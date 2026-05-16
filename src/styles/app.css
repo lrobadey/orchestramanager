@@ -29,6 +29,161 @@ body {
   min-height: 100vh;
 }
 
+/* ── Shell layout ── */
+
+.shell-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell-header {
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.shell-header-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.shell-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+}
+
+.shell-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.shell-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  align-items: start;
+}
+
+.shell-left {
+  position: sticky;
+  top: 3.5rem;
+}
+
+.shell-main {
+  min-width: 0;
+}
+
+/* ── Meters panel ── */
+
+.meters-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.meters-panel > h2 {
+  margin-bottom: 0.75rem;
+}
+
+.meters-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.meters-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.meters-section h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.meter-delta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  width: 2.2rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Work list extras ── */
+
+.work-check {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+.work-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.work-composer {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.work-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.work-stat {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.work-stat-val {
+  color: var(--accent);
+  letter-spacing: -0.05em;
+}
+
+.work-duration {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  width: 2.5rem;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+/* ── Misc ── */
+
 .app-shell {
   max-width: 1100px;
   margin: 0 auto;
