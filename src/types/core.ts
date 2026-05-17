@@ -125,3 +125,30 @@ export interface ConcertReport {
   notableMoments: string[]
   institutionalDeltas: InstitutionalDeltas
 }
+
+export interface SeasonConcertSlot {
+  index: number
+  name: string
+  program: ConcertProgram | null
+  report: ConcertReport | null
+  institutionBefore: InstitutionState | null
+  status: 'pending' | 'resolved'
+}
+
+export interface SeasonState {
+  slots: [SeasonConcertSlot, SeasonConcertSlot, SeasonConcertSlot, SeasonConcertSlot]
+  currentSlotIndex: number
+  institution: InstitutionState
+}
+
+export interface SeasonSummary {
+  totalAttendance: number
+  totalRevenue: number
+  totalExpenses: number
+  totalNet: number
+  startingInstitution: InstitutionState
+  finalInstitution: InstitutionState
+  averagePerformanceQuality: number
+  averageAudienceResponse: number
+  identityNarrative: string[]
+}

@@ -447,3 +447,75 @@ input[type='range'] {
 
 .delta-positive { color: var(--green); }
 .delta-negative { color: var(--red); }
+
+/* ── Season timeline ── */
+
+.shell-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shell-timeline {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.season-timeline {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.slot-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.slot-resolved {
+  border-color: var(--green);
+  color: var(--green);
+  opacity: 0.7;
+}
+
+.slot-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #1c1830;
+}
+
+.slot-pending {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.slot-marker {
+  font-size: 0.7rem;
+}
+
+.slot-name {
+  /* label text */
+}
+
+/* ── Concert slot heading ── */
+
+.concert-slot-label {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+  opacity: 0.8;
+}

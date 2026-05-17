@@ -3,9 +3,10 @@ import React from 'react'
 interface AppShellProps {
   left: React.ReactNode
   children: React.ReactNode
+  timeline?: React.ReactNode
 }
 
-export default function AppShell({ left, children }: AppShellProps) {
+export default function AppShell({ left, children, timeline }: AppShellProps) {
   return (
     <div className="shell-root">
       <header className="shell-header">
@@ -13,6 +14,7 @@ export default function AppShell({ left, children }: AppShellProps) {
           <span className="shell-title">Orchestra Manager</span>
           <span className="shell-subtitle">Seattle · Debut Season</span>
         </div>
+        {timeline && <div className="shell-timeline">{timeline}</div>}
       </header>
       <div className="shell-body">
         <aside className="shell-left">{left}</aside>
