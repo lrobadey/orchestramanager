@@ -61,6 +61,7 @@ function buildNotableMoments(
   performanceQuality: number,
   programNovelty: number,
   rehearsalPressure: number,
+  perWorkRehearsalPressure: (number | null)[],
   workTitles: string[],
 ): string[] {
   const moments: string[] = []
@@ -73,8 +74,18 @@ function buildNotableMoments(
   if (strongest.quality > 82)
     moments.push(`${strongest.section} delivered the strongest playing of the evening.`)
 
-  if (rehearsalPressure > 30)
-    moments.push(`${workTitles[0]} showed signs of under-preparation — ensemble coordination was uneven.`)
+  if (rehearsalPressure > 30) {
+    let worstIdx = 0
+    let worstPressure = -Infinity
+    for (let i = 0; i < perWorkRehearsalPressure.length; i++) {
+      const p = perWorkRehearsalPressure[i]
+      if (p !== null && p > worstPressure) {
+        worstPressure = p
+        worstIdx = i
+      }
+    }
+    moments.push(`${workTitles[worstIdx]} showed signs of under-preparation — ensemble coordination was uneven.`)
+  }
 
   if (programNovelty > 65 && performanceQuality > 60)
     moments.push('Critics took note of the adventurous programming; early reviews signal genuine interest.')
@@ -98,7 +109,11 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const variance = (roll - 50) / 50
 
   const forecast = forecastProgram(input)
+  if (!forecast.isComplete) {
+    throw new Error('Cannot resolve concert: program is incomplete (empty slots).')
+  }
   const works = input.program.workIds.map(id => {
+    if (id === null) throw new Error('Cannot resolve concert: empty slot.')
     const w = input.works.find(w => w.id === id)
     if (!w) throw new Error(`Work not found: ${id}`)
     return w
@@ -146,6 +161,7 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     performanceQuality,
     programNovelty,
     forecast.rehearsalPressure,
+    forecast.perWorkRehearsalPressure,
     works.map(w => w.title),
   )
 

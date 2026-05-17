@@ -8,16 +8,23 @@ import { audienceSegments } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
 import { ConcertProgram } from '../src/types/core'
 
+// Canon program (Beethoven 5, Beethoven 7, Tchaikovsky 6) — loads 30/35/45,
+// needing ~6/7/9 hours respectively. With [7,7,6] allocation this is
+// near-balanced but slightly under on Tchaikovsky 6.
 const safeProgram: ConcertProgram = {
   workIds: ['beethoven-5', 'beethoven-7', 'tchaikovsky-6'],
-  rehearsalHours: 80,
+  intermissionAfter: 1,
+  rehearsalAllocation: [7, 7, 6],
   marketingSpend: 15_000,
   ticketPrice: 65,
 }
 
+// Contemporary-heavy program — loads 65/60/58, needing ~13/12/12 hours each.
+// With a 20hr total and even split [7,7,6], every piece will be deeply under-rehearsed.
 const adventurousProgram: ConcertProgram = {
   workIds: ['harbor-grid', 'glacier-index', 'night-ferry'],
-  rehearsalHours: 40,
+  intermissionAfter: 1,
+  rehearsalAllocation: [7, 7, 6],
   marketingSpend: 5_000,
   ticketPrice: 55,
 }
@@ -52,10 +59,42 @@ describe('forecastProgram', () => {
     expect(extreme.projectedAttendance).toBeLessThan(medium.projectedAttendance * 2)
   })
 
-  it('higher rehearsal load increases rehearsalPressure', () => {
-    const underRehearsed = forecastProgram(makeInput({ ...adventurousProgram, rehearsalHours: 20 }))
-    const wellRehearsed = forecastProgram(makeInput({ ...adventurousProgram, rehearsalHours: 100 }))
-    expect(underRehearsed.rehearsalPressure).toBeGreaterThan(wellRehearsed.rehearsalPressure)
+  it('starving the worst piece increases rehearsalPressure', () => {
+    const starved = forecastProgram(
+      makeInput({ ...adventurousProgram, rehearsalAllocation: [2, 9, 9] }),
+    )
+    const balanced = forecastProgram(
+      makeInput({ ...adventurousProgram, rehearsalAllocation: [7, 7, 6] }),
+    )
+    expect(starved.rehearsalPressure).toBeGreaterThan(balanced.rehearsalPressure)
+  })
+
+  it('throws when rehearsalAllocation does not sum to the budget', () => {
+    expect(() =>
+      forecastProgram(makeInput({ ...safeProgram, rehearsalAllocation: [10, 10, 10] })),
+    ).toThrow(/sum to 20/)
+  })
+
+  it('per-piece rehearsal pressure reflects each slot independently', () => {
+    const forecast = forecastProgram(
+      makeInput({ ...adventurousProgram, rehearsalAllocation: [1, 10, 9] }),
+    )
+    // Slot 0 (Harbor Grid, needs ~13h, got 1h) should be more pressured than slot 1 (got 10h)
+    const [p0, p1] = forecast.perWorkRehearsalPressure
+    expect(p0).not.toBeNull()
+    expect(p1).not.toBeNull()
+    expect(p0!).toBeGreaterThan(p1!)
+  })
+
+  it('returns an incomplete forecast when slots are empty', () => {
+    const incompleteProgram: ConcertProgram = {
+      ...safeProgram,
+      workIds: ['beethoven-5', null, null],
+    }
+    const forecast = forecastProgram(makeInput(incompleteProgram))
+    expect(forecast.isComplete).toBe(false)
+    expect(forecast.projectedAttendance).toBe(0)
+    expect(forecast.forecastNotes.length).toBeGreaterThan(0)
   })
 
   it('higher ticket price reduces projected attendance', () => {

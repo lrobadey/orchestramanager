@@ -1,11 +1,10 @@
 import type { ReactNode } from 'react'
-import { type ConcertForecast, type Work } from '../types/core'
+import { motion, AnimatePresence } from 'framer-motion'
+import { type ConcertForecast, type SlotTuple, type Work } from '../types/core'
 
 interface ConcertForecastProps {
   forecast: ConcertForecast
-  selectedWorks: Work[]
-  onRunConcert: () => void
-  onBack: () => void
+  slotWorks: SlotTuple<Work | undefined>
 }
 
 function fmt(n: number): string {
@@ -28,119 +27,178 @@ function qualityClass(value: number): string {
   return 'risk-high'
 }
 
-function ForecastRow({ label, value }: { label: string; value: ReactNode }) {
+function ForecastRow({ label, value, animKey }: { label: string; value: ReactNode; animKey: string | number }) {
   return (
     <div className="forecast-item">
       <span className="forecast-key">{label}</span>
-      <span className="forecast-val">{value}</span>
+      <span className="forecast-val">
+        <AnimatePresence mode="popLayout">
+          <motion.span
+            key={animKey}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.18 }}
+            style={{ display: 'inline-block' }}
+          >
+            {value}
+          </motion.span>
+        </AnimatePresence>
+      </span>
     </div>
   )
 }
 
-export default function ConcertForecast({
-  forecast,
-  selectedWorks,
-  onRunConcert,
-  onBack,
-}: ConcertForecastProps) {
+export default function ConcertForecast({ forecast, slotWorks }: ConcertForecastProps) {
+  if (!forecast.isComplete) {
+    return (
+      <div className="forecast-panel forecast-panel-empty">
+        <h2 className="forecast-panel-title">Live Forecast</h2>
+        <p className="forecast-empty-text">
+          {forecast.forecastNotes[0] ??
+            'Drag pieces into the program to see the forecast take shape.'}
+        </p>
+      </div>
+    )
+  }
+
   const netClass = forecast.projectedNet >= 0 ? 'risk-low' : 'risk-high'
 
   return (
-    <div>
-      <div className="panel-row" style={{ alignItems: 'baseline', marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0 }}>Concert Forecast</h2>
-        <button
-          onClick={onBack}
-          style={{ background: 'none', border: '1px solid var(--border)', fontSize: '0.8rem', padding: '0.3rem 0.75rem' }}
-        >
-          ← Back
-        </button>
-      </div>
+    <div className="forecast-panel">
+      <h2 className="forecast-panel-title">Live Forecast</h2>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.6rem' }}>Program</h3>
-        <ol style={{ paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-          {selectedWorks.map(w => (
-            <li key={w.id} style={{ fontSize: '0.88rem' }}>
-              <strong>{w.title}</strong>
-              <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
-                {w.composer} · {w.durationMinutes} min
-              </span>
-            </li>
-          ))}
-        </ol>
-      </div>
-
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Financials</h3>
+      <section className="forecast-section">
+        <h3 className="forecast-section-title">Financials</h3>
         <div className="forecast-grid">
-          <ForecastRow label="Projected Attendance" value={forecast.projectedAttendance.toLocaleString()} />
-          <ForecastRow label="Projected Revenue" value={fmt(forecast.projectedRevenue)} />
-          <ForecastRow label="Projected Expenses" value={fmt(forecast.projectedExpenses)} />
           <ForecastRow
-            label="Projected Net"
+            label="Attendance"
+            value={forecast.projectedAttendance.toLocaleString()}
+            animKey={forecast.projectedAttendance}
+          />
+          <ForecastRow
+            label="Revenue"
+            value={fmt(forecast.projectedRevenue)}
+            animKey={forecast.projectedRevenue}
+          />
+          <ForecastRow
+            label="Expenses"
+            value={fmt(forecast.projectedExpenses)}
+            animKey={forecast.projectedExpenses}
+          />
+          <ForecastRow
+            label="Net"
             value={<span className={netClass}>{fmt(forecast.projectedNet)}</span>}
+            animKey={forecast.projectedNet}
           />
         </div>
-      </div>
+      </section>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Risk Profile</h3>
+      <section className="forecast-section">
+        <h3 className="forecast-section-title">Risk Profile</h3>
         <div className="forecast-grid">
           <ForecastRow
-            label="Performance Risk"
-            value={<span className={riskClass(forecast.performanceRisk)}>{Math.round(forecast.performanceRisk)}</span>}
-          />
-          <ForecastRow
-            label="Rehearsal Pressure"
+            label="Perf. Risk"
             value={
-              <span className={riskClass(Math.max(0, forecast.rehearsalPressure))}>
-                {forecast.rehearsalPressure > 0 ? `+${Math.round(forecast.rehearsalPressure)}` : Math.round(forecast.rehearsalPressure)}
+              <span className={riskClass(forecast.performanceRisk)}>
+                {Math.round(forecast.performanceRisk)}
               </span>
             }
+            animKey={Math.round(forecast.performanceRisk)}
+          />
+          <ForecastRow
+            label="Rehearsal"
+            value={
+              <span className={riskClass(Math.max(0, forecast.rehearsalPressure))}>
+                {forecast.rehearsalPressure > 0
+                  ? `+${Math.round(forecast.rehearsalPressure)}`
+                  : Math.round(forecast.rehearsalPressure)}
+              </span>
+            }
+            animKey={Math.round(forecast.rehearsalPressure)}
           />
           <ForecastRow
             label="Audience Fit"
-            value={<span className={qualityClass(forecast.audienceFit)}>{Math.round(forecast.audienceFit)}</span>}
+            value={
+              <span className={qualityClass(forecast.audienceFit)}>
+                {Math.round(forecast.audienceFit)}
+              </span>
+            }
+            animKey={Math.round(forecast.audienceFit)}
           />
           <ForecastRow
-            label="Donor Response"
-            value={<span className={qualityClass(forecast.donorResponse)}>{Math.round(forecast.donorResponse)}</span>}
+            label="Donors"
+            value={
+              <span className={qualityClass(forecast.donorResponse)}>
+                {Math.round(forecast.donorResponse)}
+              </span>
+            }
+            animKey={Math.round(forecast.donorResponse)}
           />
           <ForecastRow
-            label="Identity Impact"
-            value={<span className={qualityClass(forecast.identityImpact)}>{Math.round(forecast.identityImpact)}</span>}
+            label="Identity"
+            value={
+              <span className={qualityClass(forecast.identityImpact)}>
+                {Math.round(forecast.identityImpact)}
+              </span>
+            }
+            animKey={Math.round(forecast.identityImpact)}
           />
         </div>
-      </div>
+      </section>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Section Stress</h3>
+      <section className="forecast-section">
+        <h3 className="forecast-section-title">Section Stress</h3>
         <div className="forecast-grid">
           {(Object.entries(forecast.sectionStress) as [string, number][]).map(([section, stress]) => (
             <ForecastRow
               key={section}
               label={section.charAt(0).toUpperCase() + section.slice(1)}
               value={<span className={riskClass(stress)}>{Math.round(stress)}</span>}
+              animKey={`${section}-${Math.round(stress)}`}
             />
           ))}
         </div>
-      </div>
+      </section>
+
+      <section className="forecast-section">
+        <h3 className="forecast-section-title">Per-Piece Risk</h3>
+        <div className="forecast-perpiece-list">
+          {slotWorks.map((work, i) => {
+            const risk = forecast.perWorkPerformanceRisk[i]
+            const need = forecast.perWorkRehearsalHoursNeeded[i]
+            const alloc = forecast.perWorkRehearsalHoursAllocated[i]
+            const gap = need !== null && alloc !== null ? need - alloc : 0
+            return (
+              <div key={i} className="forecast-perpiece-row">
+                <span className="forecast-perpiece-num">{i + 1}</span>
+                <span className="forecast-perpiece-title">
+                  {work?.title ?? <em className="text-muted">empty</em>}
+                </span>
+                {risk !== null && (
+                  <span className={`forecast-perpiece-risk ${riskClass(risk)}`}>
+                    {Math.round(risk)}
+                  </span>
+                )}
+                {gap > 0 && (
+                  <span className="forecast-perpiece-pressure">+{Math.round(gap)}h short</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </section>
 
       {forecast.forecastNotes.length > 0 && (
-        <div className="panel" style={{ marginBottom: '1.25rem' }}>
-          <h3 style={{ marginBottom: '0.6rem' }}>Forecast Notes</h3>
+        <section className="forecast-section">
+          <h3 className="forecast-section-title">Notes</h3>
           <ul className="notes-list">
             {forecast.forecastNotes.map((note, i) => (
-              <li key={i}>{note}</li>
+              <li key={`${i}-${note}`}>{note}</li>
             ))}
           </ul>
-        </div>
+        </section>
       )}
-
-      <button onClick={onRunConcert} style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-        Run Concert →
-      </button>
     </div>
   )
 }

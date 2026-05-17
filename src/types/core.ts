@@ -71,12 +71,17 @@ export interface InstitutionState {
   identity: IdentityProfile
 }
 
+export type SlotTuple<T> = [T, T, T]
+
 export interface ConcertProgram {
-  workIds: [string, string, string]
-  rehearsalHours: number
+  workIds: SlotTuple<string | null>
+  intermissionAfter: 0 | 1 | null
+  rehearsalAllocation: SlotTuple<number>
   marketingSpend: number
   ticketPrice: number
 }
+
+export const TOTAL_REHEARSAL_HOURS = 20
 
 export interface ConcertForecast {
   projectedAttendance: number
@@ -94,7 +99,12 @@ export interface ConcertForecast {
     brass: number
     percussion: number
   }
+  perWorkRehearsalPressure: SlotTuple<number | null>
+  perWorkRehearsalHoursNeeded: SlotTuple<number | null>
+  perWorkRehearsalHoursAllocated: SlotTuple<number | null>
+  perWorkPerformanceRisk: SlotTuple<number | null>
   forecastNotes: string[]
+  isComplete: boolean
 }
 
 export interface SectionOutcome {
