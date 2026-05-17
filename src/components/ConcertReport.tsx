@@ -4,6 +4,8 @@ interface ConcertReportProps {
   report: ConcertReport
   selectedWorks: Work[]
   onDone: () => void
+  concertNumber?: number
+  totalConcerts?: number
 }
 
 function fmt(n: number): string {
@@ -48,7 +50,7 @@ function outcomeClass(quality: number): string {
   return 'outcome-fail'
 }
 
-export default function ConcertReport({ report, selectedWorks, onDone }: ConcertReportProps) {
+export default function ConcertReport({ report, selectedWorks, onDone, concertNumber, totalConcerts }: ConcertReportProps) {
   const netClass = report.net >= 0 ? 'risk-low' : 'risk-high'
   const d = report.institutionalDeltas
 
@@ -175,7 +177,9 @@ export default function ConcertReport({ report, selectedWorks, onDone }: Concert
       </div>
 
       <button onClick={onDone} style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-        Apply & Plan Next Concert →
+        {concertNumber != null && totalConcerts != null && concertNumber < totalConcerts
+          ? `Apply & Plan Concert ${concertNumber + 1} →`
+          : 'Apply & View Season Summary →'}
       </button>
     </div>
   )

@@ -16,6 +16,70 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Log Entries
 
+### 2026-05-17 — Milestone 1: Four-concert season loop
+
+**Primary milestone:** Milestone 1 — Four-Concert Season Loop
+
+**Summary**
+
+Added persistent season state wrapping the existing single-concert loop into a four-concert sequence. The player now runs Opening Night, Winter Program, Spring Identity Concert, and Season Finale in order. Institution state persists and changes across all four concerts. After the final concert, a season summary panel displays financial totals, average performance quality, institutional arc, and the identity that emerged from the season's programming.
+
+**What was added**
+
+New types in `src/types/core.ts`:
+- `SeasonConcertSlot` — holds name, status, program, report, and institution snapshot per concert
+- `SeasonState` — four slots, current slot index, live institution state
+- `SeasonSummary` — totals, averages, identity narrative
+
+New simulation layer in `src/sim/season.ts`:
+- `createInitialSeason(institution)` — initializes four pending slots
+- `resolveSeasonConcert(season, program, report)` — stamps current slot, applies report, advances index
+- `summarizeSeason(season)` — returns null until all four resolved; then computes totals and identity narrative
+
+New UI components:
+- `src/components/SeasonTimeline.tsx` — four slot chips in header (✓ resolved / → active / ○ pending)
+- `src/components/SeasonSummaryPanel.tsx` — final season screen with financials, arc, and narrative
+
+Modified files:
+- `src/types/core.ts` — added three new interfaces
+- `src/App.tsx` — replaced `institution` state with `SeasonState`; wired `handleDone` to `resolveSeasonConcert`; added season-complete branch and "New Season" reset
+- `src/components/AppShell.tsx` — added `timeline` prop slot in header
+- `src/components/ConcertReport.tsx` — added `concertNumber`/`totalConcerts` props for contextual button label
+- `src/styles/app.css` — added season timeline and slot chip styles
+
+New tests in `tests/season.test.ts` (8 tests):
+- Season initializes with four unresolved slots and correct names
+- Resolving a concert updates only that slot; others stay pending
+- `currentSlotIndex` advances after each resolve
+- Institution state persists and changes between concerts
+- `summarizeSeason` returns null until all four are resolved; totals match sum of reports
+- Contemporary-heavy season accumulates higher adventurous identity than canon season
+
+**Tests run and results**
+
+```
+npm test
+
+ ✓ tests/resolveConcert.test.ts (16 tests)
+ ✓ tests/season.test.ts (8 tests)
+
+ Test Files  2 passed (2)
+      Tests  24 passed (24)
+```
+
+**Known issues / risks**
+
+- `node_modules` is absent in the remote environment so `tsc --noEmit` was not verified locally; TypeScript types are straightforward and should compile cleanly.
+- The `SeasonSummaryPanel` imports `React.ReactNode` implicitly via JSX; if a strict import check is needed, add `import type { ReactNode } from 'react'`.
+
+**Handoff note**
+
+Milestone 1 is mechanically complete. The player can run a full four-concert season, see institutional meters update after each concert, and read a final summary. Identity drift is visible across the season. No save/load, routing, or out-of-scope systems were added.
+
+**Next recommended action**
+
+Review simulation balance across the four-concert arc: do meters reach interesting ranges? Is the identity narrative specific enough to feel meaningful? Then begin Milestone 2 (Roster System) or polish the season arc first.
+
 ### 2026-05-17 — Fix three UI display bugs in cash delta formatting
 
 **Primary milestone:** Milestone 0 — Opening Night Foundation
