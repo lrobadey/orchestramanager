@@ -7,8 +7,6 @@ import {
   TOTAL_REHEARSAL_HOURS,
   Work,
 } from '../types/core'
-import { rehearsalHoursNeeded } from '../sim/scoring'
-
 interface ProgramBuilderProps {
   works: Work[]
   program: ConcertProgram
@@ -38,6 +36,7 @@ interface SlotCardProps {
   index: number
   work: Work | null
   perWorkRisk: number | null
+  hoursNeeded: number | null
   hours: number
   onDragEnd: (point: { x: number; y: number }) => void
   registerRef: (el: HTMLDivElement | null) => void
@@ -47,6 +46,7 @@ function SlotCard({
   index,
   work,
   perWorkRisk,
+  hoursNeeded,
   hours,
   onDragEnd,
   registerRef,
@@ -82,7 +82,7 @@ function SlotCard({
               <span className="slot-piece-spacer" />
               <span className="slot-piece-duration">{work.durationMinutes} min</span>
               <span className="slot-piece-rehearsal">
-                {hours}h / {rehearsalHoursNeeded(work.rehearsalLoad)}h rehearsal
+                {hours}h / {hoursNeeded !== null ? `${Math.round(hoursNeeded * 10) / 10}` : '?'}h rehearsal
               </span>
             </div>
           </motion.div>
@@ -207,6 +207,7 @@ interface RehearsalAllocatorProps {
   allocation: SlotTuple<number>
   slotWorks: SlotTuple<Work | null>
   perWorkPressure: SlotTuple<number | null>
+  perWorkHoursNeeded: SlotTuple<number | null>
   onChange: (next: SlotTuple<number>) => void
 }
 
@@ -259,6 +260,7 @@ function RehearsalAllocator({
   allocation,
   slotWorks,
   perWorkPressure,
+  perWorkHoursNeeded,
   onChange,
 }: RehearsalAllocatorProps) {
   const barRef = useRef<HTMLDivElement>(null)
@@ -324,7 +326,7 @@ function RehearsalAllocator({
       <div className="rehearsal-labels">
         {[0, 1, 2].map(i => {
           const work = slotWorks[i]
-          const needed = work ? rehearsalHoursNeeded(work.rehearsalLoad) : null
+          const needed = perWorkHoursNeeded[i]
           return (
             <div key={i} className="rehearsal-label">
               <span className="rehearsal-label-hours">{allocation[i]}h</span>
@@ -476,6 +478,7 @@ export default function ProgramBuilder({
             index={0}
             work={slotWorks[0]}
             perWorkRisk={forecast.perWorkPerformanceRisk[0]}
+            hoursNeeded={forecast.perWorkRehearsalHoursNeeded[0]}
             hours={program.rehearsalAllocation[0]}
             registerRef={el => (slotRefs.current[0] = el)}
             onDragEnd={point => handleSlotDrop(0, point)}
@@ -491,6 +494,7 @@ export default function ProgramBuilder({
             index={1}
             work={slotWorks[1]}
             perWorkRisk={forecast.perWorkPerformanceRisk[1]}
+            hoursNeeded={forecast.perWorkRehearsalHoursNeeded[1]}
             hours={program.rehearsalAllocation[1]}
             registerRef={el => (slotRefs.current[1] = el)}
             onDragEnd={point => handleSlotDrop(1, point)}
@@ -506,6 +510,7 @@ export default function ProgramBuilder({
             index={2}
             work={slotWorks[2]}
             perWorkRisk={forecast.perWorkPerformanceRisk[2]}
+            hoursNeeded={forecast.perWorkRehearsalHoursNeeded[2]}
             hours={program.rehearsalAllocation[2]}
             registerRef={el => (slotRefs.current[2] = el)}
             onDragEnd={point => handleSlotDrop(2, point)}
@@ -520,6 +525,7 @@ export default function ProgramBuilder({
             allocation={program.rehearsalAllocation}
             slotWorks={slotWorks}
             perWorkPressure={forecast.perWorkRehearsalPressure}
+            perWorkHoursNeeded={forecast.perWorkRehearsalHoursNeeded}
             onChange={setAllocation}
           />
 
