@@ -86,6 +86,9 @@ function buildNotableMoments(
   else if (performanceQuality < 40)
     moments.push('The evening as a whole left the audience and critics with doubts about institutional readiness.')
 
+  if (moments.length === 0)
+    moments.push('The concert proceeded without notable incident — a competent, unremarkable evening.')
+
   return moments.slice(0, 4)
 }
 

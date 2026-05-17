@@ -113,6 +113,15 @@ describe('resolveConcert', () => {
     const safe = resolveConcert({ ...makeInput(safeProgram), roll: 50 })
     expect(safe.performanceQuality).toBeGreaterThan(risky.performanceQuality)
   })
+
+  it('always emits at least one notable moment across the roll range', () => {
+    for (let roll = 0; roll <= 100; roll += 10) {
+      const safe = resolveConcert({ ...makeInput(safeProgram), roll })
+      const adventurous = resolveConcert({ ...makeInput(adventurousProgram), roll })
+      expect(safe.notableMoments.length).toBeGreaterThan(0)
+      expect(adventurous.notableMoments.length).toBeGreaterThan(0)
+    }
+  })
 })
 
 // ── applyConcertReport ───────────────────────────────────────────────────────
