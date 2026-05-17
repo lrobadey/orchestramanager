@@ -16,6 +16,44 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Log Entries
 
+### 2026-05-17 — Fix three UI display bugs in cash delta formatting
+
+**Primary milestone:** Milestone 0 — Opening Night Foundation
+
+**Summary**
+
+Fixed three display bugs found during a UI review:
+
+1. `ConcertForecast.tsx` used `React.ReactNode` as a type without importing React. Added `import type { ReactNode } from 'react'` and changed the annotation accordingly.
+2. `ConcertReport.tsx` cash delta showed both the raw integer and the currency-formatted value side by side (e.g. `+45321 ($45,321)`). Now shows only the formatted value (e.g. `+$45,321`).
+3. `InstitutionMeters.tsx` cash delta badge in the sidebar showed a raw integer (e.g. `+45000`) because `deltaLabel()` does plain string concatenation. Added a `deltaDisplay` override prop to `MeterRow` and passes a currency-formatted string for the cash row.
+
+**Rationale**
+
+These were presentation-only bugs in the existing Milestone 0 playable loop. No simulation logic or domain types were changed.
+
+**Files changed**
+
+- `src/components/ConcertForecast.tsx`
+- `src/components/ConcertReport.tsx`
+- `src/components/InstitutionMeters.tsx`
+
+**Tests run and results**
+
+Not run; no changes to `src/sim/`, scoring formulas, or state transitions.
+
+**Known issues / risks**
+
+- `node_modules` is not installed in the remote environment, so `tsc --noEmit` could not be verified locally. The import fix is correct per the TypeScript spec; Vite builds should pass.
+
+**Handoff note**
+
+UI display is now consistent: all cash values and deltas use `Intl.NumberFormat` currency formatting throughout the planning, forecast, and report screens.
+
+**Next recommended action**
+
+Review Milestone 0 simulation balance and UX before starting Milestone 1.
+
 ### 2026-05-16 — Add agent operating contract and progress log
 
 **Primary milestone:** Project governance  

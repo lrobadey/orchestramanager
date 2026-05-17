@@ -28,13 +28,14 @@ interface MeterRowProps {
   value: number
   max?: number
   delta?: number
+  deltaDisplay?: string
   asBar?: boolean
   cashMode?: boolean
 }
 
-function MeterRow({ label, value, delta, asBar = true, cashMode = false }: MeterRowProps) {
+function MeterRow({ label, value, delta, deltaDisplay, asBar = true, cashMode = false }: MeterRowProps) {
   const pct = cashMode ? 0 : Math.round(Math.min(100, Math.max(0, value)))
-  const dl = deltaLabel(delta)
+  const dl = deltaDisplay ?? deltaLabel(delta)
 
   return (
     <div className="meter-row">
@@ -64,6 +65,7 @@ export default function InstitutionMeters({ institution, deltas }: InstitutionMe
           label="Cash"
           value={institution.cash}
           delta={deltas?.cash}
+          deltaDisplay={deltas?.cash != null ? `${deltas.cash >= 0 ? '+' : ''}${fmt(deltas.cash)}` : undefined}
           asBar={false}
           cashMode
         />
