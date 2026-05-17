@@ -8,9 +8,10 @@ import { audienceSegments } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
 import { ConcertProgram } from '../src/types/core'
 
-// Canon program (Beethoven 5, Beethoven 7, Tchaikovsky 6) — loads 30/35/45,
-// needing ~6/7/9 hours respectively. With [7,7,6] allocation this is
-// near-balanced but slightly under on Tchaikovsky 6.
+// Canon program (Beethoven 5, Beethoven 7, Tchaikovsky 6) — loads 30/35/45.
+// Rehearsal hours needed depend on section leadership; with the 15 starting
+// principals (~5.3 weighted divisor for balanced programs) these want ~5.7/6.6/8.5h respectively.
+// With [7,7,6] allocation this is near-balanced but slightly under on Tchaikovsky 6.
 const safeProgram: ConcertProgram = {
   workIds: ['beethoven-5', 'beethoven-7', 'tchaikovsky-6'],
   intermissionAfter: 1,
@@ -19,8 +20,9 @@ const safeProgram: ConcertProgram = {
   ticketPrice: 65,
 }
 
-// Contemporary-heavy program — loads 65/60/58, needing ~13/12/12 hours each.
-// With a 20hr total and even split [7,7,6], every piece will be deeply under-rehearsed.
+// Contemporary-heavy program — loads 65/60/58, needing ~12-13h each with the
+// starting principals. With a 20hr total and [7,7,6] allocation every piece
+// will be deeply under-rehearsed.
 const adventurousProgram: ConcertProgram = {
   workIds: ['harbor-grid', 'glacier-index', 'night-ferry'],
   intermissionAfter: 1,
