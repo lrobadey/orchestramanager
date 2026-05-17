@@ -1,8 +1,13 @@
+import type { ReactNode } from 'react'
 import { type ConcertReport, type Work } from '../types/core'
+import MovementCard from './MovementCard'
+import { flavorForSlot } from './concertFlavor'
 
 interface ConcertReportProps {
   report: ConcertReport
   selectedWorks: Work[]
+  slotIndex: number
+  slotName: string
   onDone: () => void
   concertNumber?: number
   totalConcerts?: number
@@ -35,97 +40,120 @@ function deltaStr(d: number): string {
   return d >= 0 ? `+${d}` : `${d}`
 }
 
-function ReportRow({ label, value }: { label: string; value: React.ReactNode }) {
+function LedgerRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="forecast-item">
-      <span className="forecast-key">{label}</span>
-      <span className="forecast-val">{value}</span>
+    <div className="ledger-row">
+      <span className="ledger-key">{label}</span>
+      <span className="ledger-val">{value}</span>
     </div>
   )
 }
 
-function outcomeClass(quality: number): string {
-  if (quality >= 70) return 'outcome-pass'
-  if (quality >= 40) return 'outcome-ok'
-  return 'outcome-fail'
+function SealDelta({ value, isCash = false }: { value: number; isCash?: boolean }) {
+  const cls = value > 0 ? 'positive' : value < 0 ? 'negative' : ''
+  const text = isCash
+    ? `${value >= 0 ? '+' : ''}${fmt(value)}`
+    : deltaStr(value)
+  return <span className={`seal-badge ${cls}`}>{text}</span>
 }
 
-export default function ConcertReport({ report, selectedWorks, onDone, concertNumber, totalConcerts }: ConcertReportProps) {
-  const netClass = report.net >= 0 ? 'risk-low' : 'risk-high'
+export default function ConcertReport({
+  report,
+  selectedWorks,
+  slotIndex,
+  slotName,
+  onDone,
+  concertNumber,
+  totalConcerts,
+}: ConcertReportProps) {
+  const flavor = flavorForSlot(slotIndex)
   const d = report.institutionalDeltas
+  const isLastConcert = concertNumber != null && totalConcerts != null && concertNumber >= totalConcerts
 
   return (
     <div>
-      <div style={{ marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0, marginBottom: '0.25rem' }}>Concert Report</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-          {selectedWorks.map(w => w.title).join(' · ')}
-        </p>
+      <div className="book-page elevated">
+        <div className="concert-header">
+          <div>
+            <div className="concert-slot-name">Report · {slotName}</div>
+            <div className="concert-title">{flavor.title}</div>
+            <div className="concert-meta">Performed · {flavor.venue}</div>
+            <p className="concert-flavor">{selectedWorks.map(w => w.title).join(' · ')}</p>
+          </div>
+          <div className="quality-crest">
+            <div className="quality-crest-label">Performance</div>
+            <div className="quality-crest-wreath">
+              <div className="quality-crest-value">{report.performanceQuality}</div>
+            </div>
+            <div className="quality-crest-band">{qualityLabel(report.performanceQuality)}</div>
+          </div>
+        </div>
+
+        <div className="movement-grid">
+          {selectedWorks.map((work, i) => (
+            <MovementCard
+              key={work.id}
+              movement={i + 1}
+              movementName={flavor.movementNames[i]}
+              work={work}
+            />
+          ))}
+        </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Results</h3>
-        <div className="forecast-grid">
-          <ReportRow label="Attendance" value={report.attendance.toLocaleString()} />
-          <ReportRow label="Revenue" value={fmt(report.revenue)} />
-          <ReportRow label="Expenses" value={fmt(report.expenses)} />
-          <ReportRow
+      <div className="book-page">
+        <h2 className="section-title">The Evening's Ledger</h2>
+        <div className="ledger-grid">
+          <LedgerRow label="Attendance" value={report.attendance.toLocaleString()} />
+          <LedgerRow label="Revenue" value={fmt(report.revenue)} />
+          <LedgerRow label="Expenses" value={fmt(report.expenses)} />
+          <LedgerRow
             label="Net"
-            value={<span className={netClass}>{fmt(report.net)}</span>}
+            value={<span className={report.net >= 0 ? 'risk-low' : 'risk-high'}>{fmt(report.net)}</span>}
           />
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Performance</h3>
-        <div className="forecast-grid">
-          <ReportRow
-            label="Overall Quality"
-            value={
-              <span className={qualityClass(report.performanceQuality)}>
-                {report.performanceQuality} — {qualityLabel(report.performanceQuality)}
-              </span>
-            }
-          />
-          <ReportRow
+      <div className="book-page">
+        <h2 className="section-title">Reception</h2>
+        <div className="ledger-grid">
+          <LedgerRow
             label="Audience Response"
             value={
               <span className={qualityClass(report.audienceResponse)}>
-                {report.audienceResponse} — {qualityLabel(report.audienceResponse)}
+                {report.audienceResponse} · {qualityLabel(report.audienceResponse)}
               </span>
             }
           />
-          <ReportRow
+          <LedgerRow
             label="Critic Response"
             value={
               <span className={qualityClass(report.criticResponse)}>
-                {report.criticResponse} — {qualityLabel(report.criticResponse)}
+                {report.criticResponse} · {qualityLabel(report.criticResponse)}
               </span>
             }
           />
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.6rem' }}>Section Outcomes</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div className="book-page">
+        <h2 className="section-title">Section Outcomes</h2>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
           {report.sectionOutcomes.map(outcome => (
             <div key={outcome.section} className="section-outcome">
-              <span style={{ fontWeight: 'bold', width: '7rem', flexShrink: 0 }}>
-                {outcome.section}
-              </span>
-              <span className={`${outcomeClass(outcome.quality)}`} style={{ width: '4rem', flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
+              <span className="section-outcome-name">{outcome.section}</span>
+              <span className={`section-outcome-quality ${qualityClass(outcome.quality)}`}>
                 {outcome.quality}
               </span>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{outcome.note}</span>
+              <span className="section-outcome-note">{outcome.note}</span>
             </div>
           ))}
         </div>
       </div>
 
       {report.notableMoments.length > 0 && (
-        <div className="panel" style={{ marginBottom: '0.75rem' }}>
-          <h3 style={{ marginBottom: '0.6rem' }}>Notable Moments</h3>
+        <div className="book-page">
+          <h2 className="section-title">Notable Moments</h2>
           <ul className="notes-list">
             {report.notableMoments.map((moment, i) => (
               <li key={i}>{moment}</li>
@@ -134,53 +162,39 @@ export default function ConcertReport({ report, selectedWorks, onDone, concertNu
         </div>
       )}
 
-      <div className="panel" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Institutional Impact</h3>
-        <div className="forecast-grid">
-          <ReportRow
-            label="Cash"
-            value={<span className={d.cash >= 0 ? 'delta-positive' : 'delta-negative'}>{d.cash >= 0 ? '+' : ''}{fmt(d.cash)}</span>}
-          />
-          <ReportRow
-            label="Reputation"
-            value={<span className={d.artisticReputation >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.artisticReputation)}</span>}
-          />
-          <ReportRow
-            label="Audience Trust"
-            value={<span className={d.audienceTrust >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.audienceTrust)}</span>}
-          />
-          <ReportRow
-            label="Donor Confidence"
-            value={<span className={d.donorConfidence >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.donorConfidence)}</span>}
-          />
-          <ReportRow
-            label="Morale"
-            value={<span className={d.musicianMorale >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.musicianMorale)}</span>}
-          />
-          <ReportRow
-            label="Tech Quality"
-            value={<span className={d.technicalQuality >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.technicalQuality)}</span>}
-          />
+      <div className="book-page">
+        <h2 className="section-title">Institutional Impact</h2>
+        <div className="ledger-grid">
+          <LedgerRow label="Cash" value={<SealDelta value={d.cash} isCash />} />
+          <LedgerRow label="Reputation" value={<SealDelta value={d.artisticReputation} />} />
+          <LedgerRow label="Audience Trust" value={<SealDelta value={d.audienceTrust} />} />
+          <LedgerRow label="Donor Confidence" value={<SealDelta value={d.donorConfidence} />} />
+          <LedgerRow label="Morale" value={<SealDelta value={d.musicianMorale} />} />
+          <LedgerRow label="Tech Quality" value={<SealDelta value={d.technicalQuality} />} />
           {(d.identity.adventurous ?? 0) !== 0 && (
-            <ReportRow
-              label="Identity: Adventurous"
-              value={<span className="delta-positive">+{d.identity.adventurous}</span>}
-            />
+            <LedgerRow label="Adventurous" value={<SealDelta value={d.identity.adventurous!} />} />
           )}
           {(d.identity.scholarly ?? 0) !== 0 && (
-            <ReportRow
-              label="Identity: Scholarly"
-              value={<span className="delta-positive">+{d.identity.scholarly}</span>}
-            />
+            <LedgerRow label="Scholarly" value={<SealDelta value={d.identity.scholarly!} />} />
+          )}
+          {(d.identity.communityFocused ?? 0) !== 0 && (
+            <LedgerRow label="Community" value={<SealDelta value={d.identity.communityFocused!} />} />
           )}
         </div>
       </div>
 
-      <button onClick={onDone} style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-        {concertNumber != null && totalConcerts != null && concertNumber < totalConcerts
-          ? `Apply & Plan Concert ${concertNumber + 1} →`
-          : 'Apply & View Season Summary →'}
-      </button>
+      <div className="row-between" style={{ marginTop: '1.5rem' }}>
+        <span className="text-muted text-italic" style={{ fontSize: '0.85rem' }}>
+          {isLastConcert ? 'Turn the page to close the season.' : 'Turn the page to plan the next concert.'}
+        </span>
+        <button onClick={onDone}>
+          {isLastConcert ? 'View Season Summary →' : `Plan Concert ${(concertNumber ?? 0) + 1} →`}
+        </button>
+      </div>
+
+      <div className="book-footer-flourish">
+        Great orchestras aren't built by accident. They are composed.
+      </div>
     </div>
   )
 }

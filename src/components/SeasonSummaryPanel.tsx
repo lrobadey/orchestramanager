@@ -31,11 +31,11 @@ function qualityLabel(value: number): string {
   return 'Poor'
 }
 
-function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
+function LedgerRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="forecast-item">
-      <span className="forecast-key">{label}</span>
-      <span className="forecast-val">{value}</span>
+    <div className="ledger-row">
+      <span className="ledger-key">{label}</span>
+      <span className="ledger-val">{value}</span>
     </div>
   )
 }
@@ -54,20 +54,33 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
 
   return (
     <div>
-      <div style={{ marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0, marginBottom: '0.25rem' }}>Season Summary</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-          Four-concert debut season complete
-        </p>
+      <div className="book-page elevated">
+        <div className="concert-header">
+          <div>
+            <div className="concert-slot-name">The Season · 2030–31</div>
+            <div className="concert-title">EPILOGUE</div>
+            <div className="concert-meta">Four concerts · Harmonia Hall</div>
+            <p className="concert-flavor">
+              A debut season completes. What follows is the institution we have become.
+            </p>
+          </div>
+          <div className="quality-crest">
+            <div className="quality-crest-label">Avg Quality</div>
+            <div className="quality-crest-wreath">
+              <div className="quality-crest-value">{s.averagePerformanceQuality}</div>
+            </div>
+            <div className="quality-crest-band">{qualityLabel(s.averagePerformanceQuality)}</div>
+          </div>
+        </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Season Financials</h3>
-        <div className="forecast-grid">
-          <SummaryRow label="Total Attendance" value={s.totalAttendance.toLocaleString()} />
-          <SummaryRow label="Total Revenue" value={fmt(s.totalRevenue)} />
-          <SummaryRow label="Total Expenses" value={fmt(s.totalExpenses)} />
-          <SummaryRow
+      <div className="book-page">
+        <h2 className="section-title">Season Financials</h2>
+        <div className="ledger-grid">
+          <LedgerRow label="Total Attendance" value={s.totalAttendance.toLocaleString()} />
+          <LedgerRow label="Total Revenue" value={fmt(s.totalRevenue)} />
+          <LedgerRow label="Total Expenses" value={fmt(s.totalExpenses)} />
+          <LedgerRow
             label="Total Net"
             value={
               <span className={s.totalNet >= 0 ? 'risk-low' : 'risk-high'}>
@@ -78,52 +91,52 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Artistic Performance</h3>
-        <div className="forecast-grid">
-          <SummaryRow
+      <div className="book-page">
+        <h2 className="section-title">Artistic Performance</h2>
+        <div className="ledger-grid">
+          <LedgerRow
             label="Avg Performance Quality"
-            value={`${s.averagePerformanceQuality} — ${qualityLabel(s.averagePerformanceQuality)}`}
+            value={`${s.averagePerformanceQuality} · ${qualityLabel(s.averagePerformanceQuality)}`}
           />
-          <SummaryRow
+          <LedgerRow
             label="Avg Audience Response"
-            value={`${s.averageAudienceResponse} — ${qualityLabel(s.averageAudienceResponse)}`}
+            value={`${s.averageAudienceResponse} · ${qualityLabel(s.averageAudienceResponse)}`}
           />
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Institutional Arc</h3>
-        <div className="forecast-grid">
-          <SummaryRow
+      <div className="book-page">
+        <h2 className="section-title">Institutional Arc</h2>
+        <div className="ledger-grid">
+          <LedgerRow
             label="Cash"
             value={<span className={deltaClass(cashDelta)}>{cashDelta >= 0 ? '+' : ''}{fmt(cashDelta)}</span>}
           />
-          <SummaryRow
+          <LedgerRow
             label="Artistic Reputation"
             value={<span className={deltaClass(repDelta)}>{deltaStr(repDelta)}</span>}
           />
-          <SummaryRow
+          <LedgerRow
             label="Audience Trust"
             value={<span className={deltaClass(trustDelta)}>{deltaStr(trustDelta)}</span>}
           />
-          <SummaryRow
+          <LedgerRow
             label="Donor Confidence"
             value={<span className={deltaClass(donorDelta)}>{deltaStr(donorDelta)}</span>}
           />
-          <SummaryRow
+          <LedgerRow
             label="Musician Morale"
             value={<span className={deltaClass(moraleDelta)}>{deltaStr(moraleDelta)}</span>}
           />
-          <SummaryRow
+          <LedgerRow
             label="Technical Quality"
             value={<span className={deltaClass(qualityDelta)}>{deltaStr(qualityDelta)}</span>}
           />
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ marginBottom: '0.6rem' }}>Identity That Emerged</h3>
+      <div className="book-page">
+        <h2 className="section-title">Identity That Emerged</h2>
         <ul className="notes-list">
           {s.identityNarrative.map((note, i) => (
             <li key={i}>{note}</li>
@@ -131,9 +144,16 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
         </ul>
       </div>
 
-      <button onClick={onNewSeason} style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-        New Season →
-      </button>
+      <div className="row-between" style={{ marginTop: '1.5rem' }}>
+        <span className="text-muted text-italic" style={{ fontSize: '0.85rem' }}>
+          A new season awaits.
+        </span>
+        <button onClick={onNewSeason}>Begin a New Season →</button>
+      </div>
+
+      <div className="book-footer-flourish">
+        Great orchestras aren't built by accident. They are composed.
+      </div>
     </div>
   )
 }

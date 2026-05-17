@@ -14,6 +14,10 @@ import ConcertForecastView from './components/ConcertForecast'
 import ConcertReportView from './components/ConcertReport'
 import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
+import AudienceOutlookPanel from './components/rightRail/AudienceOutlookPanel'
+import DonorComfortPanel from './components/rightRail/DonorComfortPanel'
+import SectionLoadPanel from './components/rightRail/SectionLoadPanel'
+import FinancialProjectionPanel from './components/rightRail/FinancialProjectionPanel'
 
 type Phase = 'planning' | 'forecast' | 'report'
 
@@ -101,9 +105,21 @@ export default function App() {
     .map(id => works.find(w => w.id === id))
     .filter((w): w is NonNullable<typeof w> => w !== undefined)
 
+  const slotIndex = Math.min(season.currentSlotIndex, 3)
   const currentSlotName = !seasonComplete
     ? season.slots[season.currentSlotIndex].name
-    : null
+    : 'Season Complete'
+
+  // Right rail is shown for planning + forecast (where the player is still shaping the program).
+  const showRightRail = !seasonComplete && (phase === 'planning' || phase === 'forecast')
+  const rightRail = showRightRail ? (
+    <>
+      <AudienceOutlookPanel institution={institution} selectedWorks={selectedWorks} />
+      <DonorComfortPanel institution={institution} selectedWorks={selectedWorks} />
+      <SectionLoadPanel selectedWorks={selectedWorks} />
+      <FinancialProjectionPanel institution={institution} season={season} />
+    </>
+  ) : undefined
 
   return (
     <AppShell
@@ -114,6 +130,7 @@ export default function App() {
         />
       }
       timeline={<SeasonTimeline season={season} />}
+      rightRail={rightRail}
     >
       {seasonComplete ? (
         <SeasonSummaryPanel
@@ -122,9 +139,6 @@ export default function App() {
         />
       ) : (
         <>
-          {currentSlotName && phase === 'planning' && (
-            <p className="concert-slot-label">{currentSlotName}</p>
-          )}
           {phase === 'planning' && (
             <ProgramBuilder
               works={works}
@@ -132,6 +146,8 @@ export default function App() {
               rehearsalHours={rehearsalHours}
               marketingSpend={marketingSpend}
               ticketPrice={ticketPrice}
+              slotIndex={slotIndex}
+              slotName={currentSlotName}
               onToggleWork={toggleWork}
               onRehearsalChange={setRehearsalHours}
               onMarketingChange={setMarketingSpend}
@@ -143,6 +159,8 @@ export default function App() {
             <ConcertForecastView
               forecast={forecast}
               selectedWorks={selectedWorks}
+              slotIndex={slotIndex}
+              slotName={currentSlotName}
               onRunConcert={handleRunConcert}
               onBack={() => setPhase('planning')}
             />
@@ -151,6 +169,8 @@ export default function App() {
             <ConcertReportView
               report={report}
               selectedWorks={selectedWorks}
+              slotIndex={slotIndex}
+              slotName={currentSlotName}
               onDone={handleDone}
               concertNumber={season.currentSlotIndex + 1}
               totalConcerts={4}

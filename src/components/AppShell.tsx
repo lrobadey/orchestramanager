@@ -4,22 +4,16 @@ interface AppShellProps {
   left: React.ReactNode
   children: React.ReactNode
   timeline?: React.ReactNode
+  rightRail?: React.ReactNode
 }
 
-export default function AppShell({ left, children, timeline }: AppShellProps) {
+export default function AppShell({ left, children, timeline, rightRail }: AppShellProps) {
   return (
-    <div className="shell-root">
-      <header className="shell-header">
-        <div className="shell-header-inner">
-          <span className="shell-title">Orchestra Manager</span>
-          <span className="shell-subtitle">Seattle · Debut Season</span>
-        </div>
-        {timeline && <div className="shell-timeline">{timeline}</div>}
-      </header>
-      <div className="shell-body">
-        <aside className="shell-left">{left}</aside>
-        <main className="shell-main">{children}</main>
-      </div>
+    <div className={`shell-root${rightRail ? ' has-rail' : ''}`}>
+      <aside className="shell-sidebar">{left}</aside>
+      <header className="shell-topbar">{timeline}</header>
+      <main className="shell-main">{children}</main>
+      {rightRail && <aside className="shell-rightrail">{rightRail}</aside>}
     </div>
   )
 }
