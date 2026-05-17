@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { SeasonSummary } from '../types/core'
 
 interface SeasonSummaryPanelProps {
@@ -30,7 +31,7 @@ function qualityLabel(value: number): string {
   return 'Poor'
 }
 
-function SummaryRow({ label, value }: { label: string; value: React.ReactNode }) {
+function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="forecast-item">
       <span className="forecast-key">{label}</span>
