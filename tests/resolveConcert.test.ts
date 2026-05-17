@@ -9,8 +9,8 @@ import { startingInstitution } from '../src/data/institution'
 import { ConcertProgram } from '../src/types/core'
 
 // Canon program (Beethoven 5, Beethoven 7, Tchaikovsky 6) — loads 30/35/45.
-// Rehearsal hours needed depend on section leadership; with the starting
-// principals (~5.4 weighted divisor) these want ~5.5/6.4/8.3h respectively.
+// Rehearsal hours needed depend on section leadership; with the 14 starting
+// principals (~5.3 weighted divisor) these want ~5.7/6.6/8.5h respectively.
 // With [7,7,6] allocation this is near-balanced but slightly under on Tchaikovsky 6.
 const safeProgram: ConcertProgram = {
   workIds: ['beethoven-5', 'beethoven-7', 'tchaikovsky-6'],
