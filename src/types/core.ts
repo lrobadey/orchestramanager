@@ -1,0 +1,127 @@
+export type Era = 'classical' | 'romantic' | 'late-romantic' | 'contemporary'
+
+export interface Work {
+  id: string
+  title: string
+  composer: string
+  durationMinutes: number
+  era: Era
+  isContemporary: boolean
+  // 0-100 audience scores
+  audienceDraw: number
+  artisticPrestige: number
+  donorComfort: number
+  novelty: number
+  identityValue: number
+  // rehearsal load in hours of dedicated preparation needed
+  rehearsalLoad: number
+  // section demands 0-100 (how hard this work is for each section)
+  demands: {
+    strings: number
+    winds: number
+    brass: number
+    percussion: number
+  }
+}
+
+export interface Principal {
+  id: string
+  name: string
+  position: string
+  section: 'strings' | 'winds' | 'brass' | 'percussion'
+  overall: number
+  morale: number
+  form: number
+  intonation: number
+  rhythm: number
+  endurance: number
+  tone: number
+  blend: number
+  soloReliability: number
+  leadership: number
+  stressResistance: number
+}
+
+export interface AudienceSegment {
+  id: string
+  name: string
+  size: number
+  loyalty: number
+  priceSensitivity: number
+  canonAffinity: number
+  contemporaryAffinity: number
+  crossoverAffinity: number
+  prestigeAffinity: number
+  communityAffinity: number
+}
+
+export interface IdentityProfile {
+  adventurous: number
+  communityFocused: number
+  scholarly: number
+}
+
+export interface InstitutionState {
+  cash: number
+  artisticReputation: number
+  audienceTrust: number
+  donorConfidence: number
+  musicianMorale: number
+  technicalQuality: number
+  identity: IdentityProfile
+}
+
+export interface ConcertProgram {
+  workIds: [string, string, string]
+  rehearsalHours: number
+  marketingSpend: number
+  ticketPrice: number
+}
+
+export interface ConcertForecast {
+  projectedAttendance: number
+  projectedRevenue: number
+  projectedExpenses: number
+  projectedNet: number
+  performanceRisk: number
+  rehearsalPressure: number
+  audienceFit: number
+  donorResponse: number
+  identityImpact: number
+  sectionStress: {
+    strings: number
+    winds: number
+    brass: number
+    percussion: number
+  }
+  forecastNotes: string[]
+}
+
+export interface SectionOutcome {
+  section: string
+  quality: number
+  note: string
+}
+
+export interface InstitutionalDeltas {
+  cash: number
+  artisticReputation: number
+  audienceTrust: number
+  donorConfidence: number
+  musicianMorale: number
+  technicalQuality: number
+  identity: Partial<IdentityProfile>
+}
+
+export interface ConcertReport {
+  attendance: number
+  revenue: number
+  expenses: number
+  net: number
+  performanceQuality: number
+  audienceResponse: number
+  criticResponse: number
+  sectionOutcomes: SectionOutcome[]
+  notableMoments: string[]
+  institutionalDeltas: InstitutionalDeltas
+}
