@@ -18,8 +18,9 @@
   --green: #4caf72;
   --red: #c95c5c;
   --yellow: #c9a84c;
-  --font-mono: 'Courier New', Courier, monospace;
-  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', Courier, monospace;
 }
 
 body {
@@ -57,8 +58,9 @@ body {
 }
 
 .shell-title {
+  font-family: var(--font-display);
   font-size: 1.1rem;
-  font-weight: bold;
+  font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--accent);
 }
@@ -124,6 +126,8 @@ body {
 
 .meter-delta {
   font-family: var(--font-mono);
+  font-weight: 300;
+  font-feature-settings: 'lnum' 1, 'tnum' 1;
   font-size: 0.72rem;
   width: 2.2rem;
   text-align: right;
@@ -134,6 +138,7 @@ body {
 
 .work-check {
   font-family: var(--font-mono);
+  font-weight: 300;
   font-size: 0.8rem;
   color: var(--accent);
   width: 1rem;
@@ -163,6 +168,8 @@ body {
   font-size: 0.7rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  font-weight: 300;
+  font-feature-settings: 'lnum' 1, 'tnum' 1;
   white-space: nowrap;
 }
 
@@ -173,6 +180,8 @@ body {
 
 .work-duration {
   font-family: var(--font-mono);
+  font-weight: 300;
+  font-feature-settings: 'lnum' 1, 'tnum' 1;
   font-size: 0.75rem;
   color: var(--text-muted);
   width: 2.5rem;
@@ -193,7 +202,9 @@ body {
 }
 
 h1 {
+  font-family: var(--font-display);
   font-size: 2rem;
+  font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--accent);
   margin-bottom: 0.25rem;
@@ -206,7 +217,9 @@ h1 {
 }
 
 h2 {
+  font-family: var(--font-display);
   font-size: 1.1rem;
+  font-weight: 400;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
