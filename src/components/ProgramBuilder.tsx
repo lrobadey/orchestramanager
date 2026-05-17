@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { motion, AnimatePresence, PanInfo } from 'framer-motion'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { motion, AnimatePresence, PanInfo, useMotionValue } from 'framer-motion'
 import {
   ConcertForecast,
   ConcertProgram,
@@ -210,45 +210,73 @@ interface RehearsalAllocatorProps {
   onChange: (next: SlotTuple<number>) => void
 }
 
+interface MarkerProps {
+  hours: number
+  minHours: number
+  maxHours: number
+  barWidth: number
+  onChange: (hours: number) => void
+}
+
+function Marker({ hours, minHours, maxHours, barWidth, onChange }: MarkerProps) {
+  const x = useMotionValue(0)
+  const isDragging = useRef(false)
+  const pxPerHour = barWidth > 0 ? barWidth / TOTAL_REHEARSAL_HOURS : 0
+
+  useLayoutEffect(() => {
+    if (isDragging.current || pxPerHour === 0) return
+    x.set(hours * pxPerHour)
+  }, [hours, pxPerHour, x])
+
+  return (
+    <motion.div
+      className="rehearsal-marker"
+      style={{ x, left: 0 }}
+      drag="x"
+      dragMomentum={false}
+      dragElastic={0}
+      dragConstraints={{ left: minHours * pxPerHour, right: maxHours * pxPerHour }}
+      whileDrag={{ scale: 1.15 }}
+      onDragStart={() => {
+        isDragging.current = true
+      }}
+      onDrag={() => {
+        if (pxPerHour === 0) return
+        const snapped = Math.max(minHours, Math.min(maxHours, Math.round(x.get() / pxPerHour)))
+        if (snapped !== hours) onChange(snapped)
+      }}
+      onDragEnd={() => {
+        isDragging.current = false
+        if (pxPerHour === 0) return
+        const snapped = Math.max(minHours, Math.min(maxHours, Math.round(x.get() / pxPerHour)))
+        x.set(snapped * pxPerHour)
+      }}
+    />
+  )
+}
+
 function RehearsalAllocator({
   allocation,
   slotWorks,
   perWorkPressure,
   onChange,
 }: RehearsalAllocatorProps) {
-  const [dragging, setDragging] = useState<0 | 1 | null>(null)
   const barRef = useRef<HTMLDivElement>(null)
+  const [barWidth, setBarWidth] = useState(0)
 
   const m1 = allocation[0]
   const m2 = m1 + allocation[1]
 
-  useEffect(() => {
-    if (dragging === null) return
-
-    function handleMove(e: PointerEvent) {
-      if (!barRef.current) return
-      const rect = barRef.current.getBoundingClientRect()
-      const ratio = (e.clientX - rect.left) / rect.width
-      const hours = Math.round(Math.max(0, Math.min(1, ratio)) * TOTAL_REHEARSAL_HOURS)
-      if (dragging === 0) {
-        const newM1 = Math.max(1, Math.min(m2 - 1, hours))
-        onChange([newM1, m2 - newM1, TOTAL_REHEARSAL_HOURS - m2])
-      } else {
-        const newM2 = Math.max(m1 + 1, Math.min(TOTAL_REHEARSAL_HOURS - 1, hours))
-        onChange([m1, newM2 - m1, TOTAL_REHEARSAL_HOURS - newM2])
-      }
+  useLayoutEffect(() => {
+    if (!barRef.current) return
+    const measure = () => {
+      if (barRef.current) setBarWidth(barRef.current.getBoundingClientRect().width)
     }
-    function handleUp() {
-      setDragging(null)
-    }
-
-    window.addEventListener('pointermove', handleMove)
-    window.addEventListener('pointerup', handleUp)
-    return () => {
-      window.removeEventListener('pointermove', handleMove)
-      window.removeEventListener('pointerup', handleUp)
-    }
-  }, [dragging, m1, m2, onChange])
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(barRef.current)
+    return () => observer.disconnect()
+  }, [])
 
   return (
     <div className="rehearsal-allocator">
@@ -274,25 +302,23 @@ function RehearsalAllocator({
             />
           )
         })}
-        <motion.div
-          className="rehearsal-marker"
-          initial={false}
-          animate={{ left: `${(m1 / TOTAL_REHEARSAL_HOURS) * 100}%` }}
-          transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-          onPointerDown={e => {
-            e.preventDefault()
-            setDragging(0)
-          }}
+        <Marker
+          hours={m1}
+          minHours={1}
+          maxHours={m2 - 1}
+          barWidth={barWidth}
+          onChange={newM1 =>
+            onChange([newM1, m2 - newM1, TOTAL_REHEARSAL_HOURS - m2])
+          }
         />
-        <motion.div
-          className="rehearsal-marker"
-          initial={false}
-          animate={{ left: `${(m2 / TOTAL_REHEARSAL_HOURS) * 100}%` }}
-          transition={{ type: 'spring', stiffness: 320, damping: 30 }}
-          onPointerDown={e => {
-            e.preventDefault()
-            setDragging(1)
-          }}
+        <Marker
+          hours={m2}
+          minHours={m1 + 1}
+          maxHours={TOTAL_REHEARSAL_HOURS - 1}
+          barWidth={barWidth}
+          onChange={newM2 =>
+            onChange([m1, newM2 - m1, TOTAL_REHEARSAL_HOURS - newM2])
+          }
         />
       </div>
       <div className="rehearsal-labels">
