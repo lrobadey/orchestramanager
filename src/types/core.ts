@@ -15,6 +15,8 @@ export interface Work {
   identityValue: number
   // abstract load (0–100); divide by a leadership-based divisor to get rehearsal hours needed
   rehearsalLoad: number
+  // 0–100: how well-known the piece is; boosts the rehearsal divisor
+  familiarity: number
   // section demands 0-100 (how hard this work is for each section)
   demands: {
     strings: number

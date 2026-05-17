@@ -14,6 +14,7 @@ export const works: Work[] = [
     novelty: 10,
     identityValue: 15,
     rehearsalLoad: 30,
+    familiarity: 95,
     demands: { strings: 65, winds: 60, brass: 70, percussion: 55 },
   },
   {
@@ -29,6 +30,7 @@ export const works: Work[] = [
     novelty: 12,
     identityValue: 20,
     rehearsalLoad: 35,
+    familiarity: 88,
     demands: { strings: 70, winds: 65, brass: 60, percussion: 60 },
   },
   {
@@ -44,6 +46,7 @@ export const works: Work[] = [
     novelty: 15,
     identityValue: 25,
     rehearsalLoad: 45,
+    familiarity: 80,
     demands: { strings: 82, winds: 65, brass: 68, percussion: 60 },
   },
   {
@@ -59,6 +62,7 @@ export const works: Work[] = [
     novelty: 40,
     identityValue: 70,
     rehearsalLoad: 50,
+    familiarity: 40,
     demands: { strings: 75, winds: 80, brass: 72, percussion: 40 },
   },
   {
@@ -74,6 +78,7 @@ export const works: Work[] = [
     novelty: 10,
     identityValue: 18,
     rehearsalLoad: 55,
+    familiarity: 78,
     demands: { strings: 78, winds: 75, brass: 70, percussion: 45 },
   },
   {
@@ -89,6 +94,7 @@ export const works: Work[] = [
     novelty: 45,
     identityValue: 65,
     rehearsalLoad: 48,
+    familiarity: 55,
     demands: { strings: 72, winds: 90, brass: 78, percussion: 65 },
   },
   {
@@ -104,6 +110,7 @@ export const works: Work[] = [
     novelty: 78,
     identityValue: 80,
     rehearsalLoad: 40,
+    familiarity: 5,
     demands: { strings: 60, winds: 55, brass: 45, percussion: 70 },
   },
   {
@@ -119,6 +126,7 @@ export const works: Work[] = [
     novelty: 90,
     identityValue: 92,
     rehearsalLoad: 60,
+    familiarity: 5,
     demands: { strings: 68, winds: 72, brass: 55, percussion: 80 },
   },
   {
@@ -134,6 +142,7 @@ export const works: Work[] = [
     novelty: 68,
     identityValue: 72,
     rehearsalLoad: 35,
+    familiarity: 5,
     demands: { strings: 55, winds: 60, brass: 50, percussion: 58 },
   },
   {
@@ -149,6 +158,7 @@ export const works: Work[] = [
     novelty: 60,
     identityValue: 65,
     rehearsalLoad: 45,
+    familiarity: 5,
     demands: { strings: 80, winds: 50, brass: 42, percussion: 40 },
   },
   {
@@ -164,6 +174,7 @@ export const works: Work[] = [
     novelty: 95,
     identityValue: 88,
     rehearsalLoad: 65,
+    familiarity: 5,
     demands: { strings: 62, winds: 68, brass: 58, percussion: 90 },
   },
   {
@@ -179,6 +190,7 @@ export const works: Work[] = [
     novelty: 72,
     identityValue: 85,
     rehearsalLoad: 58,
+    familiarity: 5,
     demands: { strings: 75, winds: 70, brass: 62, percussion: 55 },
   },
 ]

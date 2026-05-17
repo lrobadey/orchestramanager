@@ -22,7 +22,7 @@ function makePrincipal(section: Principal['section'], leadership: number): Princ
   }
 }
 
-function makeWork(demands: Work['demands']): Work {
+function makeWork(demands: Work['demands'], familiarity = 0): Work {
   return {
     id: 'test-work',
     title: 'Test Work',
@@ -36,6 +36,7 @@ function makeWork(demands: Work['demands']): Work {
     novelty: 50,
     identityValue: 50,
     rehearsalLoad: 40,
+    familiarity,
     demands,
   }
 }
@@ -76,12 +77,35 @@ describe('computeRehearsalDivisor', () => {
     expect(divisor).toBeCloseTo(5.25, 5)
   })
 
-  it('leadership clamp: leadership > 100 is clamped to 100, divisor capped at 7', () => {
+  it('leadership clamp: leadership > 100 is clamped to 100, divisor capped at 7 (at familiarity 0)', () => {
     const work = makeWork({ strings: 100, winds: 0, brass: 0, percussion: 0 })
     const clamped = computeRehearsalDivisor(work, [makePrincipal('strings', 100)])
     const over = computeRehearsalDivisor(work, [makePrincipal('strings', 150)])
     expect(over).toBeCloseTo(clamped, 5)
     expect(over).toBeCloseTo(7.0, 5)
+  })
+
+  it('familiarity boost: higher familiarity increases the divisor and reduces hours needed', () => {
+    const demands = { strings: 50, winds: 50, brass: 0, percussion: 0 }
+    const unfamiliar = makeWork(demands, 0)
+    const wellKnown = makeWork(demands, 100)
+    const principals = [makePrincipal('strings', 80), makePrincipal('winds', 80)]
+
+    const unfamiliarDivisor = computeRehearsalDivisor(unfamiliar, principals)
+    const wellKnownDivisor = computeRehearsalDivisor(wellKnown, principals)
+
+    // Familiarity 100 contributes exactly +2 to the divisor
+    expect(wellKnownDivisor - unfamiliarDivisor).toBeCloseTo(2, 5)
+    expect(
+      rehearsalHoursNeeded(wellKnown.rehearsalLoad, wellKnownDivisor),
+    ).toBeLessThan(rehearsalHoursNeeded(unfamiliar.rehearsalLoad, unfamiliarDivisor))
+  })
+
+  it('familiarity clamp: familiarity > 100 is clamped to 100 (max bonus +2)', () => {
+    const demands = { strings: 100, winds: 0, brass: 0, percussion: 0 }
+    const overFamiliar = makeWork(demands, 150)
+    const principals = [makePrincipal('strings', 100)]
+    expect(computeRehearsalDivisor(overFamiliar, principals)).toBeCloseTo(9.0, 5)
   })
 
   it('balanced demands: weighted average matches manual calculation', () => {

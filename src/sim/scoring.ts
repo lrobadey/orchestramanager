@@ -33,9 +33,11 @@ export const REHEARSAL_COST_PER_HOUR = 120
 export const BASE_CONCERT_COST = 45_000
 
 // Returns the effective rehearsal divisor for a piece, weighted by section
-// demands and driven by each section's average principal leadership.
+// demands and driven by each section's average principal leadership, then
+// boosted by how familiar the piece is to the orchestra.
 // Formula: sectionDivisor = 3.5 + (avgLeadership / 100) * 3.5 → range 3.5–7.
 // Sections with no principals fall back to leadership 50 (divisor 5.25).
+// Familiarity adds up to +2 (familiarity 100), so the final range is 3.5–9.
 export function computeRehearsalDivisor(work: Work, principals: Principal[]): number {
   const sections = ['strings', 'winds', 'brass', 'percussion'] as const
   let weightedSum = 0
@@ -51,7 +53,9 @@ export function computeRehearsalDivisor(work: Work, principals: Principal[]): nu
     weightedSum += weight * divisor
     totalWeight += weight
   }
-  return totalWeight > 0 ? weightedSum / totalWeight : 5.25
+  const baseDivisor = totalWeight > 0 ? weightedSum / totalWeight : 5.25
+  const familiarityBonus = (clamp(work.familiarity, 0, 100) / 100) * 2
+  return baseDivisor + familiarityBonus
 }
 
 // Translates a work's abstract rehearsalLoad (0-100 units) into hours of
