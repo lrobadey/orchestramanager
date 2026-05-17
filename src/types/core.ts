@@ -100,6 +100,8 @@ export interface ConcertForecast {
     percussion: number
   }
   perWorkRehearsalPressure: SlotTuple<number | null>
+  perWorkRehearsalHoursNeeded: SlotTuple<number | null>
+  perWorkRehearsalHoursAllocated: SlotTuple<number | null>
   perWorkPerformanceRisk: SlotTuple<number | null>
   forecastNotes: string[]
   isComplete: boolean

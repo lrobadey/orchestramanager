@@ -59,14 +59,20 @@ describe('forecastProgram', () => {
     expect(extreme.projectedAttendance).toBeLessThan(medium.projectedAttendance * 2)
   })
 
-  it('smaller rehearsal allocation increases rehearsalPressure', () => {
-    const underRehearsed = forecastProgram(
-      makeInput({ ...adventurousProgram, rehearsalAllocation: [2, 2, 2] }),
+  it('starving the worst piece increases rehearsalPressure', () => {
+    const starved = forecastProgram(
+      makeInput({ ...adventurousProgram, rehearsalAllocation: [2, 9, 9] }),
     )
-    const wellRehearsed = forecastProgram(
-      makeInput({ ...adventurousProgram, rehearsalAllocation: [15, 15, 15] }),
+    const balanced = forecastProgram(
+      makeInput({ ...adventurousProgram, rehearsalAllocation: [7, 7, 6] }),
     )
-    expect(underRehearsed.rehearsalPressure).toBeGreaterThan(wellRehearsed.rehearsalPressure)
+    expect(starved.rehearsalPressure).toBeGreaterThan(balanced.rehearsalPressure)
+  })
+
+  it('throws when rehearsalAllocation does not sum to the budget', () => {
+    expect(() =>
+      forecastProgram(makeInput({ ...safeProgram, rehearsalAllocation: [10, 10, 10] })),
+    ).toThrow(/sum to 20/)
   })
 
   it('per-piece rehearsal pressure reflects each slot independently', () => {

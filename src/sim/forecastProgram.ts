@@ -6,6 +6,7 @@ import {
   ConcertProgram,
   ConcertForecast,
   SlotTuple,
+  TOTAL_REHEARSAL_HOURS,
 } from '../types/core'
 import {
   clamp,
@@ -144,6 +145,8 @@ function emptyForecast(message: string): ConcertForecast {
     identityImpact: 0,
     sectionStress: { strings: 0, winds: 0, brass: 0, percussion: 0 },
     perWorkRehearsalPressure: [null, null, null],
+    perWorkRehearsalHoursNeeded: [null, null, null],
+    perWorkRehearsalHoursAllocated: [null, null, null],
     perWorkPerformanceRisk: [null, null, null],
     forecastNotes: [message],
     isComplete: false,
@@ -151,6 +154,13 @@ function emptyForecast(message: string): ConcertForecast {
 }
 
 export function forecastProgram(input: ForecastInput): ConcertForecast {
+  const allocSum = input.program.rehearsalAllocation.reduce((s, h) => s + h, 0)
+  if (allocSum !== TOTAL_REHEARSAL_HOURS) {
+    throw new Error(
+      `Rehearsal allocation must sum to ${TOTAL_REHEARSAL_HOURS} hours (got ${allocSum}).`,
+    )
+  }
+
   const slotWorks = resolveSlotWorks(input)
   const filled = slotWorks.filter((w): w is Work => w !== null)
 
@@ -178,10 +188,18 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const adjustedDraw = clamp(programDraw + marketingBoost - pricePen, 0, 100)
 
   // Per-piece rehearsal pressure: each slot's piece compared against its own allocation
+  const perWorkRehearsalHoursNeeded = slotWorks.map(work =>
+    work ? rehearsalHoursNeeded(work.rehearsalLoad) : null,
+  ) as SlotTuple<number | null>
+  const perWorkRehearsalHoursAllocated = slotWorks.map((work, i) =>
+    work ? program.rehearsalAllocation[i] : null,
+  ) as SlotTuple<number | null>
   const perWorkRehearsalPressure = slotWorks.map((work, i) => {
     if (!work) return null
-    const needed = rehearsalHoursNeeded(work.rehearsalLoad)
-    return pressureFromHoursGap(needed, program.rehearsalAllocation[i])
+    return pressureFromHoursGap(
+      perWorkRehearsalHoursNeeded[i]!,
+      perWorkRehearsalHoursAllocated[i]!,
+    )
   }) as SlotTuple<number | null>
 
   // Aggregate pressure: the weakest-prepared piece dominates the evening
@@ -248,6 +266,8 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     identityImpact: programIdentityValue,
     sectionStress,
     perWorkRehearsalPressure,
+    perWorkRehearsalHoursNeeded,
+    perWorkRehearsalHoursAllocated,
     perWorkPerformanceRisk,
     forecastNotes,
     isComplete: true,

@@ -166,7 +166,9 @@ export default function ConcertForecast({ forecast, slotWorks }: ConcertForecast
         <div className="forecast-perpiece-list">
           {slotWorks.map((work, i) => {
             const risk = forecast.perWorkPerformanceRisk[i]
-            const pressure = forecast.perWorkRehearsalPressure[i]
+            const need = forecast.perWorkRehearsalHoursNeeded[i]
+            const alloc = forecast.perWorkRehearsalHoursAllocated[i]
+            const gap = need !== null && alloc !== null ? need - alloc : 0
             return (
               <div key={i} className="forecast-perpiece-row">
                 <span className="forecast-perpiece-num">{i + 1}</span>
@@ -178,8 +180,8 @@ export default function ConcertForecast({ forecast, slotWorks }: ConcertForecast
                     {Math.round(risk)}
                   </span>
                 )}
-                {pressure !== null && pressure > 0 && (
-                  <span className="forecast-perpiece-pressure">+{Math.round(pressure)}h gap</span>
+                {gap > 0 && (
+                  <span className="forecast-perpiece-pressure">+{Math.round(gap)}h short</span>
                 )}
               </div>
             )
