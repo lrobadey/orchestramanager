@@ -99,6 +99,7 @@ export interface ConcertForecast {
     brass: number
     percussion: number
   }
+  perWorkRehearsalDivisor: SlotTuple<number | null>
   perWorkRehearsalPressure: SlotTuple<number | null>
   perWorkRehearsalHoursNeeded: SlotTuple<number | null>
   perWorkRehearsalHoursAllocated: SlotTuple<number | null>

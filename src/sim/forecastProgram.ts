@@ -11,6 +11,7 @@ import {
 import {
   clamp,
   average,
+  computeRehearsalDivisor,
   marketingEffect,
   pricePenalty,
   rehearsalHoursNeeded,
@@ -144,6 +145,7 @@ function emptyForecast(message: string): ConcertForecast {
     donorResponse: 0,
     identityImpact: 0,
     sectionStress: { strings: 0, winds: 0, brass: 0, percussion: 0 },
+    perWorkRehearsalDivisor: [null, null, null],
     perWorkRehearsalPressure: [null, null, null],
     perWorkRehearsalHoursNeeded: [null, null, null],
     perWorkRehearsalHoursAllocated: [null, null, null],
@@ -188,8 +190,11 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const adjustedDraw = clamp(programDraw + marketingBoost - pricePen, 0, 100)
 
   // Per-piece rehearsal pressure: each slot's piece compared against its own allocation
-  const perWorkRehearsalHoursNeeded = slotWorks.map(work =>
-    work ? rehearsalHoursNeeded(work.rehearsalLoad) : null,
+  const perWorkRehearsalDivisor = slotWorks.map(work =>
+    work ? computeRehearsalDivisor(work, principals) : null,
+  ) as SlotTuple<number | null>
+  const perWorkRehearsalHoursNeeded = slotWorks.map((work, i) =>
+    work ? rehearsalHoursNeeded(work.rehearsalLoad, perWorkRehearsalDivisor[i]!) : null,
   ) as SlotTuple<number | null>
   const perWorkRehearsalHoursAllocated = slotWorks.map((work, i) =>
     work ? program.rehearsalAllocation[i] : null,
@@ -265,6 +270,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     donorResponse,
     identityImpact: programIdentityValue,
     sectionStress,
+    perWorkRehearsalDivisor,
     perWorkRehearsalPressure,
     perWorkRehearsalHoursNeeded,
     perWorkRehearsalHoursAllocated,
