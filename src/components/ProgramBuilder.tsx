@@ -135,17 +135,16 @@ interface DurationBarProps {
   intermissionAfter: 0 | 1 | null
 }
 
-const INTERMISSION_VISUAL_MIN = 15
+const INTERMISSION_MIN = 15
 
 function DurationBar({ slotWorks, intermissionAfter }: DurationBarProps) {
-  const totalMin = slotWorks.reduce((sum, w) => sum + (w?.durationMinutes ?? 0), 0)
+  const musicMin = slotWorks.reduce((sum, w) => sum + (w?.durationMinutes ?? 0), 0)
   const ticks = [30, 60, 90, 120]
-  const intermissionVisual = intermissionAfter !== null && slotWorks[intermissionAfter] !== null
-    ? INTERMISSION_VISUAL_MIN
+  const intermissionMin = intermissionAfter !== null && slotWorks[intermissionAfter] !== null
+    ? INTERMISSION_MIN
     : 0
-  const visualTotal = totalMin + intermissionVisual
-  // Scale: 1 unit = 1 min, full bar = DURATION_BAR_MAX_MIN min, but expand if needed
-  const denom = Math.max(DURATION_BAR_MAX_MIN, visualTotal + 10)
+  const totalMin = musicMin + intermissionMin
+  const denom = Math.max(DURATION_BAR_MAX_MIN, totalMin + 10)
 
   let cursor = 0
   const segments: { width: number; left: number; key: string; color: string }[] = []
@@ -156,7 +155,7 @@ function DurationBar({ slotWorks, intermissionAfter }: DurationBarProps) {
     const leftPct = (cursor / denom) * 100
     segments.push({ width: widthPct, left: leftPct, key: `slot-${i}`, color: palette[i] })
     cursor += w.durationMinutes
-    if (intermissionAfter === i) cursor += INTERMISSION_VISUAL_MIN
+    if (intermissionAfter === i) cursor += INTERMISSION_MIN
   })
 
   return (
@@ -192,7 +191,11 @@ function DurationBar({ slotWorks, intermissionAfter }: DurationBarProps) {
         >
           {totalMin}
         </motion.span>
-        <span className="duration-total-unit">min of music</span>
+        <span className="duration-total-unit">
+          {intermissionMin > 0
+            ? `${musicMin} music + ${intermissionMin} intermission`
+            : 'min of music'}
+        </span>
       </div>
     </div>
   )
