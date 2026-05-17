@@ -137,7 +137,7 @@ export default function ConcertReport({ report, selectedWorks, onDone }: Concert
         <div className="forecast-grid">
           <ReportRow
             label="Cash"
-            value={<span className={d.cash >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.cash)} ({fmt(d.cash)})</span>}
+            value={<span className={d.cash >= 0 ? 'delta-positive' : 'delta-negative'}>{d.cash >= 0 ? '+' : ''}{fmt(d.cash)}</span>}
           />
           <ReportRow
             label="Reputation"

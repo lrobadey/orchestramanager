@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { type ConcertForecast, type Work } from '../types/core'
 
 interface ConcertForecastProps {
@@ -27,7 +28,7 @@ function qualityClass(value: number): string {
   return 'risk-high'
 }
 
-function ForecastRow({ label, value }: { label: string; value: React.ReactNode }) {
+function ForecastRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="forecast-item">
       <span className="forecast-key">{label}</span>
