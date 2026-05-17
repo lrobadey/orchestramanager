@@ -332,7 +332,7 @@ function RehearsalAllocator({
               <span className="rehearsal-label-hours">{allocation[i]}h</span>
               {work && needed !== null && (
                 <span className="rehearsal-label-need">
-                  needs ~{needed}h
+                  needs ~{Math.round(needed * 10) / 10}h
                 </span>
               )}
             </div>

@@ -47,7 +47,7 @@ export function computeRehearsalDivisor(work: Work, principals: Principal[]): nu
       sectionPrincipals.length > 0
         ? sectionPrincipals.reduce((s, p) => s + p.leadership, 0) / sectionPrincipals.length
         : 50
-    const divisor = 3.5 + (avgLeadership / 100) * 3.5
+    const divisor = 3.5 + (clamp(avgLeadership, 0, 100) / 100) * 3.5
     weightedSum += weight * divisor
     totalWeight += weight
   }

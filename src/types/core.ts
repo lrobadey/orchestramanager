@@ -13,7 +13,7 @@ export interface Work {
   donorComfort: number
   novelty: number
   identityValue: number
-  // rehearsal load in hours of dedicated preparation needed
+  // abstract load (0–100); divide by a leadership-based divisor to get rehearsal hours needed
   rehearsalLoad: number
   // section demands 0-100 (how hard this work is for each section)
   demands: {
