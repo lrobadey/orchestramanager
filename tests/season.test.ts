@@ -9,14 +9,16 @@ import { ConcertProgram, SeasonState } from '../src/types/core'
 
 const safeProgram: ConcertProgram = {
   workIds: ['beethoven-5', 'beethoven-7', 'tchaikovsky-6'],
-  rehearsalHours: 80,
+  intermissionAfter: 1,
+  rehearsalAllocation: [7, 7, 6],
   marketingSpend: 15_000,
   ticketPrice: 65,
 }
 
 const adventurousProgram: ConcertProgram = {
   workIds: ['harbor-grid', 'glacier-index', 'night-ferry'],
-  rehearsalHours: 60,
+  intermissionAfter: 1,
+  rehearsalAllocation: [7, 7, 6],
   marketingSpend: 10_000,
   ticketPrice: 55,
 }

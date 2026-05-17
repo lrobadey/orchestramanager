@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { works } from './data/works'
 import { principals } from './data/principals'
 import { audienceSegments } from './data/audienceSegments'
@@ -6,7 +6,13 @@ import { startingInstitution } from './data/institution'
 import { forecastProgram } from './sim/forecastProgram'
 import { resolveConcert } from './sim/resolveConcert'
 import { createInitialSeason, resolveSeasonConcert, summarizeSeason } from './sim/season'
-import { ConcertProgram, ConcertForecast, ConcertReport, SeasonState } from './types/core'
+import {
+  ConcertProgram,
+  ConcertReport,
+  SeasonState,
+  SlotTuple,
+  TOTAL_REHEARSAL_HOURS,
+} from './types/core'
 import AppShell from './components/AppShell'
 import InstitutionMeters from './components/InstitutionMeters'
 import ProgramBuilder from './components/ProgramBuilder'
@@ -15,53 +21,47 @@ import ConcertReportView from './components/ConcertReport'
 import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 
-type Phase = 'planning' | 'forecast' | 'report'
+type Phase = 'planning' | 'report'
+
+const evenAllocation = (): SlotTuple<number> => {
+  const each = Math.floor(TOTAL_REHEARSAL_HOURS / 3)
+  const remainder = TOTAL_REHEARSAL_HOURS - each * 3
+  return [each + remainder, each, each]
+}
+
+const emptyProgram = (): ConcertProgram => ({
+  workIds: [null, null, null],
+  intermissionAfter: 1,
+  rehearsalAllocation: evenAllocation(),
+  marketingSpend: 15_000,
+  ticketPrice: 70,
+})
 
 export default function App() {
   const [season, setSeason] = useState<SeasonState>(() =>
     createInitialSeason(startingInstitution),
   )
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [rehearsalHours, setRehearsalHours] = useState(60)
-  const [marketingSpend, setMarketingSpend] = useState(15_000)
-  const [ticketPrice, setTicketPrice] = useState(70)
+  const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
   const [phase, setPhase] = useState<Phase>('planning')
-  const [forecast, setForecast] = useState<ConcertForecast | null>(null)
   const [report, setReport] = useState<ConcertReport | null>(null)
 
   const institution = season.institution
   const seasonComplete = season.currentSlotIndex >= 4
 
-  function toggleWork(id: string) {
-    setSelectedIds(prev => {
-      if (prev.includes(id)) return prev.filter(x => x !== id)
-      if (prev.length >= 3) return prev
-      return [...prev, id]
-    })
-  }
-
-  function handleGetForecast() {
-    if (selectedIds.length !== 3) return
-    const program: ConcertProgram = {
-      workIds: selectedIds as [string, string, string],
-      rehearsalHours,
-      marketingSpend,
-      ticketPrice,
-    }
-    const result = forecastProgram({ works, institution, principals, audienceSegments, program })
-    setForecast(result)
-    setReport(null)
-    setPhase('forecast')
-  }
+  const forecast = useMemo(
+    () =>
+      forecastProgram({
+        works,
+        institution,
+        principals,
+        audienceSegments,
+        program,
+      }),
+    [institution, program],
+  )
 
   function handleRunConcert() {
-    if (selectedIds.length !== 3) return
-    const program: ConcertProgram = {
-      workIds: selectedIds as [string, string, string],
-      rehearsalHours,
-      marketingSpend,
-      ticketPrice,
-    }
+    if (!forecast.isComplete) return
     const result = resolveConcert({
       works,
       institution,
@@ -76,30 +76,25 @@ export default function App() {
 
   function handleDone() {
     if (!report) return
-    const program: ConcertProgram = {
-      workIds: selectedIds as [string, string, string],
-      rehearsalHours,
-      marketingSpend,
-      ticketPrice,
-    }
     setSeason(prev => resolveSeasonConcert(prev, program, report))
-    setSelectedIds([])
-    setForecast(null)
+    setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
   }
 
   function handleNewSeason() {
     setSeason(createInitialSeason(startingInstitution))
-    setSelectedIds([])
-    setForecast(null)
+    setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
   }
 
-  const selectedWorks = selectedIds
-    .map(id => works.find(w => w.id === id))
-    .filter((w): w is NonNullable<typeof w> => w !== undefined)
+  const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
+    program.workIds[0] ? works.find(w => w.id === program.workIds[0]) : undefined,
+    program.workIds[1] ? works.find(w => w.id === program.workIds[1]) : undefined,
+    program.workIds[2] ? works.find(w => w.id === program.workIds[2]) : undefined,
+  ]
+  const filledSlotWorks = slotWorks.filter((w): w is NonNullable<typeof w> => w !== undefined)
 
   const currentSlotName = !seasonComplete
     ? season.slots[season.currentSlotIndex].name
@@ -126,31 +121,21 @@ export default function App() {
             <p className="concert-slot-label">{currentSlotName}</p>
           )}
           {phase === 'planning' && (
-            <ProgramBuilder
-              works={works}
-              selectedIds={selectedIds}
-              rehearsalHours={rehearsalHours}
-              marketingSpend={marketingSpend}
-              ticketPrice={ticketPrice}
-              onToggleWork={toggleWork}
-              onRehearsalChange={setRehearsalHours}
-              onMarketingChange={setMarketingSpend}
-              onPriceChange={setTicketPrice}
-              onGetForecast={handleGetForecast}
-            />
-          )}
-          {phase === 'forecast' && forecast && (
-            <ConcertForecastView
-              forecast={forecast}
-              selectedWorks={selectedWorks}
-              onRunConcert={handleRunConcert}
-              onBack={() => setPhase('planning')}
-            />
+            <div className="builder-layout">
+              <ProgramBuilder
+                works={works}
+                program={program}
+                forecast={forecast}
+                onProgramChange={setProgram}
+                onRunConcert={handleRunConcert}
+              />
+              <ConcertForecastView forecast={forecast} slotWorks={slotWorks} />
+            </div>
           )}
           {phase === 'report' && report && (
             <ConcertReportView
               report={report}
-              selectedWorks={selectedWorks}
+              selectedWorks={filledSlotWorks}
               onDone={handleDone}
               concertNumber={season.currentSlotIndex + 1}
               totalConcerts={4}

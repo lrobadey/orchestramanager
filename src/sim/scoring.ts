@@ -29,3 +29,16 @@ export const REHEARSAL_COST_PER_HOUR = 120
 
 // Base concert costs: hall rental, staff, programs, production
 export const BASE_CONCERT_COST = 45_000
+
+// Translates a work's abstract rehearsalLoad (0-100 units) into hours of
+// rehearsal it ideally wants to feel well-prepared. A 60-load piece (e.g.
+// Glacier Index) wants ~12 hours; a 30-load piece (e.g. Beethoven 5) wants ~6.
+export function rehearsalHoursNeeded(rehearsalLoad: number): number {
+  return rehearsalLoad / 5
+}
+
+// Convert an hours-based gap back into the existing pressure scale (-40..100)
+// so downstream scoring keeps working at the same magnitudes as before.
+export function pressureFromHoursGap(hoursNeeded: number, hoursAllocated: number): number {
+  return clamp((hoursNeeded - hoursAllocated) * 5, -40, 100)
+}
