@@ -6,15 +6,184 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Current Status
 
-**Last updated:** 2026-05-16  
-**Current milestone:** Milestone 0 — Opening Night Foundation  
-**Current playable state:** Playable single-concert loop exists: select 3 works, forecast, run concert, view report, update institution.  
-**Latest PR:** PR #3 — app foundation and Milestone 0 loop  
-**Known blockers:** None currently recorded.  
-**Current risks:** No `AGENTS.md` or progress log existed before this PR; future agents may have already made changes without standardized handoff notes.  
-**Next recommended action:** Review Milestone 0 for formula balance, UX clarity, code quality, and whether it should be polished before starting Milestone 1.
+**Last updated:** 2026-05-18  
+**Current milestone:** Milestone 1 complete — Four-Concert Season Loop  
+**Current playable state:** Full four-concert season loop is playable. Player selects programs from 30+ works, allocates rehearsal hours via drag interface, sets marketing spend and ticket price, views a live forecast, runs each concert, reads section-level reports, watches institutional meters persist across concerts, and receives a season summary after all four concerts. The roster is fully expanded to 15 named principals across all sections with per-piece familiarity scores and leadership-driven rehearsal divisors.  
+**Latest PR:** PR #12 — per-piece familiarity scores  
+**Known blockers:** None.  
+**Current risks:** None recorded.  
+**Next recommended action:** Begin Milestone 2 (Roster and Section Leader System) — principals are seeded with full attributes; the next step is exposing them strategically so roster fit drives visible per-concert risk and the player can make hiring decisions.
 
 ## Log Entries
+
+### 2026-05-18 — PR #12: Per-piece familiarity scores
+
+**Primary milestone:** Milestone 1 — Four-Concert Season Loop
+
+**Summary**
+
+Added a `familiarity` field (0–100) to every `Work` in the library. Familiarity feeds a bonus of up to +2 to the rehearsal divisor in `computeRehearsalDivisor`, so well-known canon works need meaningfully fewer rehearsal hours than newly-premiered contemporary pieces. Values range from 95 (Beethoven 5) down to 5 for fictional new commissions.
+
+**What was added / changed**
+
+- `src/types/core.ts` — added `familiarity: number` to the `Work` interface
+- `src/data/works.ts` — set `familiarity` on all 30+ works (canon 40–95, contemporary/fictional 5–30)
+- `src/sim/scoring.ts` — `computeRehearsalDivisor` adds `(familiarity / 100) * 2` to the base divisor
+- `tests/scoring.test.ts` — two new tests: familiarity boost produces exactly +2 at familiarity 100; familiarity clamped at 100 (max bonus +2)
+
+**Tests run and results**
+
+```
+✓ tests/scoring.test.ts       (9 tests)
+✓ tests/season.test.ts        (8 tests)
+✓ tests/resolveConcert.test.ts (19 tests)
+
+Test Files  3 passed (3)
+     Tests  36 passed (36)
+```
+
+**Known issues / risks**
+
+None.
+
+**Handoff note**
+
+The rehearsal divisor formula now has two meaningful axes: principal leadership (section strength) and piece familiarity (repertoire history). Both are visible in the program builder's per-piece rehearsal display.
+
+**Next recommended action**
+
+Begin Milestone 2 (Roster and Section Leader System) or consider adding UI visibility for per-principal attributes so the player can see which sections are bottlenecks before programming.
+
+---
+
+### 2026-05-18 — PR #11: GitHub Actions CI workflow
+
+**Primary milestone:** Project infrastructure
+
+**Summary**
+
+Added a GitHub Actions CI workflow (`.github/workflows/ci.yml`) that runs `npm ci` and `npm test` on every push and pull request.
+
+**Files changed**
+
+- `.github/workflows/ci.yml` — new workflow file
+
+**Tests run and results**
+
+CI is the test runner in this PR; no local test changes.
+
+**Handoff note**
+
+All future PRs will have automated test results in GitHub before merging.
+
+---
+
+### 2026-05-18 — PR #10: Leadership-driven rehearsal divisor and full principal roster
+
+**Primary milestone:** Milestone 1 — Four-Concert Season Loop  
+**Secondary milestone:** Milestone 2 — Roster and Section Leader System (partial foundation)
+
+**Summary**
+
+Replaced the flat rehearsal-pressure model with a leadership-weighted, section-aware rehearsal divisor. Section leaders with higher `leadership` scores make their section more efficient, reducing rehearsal hours needed for demanding pieces. Starting principals were weakened to create realistic upside. The roster was expanded from 7 to 15 named principals covering all sections.
+
+**What was added / changed**
+
+New simulation logic in `src/sim/scoring.ts`:
+- `computeRehearsalDivisor(work, principals)` — weighted average of per-section divisors (3.5–7), where each section's divisor is driven by its average principal leadership. Sections with no principals fall back to leadership 50 (divisor 5.25).
+- `rehearsalHoursNeeded(rehearsalLoad, divisor)` — converts load units to hours
+- `pressureFromHoursGap(hoursNeeded, hoursAllocated)` — converts hours gap back to the pressure scale (-40..100)
+
+New principals in `src/data/principals.ts`:
+- Principal Second Violin (Yuki Tanaka)
+- Principal Viola (Tariq El-Amin)
+- Principal Double Bass (Birgit Halvorsen)
+- Principal Clarinet (Lena Schreiber)
+- Principal Bassoon (Kofi Mensah)
+- Principal Trombone (Rafael Sousa)
+- Principal Tuba (Ingrid Magnusson)
+- Principal Percussion (Amara Diallo) — Timpani role retitled to Timpani, separate from Percussion
+
+All starting principals weakened (overall 57–72) to give meaningful room for future improvement.
+
+`src/components/ProgramBuilder.tsx`:
+- Fixed broken `rehearsalHoursNeeded` calls
+- Partial-program UX improvements
+- Per-piece rehearsal hours display
+
+`tests/scoring.test.ts` (9 tests):
+- Section weighting: brass leadership matters more for brass-heavy pieces
+- Higher leadership always produces higher divisor
+- Fallback: no principals → leadership 50 → divisor 5.25
+- Leadership clamp: >100 capped at 7.0 (at familiarity 0)
+- Balanced demands manual calculation verification
+- Zero totalWeight guard
+- `rehearsalHoursNeeded` monotonicity
+
+**Tests run and results**
+
+```
+✓ tests/scoring.test.ts       (7 tests at time of PR)
+✓ tests/season.test.ts        (8 tests)
+✓ tests/resolveConcert.test.ts (19 tests)
+```
+
+**Known issues / risks**
+
+None.
+
+**Handoff note**
+
+Rehearsal risk is now mechanically meaningful: programming brass-heavy works with a weak principal horn section will produce real pressure. The roster expansion gives each section at least one named principal for the divisor calculation.
+
+---
+
+### 2026-05-18 — PR #9: Symphony-esque typography
+
+**Primary milestone:** Milestone 0 — Opening Night Foundation (UI polish)
+
+**Summary**
+
+Replaced the default web fonts with a Playfair Display / Lora / IBM Plex Mono typography stack loaded from Google Fonts, matching the aesthetic register of a serious orchestral institution.
+
+**Files changed**
+
+- `src/styles/app.css` — font-face imports and CSS variable assignments
+- `index.html` — Google Fonts preconnect and stylesheet link
+
+**Tests run and results**
+
+Not run; no simulation or logic changes.
+
+**Handoff note**
+
+Visual polish only. No component or simulation changes.
+
+---
+
+### 2026-05-18 — PR #8: Bespoke concert program builder with live forecast
+
+**Primary milestone:** Milestone 0 — Opening Night Foundation (UI rewrite)
+
+**Summary**
+
+Replaced the placeholder program builder with a fully bespoke concert programming interface. Rehearsal hours are allocated via Framer Motion drag handles (one per work). The live forecast updates as the player adjusts the program, showing per-work rehearsal pressure and a real-time institutional forecast panel.
+
+**What was added / changed**
+
+- `src/components/ProgramBuilder.tsx` — complete rewrite with drag-based rehearsal allocation and live per-work stats
+- `src/components/ConcertForecast.tsx` — updated to render inline next to the builder
+- Fixed three correctness bugs in the original builder (wrong section stress calculation, misapplied price penalty, intermission not included in displayed total duration)
+
+**Tests run and results**
+
+Not run; no simulation changes (only UI).
+
+**Handoff note**
+
+The program builder is now the primary planning surface. The drag interaction makes rehearsal tradeoffs tactile. The live forecast makes consequences immediate.
+
+---
 
 ### 2026-05-17 — Milestone 1: Four-concert season loop
 
