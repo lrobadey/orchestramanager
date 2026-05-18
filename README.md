@@ -26,29 +26,32 @@ Each work stresses the institution in different ways: strings, winds, brass, per
 
 Programming is therefore not a taste menu. It is strategic risk design.
 
-## Initial MVP
+## Current Playable State
 
-The first playable slice is **one debut season** for a new upstart orchestra in Seattle.
+**Milestone 1 complete.** A full four-concert debut season is playable.
 
-The MVP should focus on a four-concert season:
+The player can:
 
-1. Plan the season.
-2. Choose programs from a limited repertoire pool.
-3. Hire or rely on a starting roster of musicians and section leaders.
-4. Allocate rehearsal time, marketing effort, and budget.
-5. Run each concert as a simulated outcome.
-6. Read detailed reports on attendance, finances, performance quality, morale, reviews, and identity drift.
-7. Survive the season while defining what kind of orchestra this is becoming.
+1. Build a three-work program from a library of 30+ works spanning classical canon to fictional new commissions.
+2. Allocate rehearsal hours per work using a drag interface with live per-work pressure feedback.
+3. Set marketing spend and ticket price.
+4. Read a live forecast: projected attendance, revenue, expenses, rehearsal pressure, section stress, donor response, and identity impact.
+5. Run each concert as a stochastic simulation.
+6. Read a detailed concert report: attendance, finances, performance quality, section-by-section outcomes, critic tone, notable moments, and institutional meter changes.
+7. Watch institutional meters (cash, reputation, trust, donor confidence, morale, technical quality, identity) persist and evolve across all four concerts.
+8. Read a final season summary with financial totals, performance arc, and the identity the orchestra accumulated.
 
-The MVP should be narrow, but not shallow. It should already contain the core feedback loop between programming choices and the orchestra’s ability to execute those choices.
+The rehearsal system is now mechanically meaningful: principal leadership scores drive section-specific rehearsal efficiency, and per-piece familiarity scores reduce hours needed for well-known canon works versus new commissions.
 
 ## Repertoire Approach
 
-The MVP should use:
+The library uses:
 
-- Real public-domain canon where appropriate.
-- Fictional living composers and fictional new commissions.
-- Fictional rival institutions modeled on real institutional types.
+- Real public-domain canon (Beethoven, Brahms, Sibelius, Ravel, Mahler, etc.).
+- Fictional living composers and fictional new commissions (City Light Machines, Glacier Index, Harbor Grid, etc.).
+- Fictional rival institutions modeled on real institutional types (planned for Milestone 5).
+
+Each work has a `familiarity` score (0–100) reflecting how well the orchestra knows it. Familiar canon works need fewer rehearsal hours; fresh commissions demand more preparation time relative to their technical load.
 
 The goal is to capture real orchestra-world dynamics without depending on real contemporary composers, real rival institutions, or real-world commentary as core data.
 
@@ -69,23 +72,36 @@ Future agentic roles could include:
 
 The deterministic simulation should own the actual state: money, dates, contracts, rehearsal time, musician attributes, performance outcomes, audience response, and reputation changes. Agents should provide negotiation, personality, emails, proposals, reviews, demands, and narrative texture without directly bypassing the simulation rules.
 
-## Not in the MVP
+## Running the App
 
-The first version should not include:
+```bash
+npm install
+npm run dev       # start Vite dev server
+npm test          # run simulation tests
+npm run build     # TypeScript compile + Vite bundle
+```
 
-- Full career mode.
-- Real-time concert visualization.
-- Generated audio.
-- A full union contract model.
-- A global orchestra market.
-- Hundreds of composers or works.
-- Fully simulated rival seasons.
-- Deep venue operations.
-- Complete education/outreach systems.
-- A detailed grant-writing simulator.
-- LLM agents as required infrastructure.
+## Architecture
 
-Those may become future systems. The MVP should prove the season-planning and concert-resolution loop first.
+```
+src/types/     domain types (Work, Principal, InstitutionState, SeasonState, …)
+src/data/      seed data (30+ works, 15 principals, 5 audience segments)
+src/sim/       pure simulation functions (forecast, resolve, scoring, season)
+src/components/ React UI components
+src/App.tsx    season state machine and game loop
+tests/         Vitest simulation tests (36 tests passing)
+```
+
+The simulation layer has no React dependency. UI components do not own formulas.
+
+## What Is Not Yet Built
+
+- Roster management and hiring (Milestone 2)
+- Richer audience/finance systems (Milestone 3)
+- Inbox, commissions, board pressure (Milestone 4)
+- Rival institution ecosystem (Milestone 5)
+- Save/load, scenario setup, release polish (Milestone 6)
+- Full career mode, real-time concert visualization, generated audio, LLM agents
 
 ## Documentation
 
