@@ -6,15 +6,83 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Current Status
 
-**Last updated:** 2026-05-18  
-**Current milestone:** Milestone 1 complete — Four-Concert Season Loop  
-**Current playable state:** Full four-concert season loop is playable. Player selects programs from 30+ works, allocates rehearsal hours via drag interface, sets marketing spend and ticket price, views a live forecast, runs each concert, reads section-level reports, watches institutional meters persist across concerts, and receives a season summary after all four concerts. The roster is fully expanded to 15 named principals across all sections with per-piece familiarity scores and leadership-driven rehearsal divisors.  
-**Latest PR:** PR #12 — per-piece familiarity scores  
-**Known blockers:** None.  
-**Current risks:** None recorded.  
-**Next recommended action:** Begin Milestone 2 (Roster and Section Leader System) — principals are seeded with full attributes; the next step is exposing them strategically so roster fit drives visible per-concert risk and the player can make hiring decisions.
+**Last updated:** 2026-05-18
+**Current milestone:** Milestone 1 complete — Four-Concert Season Loop
+**Current playable state:** Full four-concert season loop is playable. Player can choose 2- or 3-work programs from a nested Era -> Composer -> Works repertoire library, allocate rehearsal hours via drag interface, set marketing spend and ticket price, view a live forecast, run each concert, read section-level reports, watch institutional meters persist across concerts, and receive a season summary after all four concerts. The roster is fully expanded to 15 named principals across all sections with per-piece familiarity scores and leadership-driven rehearsal divisors.
+**Latest PR:** Issue #13 repertoire expansion and nested program builder
+**Known blockers:** None.
+**Current risks:** Browser-plugin verification could not complete in the final pass because the in-app browser backend blocked or lost loopback access; `npm test`, `npm run build`, and `git diff --check` are clean.
+**Next recommended action:** Re-run browser verification in a stable browser session, then tune the expanded repertoire balance through actual four-concert season playthroughs before moving fully into Milestone 2 hiring decisions.
 
 ## Log Entries
+
+### 2026-05-18 — Issue #13 repertoire expansion and nested picker
+
+**Primary milestone:** Milestone 1 — Four-Concert Season Loop
+**Secondary milestone:** Milestone 0 — Opening Night Foundation
+
+**Summary**
+
+Expanded the playable public-domain symphonic repertoire for issue #13 and replaced the flat repertoire shelf with a nested Era -> Composer -> Works library. The program builder now supports either 2-work or 3-work concerts, so large symphonic events such as Beethoven 9 and Manfred can be programmed without forcing a third work into the evening.
+
+**Rationale**
+
+The expanded catalog would make the previous flat shelf too noisy, and several new works are structurally too large for the old fixed three-piece evening. The new system keeps the current vertical playable loop, but makes repertoire selection more nested and institutionally legible: choose a historical era, choose a composer, then choose works with visible draw/prestige/donor/novelty tradeoffs.
+
+**Files changed**
+
+- `src/data/works.ts`
+- `src/types/core.ts`
+- `src/sim/forecastProgram.ts`
+- `src/sim/resolveConcert.ts`
+- `src/App.tsx`
+- `src/components/ProgramBuilder.tsx`
+- `src/components/ConcertForecast.tsx`
+- `src/components/ConcertReport.tsx`
+- `src/styles/app.css`
+- `tests/works.test.ts`
+- `tests/resolveConcert.test.ts`
+- `tests/season.test.ts`
+- `vite.config.ts`
+- `docs/PROGRESS.md`
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  4 passed (4)
+Tests       45 passed (45)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 492ms
+```
+
+**Browser verification**
+
+- Verified through browser automation before the browser backend failed that the default library opened to Romantic / Beethoven.
+- Verified switching to 2 Works showed two active slots, `20 hrs across 2 pieces`, and a single intermission toggle between the two works.
+- Verified era/composer filtering by switching to Late Romantic / Sibelius and seeing Sibelius symphonies ordered by number.
+- Final in-app browser verification could not complete after the local browser backend started returning loopback/blocking errors and then became unavailable.
+
+**Known issues / risks**
+
+- Beethoven 9 and Manfred logistics are encoded into `rehearsalLoad` and section demands because `Work` still has no chorus, soloist, extra-player, or stage-complexity fields.
+- Browser verification should be rerun in a stable browser session before merging if visual signoff is required.
+
+**Handoff note**
+
+This PR builds on the merged principal-roster, leadership-divisor, and familiarity systems from PR #10 and PR #12. It does not add backend, database, auth, LLM agents, save/load, routing, real concert visualization, full roster management, or future placeholder tabs. The one config change in `vite.config.ts` excludes `.claude/` and `.playwright-mcp/` from Vitest so untracked automation/worktree artifacts do not duplicate test discovery.
+
+**Next recommended action**
+
+Open the app in a stable browser session, drag Beethoven 9 and Manfred into a 2-work program, confirm the live forecast is severe but playable, then run at least one four-concert season to tune the expanded catalog.
+
+---
 
 ### 2026-05-18 — PR #12: Per-piece familiarity scores
 

@@ -1,8 +1,9 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, PanInfo, useMotionValue } from 'framer-motion'
 import {
   ConcertForecast,
   ConcertProgram,
+  Era,
   SlotTuple,
   TOTAL_REHEARSAL_HOURS,
   Work,
@@ -11,12 +12,21 @@ interface ProgramBuilderProps {
   works: Work[]
   program: ConcertProgram
   forecast: ConcertForecast
+  rightPanel?: ReactNode
   onProgramChange: (next: ConcertProgram) => void
   onRunConcert: () => void
 }
 
-const SLOT_COUNT = 3
 const DURATION_BAR_MAX_MIN = 150
+const ERA_ORDER: Era[] = ['classical', 'romantic', 'late-romantic', 'contemporary']
+const ERA_LABELS: Record<Era, string> = {
+  classical: 'Classical',
+  romantic: 'Romantic',
+  'late-romantic': 'Late Romantic',
+  contemporary: 'Contemporary',
+}
+const DEFAULT_ERA: Era = 'romantic'
+const DEFAULT_COMPOSER = 'Beethoven'
 
 function riskTone(risk: number | null): string {
   if (risk === null) return ''
@@ -28,6 +38,15 @@ function riskTone(risk: number | null): string {
 function findWork(works: Work[], id: string | null): Work | null {
   if (!id) return null
   return works.find(w => w.id === id) ?? null
+}
+
+function sortWorksForComposer(a: Work, b: Work): number {
+  const aMatch = a.title.match(/Symphony No\. (\d+)/)
+  const bMatch = b.title.match(/Symphony No\. (\d+)/)
+  if (aMatch && bMatch) return Number(aMatch[1]) - Number(bMatch[1])
+  if (aMatch) return -1
+  if (bMatch) return 1
+  return a.title.localeCompare(b.title)
 }
 
 // ── Slot card (drop target + draggable when filled) ─────────────────────────
@@ -133,14 +152,18 @@ function IntermissionToggle({ position, active, onToggle }: IntermissionTogglePr
 interface DurationBarProps {
   slotWorks: SlotTuple<Work | null>
   intermissionAfter: 0 | 1 | null
+  workCount: 2 | 3
 }
 
 const INTERMISSION_MIN = 15
 
-function DurationBar({ slotWorks, intermissionAfter }: DurationBarProps) {
-  const musicMin = slotWorks.reduce((sum, w) => sum + (w?.durationMinutes ?? 0), 0)
+function DurationBar({ slotWorks, intermissionAfter, workCount }: DurationBarProps) {
+  const activeWorks = slotWorks.slice(0, workCount)
+  const musicMin = activeWorks.reduce((sum, w) => sum + (w?.durationMinutes ?? 0), 0)
   const ticks = [30, 60, 90, 120]
-  const intermissionMin = intermissionAfter !== null && slotWorks[intermissionAfter] !== null
+  const intermissionMin = intermissionAfter !== null &&
+    intermissionAfter < workCount - 1 &&
+    slotWorks[intermissionAfter] !== null
     ? INTERMISSION_MIN
     : 0
   const totalMin = musicMin + intermissionMin
@@ -149,7 +172,7 @@ function DurationBar({ slotWorks, intermissionAfter }: DurationBarProps) {
   let cursor = 0
   const segments: { width: number; left: number; key: string; color: string }[] = []
   const palette = ['var(--accent)', 'var(--accent-soft)', 'var(--accent)']
-  slotWorks.forEach((w, i) => {
+  activeWorks.forEach((w, i) => {
     if (!w) return
     const widthPct = (w.durationMinutes / denom) * 100
     const leftPct = (cursor / denom) * 100
@@ -208,6 +231,7 @@ interface RehearsalAllocatorProps {
   slotWorks: SlotTuple<Work | null>
   perWorkPressure: SlotTuple<number | null>
   perWorkHoursNeeded: SlotTuple<number | null>
+  workCount: 2 | 3
   onChange: (next: SlotTuple<number>) => void
 }
 
@@ -261,6 +285,7 @@ function RehearsalAllocator({
   slotWorks,
   perWorkPressure,
   perWorkHoursNeeded,
+  workCount,
   onChange,
 }: RehearsalAllocatorProps) {
   const barRef = useRef<HTMLDivElement>(null)
@@ -268,6 +293,7 @@ function RehearsalAllocator({
 
   const m1 = allocation[0]
   const m2 = m1 + allocation[1]
+  const activeSlots = Array.from({ length: workCount }, (_, i) => i)
 
   useLayoutEffect(() => {
     if (!barRef.current) return
@@ -284,12 +310,14 @@ function RehearsalAllocator({
     <div className="rehearsal-allocator">
       <div className="rehearsal-header">
         <span className="rehearsal-title">Rehearsal Time</span>
-        <span className="rehearsal-budget">{TOTAL_REHEARSAL_HOURS} hrs across {SLOT_COUNT} pieces</span>
+        <span className="rehearsal-budget">{TOTAL_REHEARSAL_HOURS} hrs across {workCount} pieces</span>
       </div>
       <div ref={barRef} className="rehearsal-bar">
-        {[0, 1, 2].map(i => {
+        {activeSlots.map(i => {
           const start = i === 0 ? 0 : i === 1 ? m1 : m2
-          const end = i === 0 ? m1 : i === 1 ? m2 : TOTAL_REHEARSAL_HOURS
+          const end = workCount === 2
+            ? i === 0 ? m1 : TOTAL_REHEARSAL_HOURS
+            : i === 0 ? m1 : i === 1 ? m2 : TOTAL_REHEARSAL_HOURS
           const left = (start / TOTAL_REHEARSAL_HOURS) * 100
           const width = ((end - start) / TOTAL_REHEARSAL_HOURS) * 100
           const pressure = perWorkPressure[i]
@@ -304,27 +332,41 @@ function RehearsalAllocator({
             />
           )
         })}
-        <Marker
-          hours={m1}
-          minHours={1}
-          maxHours={m2 - 1}
-          barWidth={barWidth}
-          onChange={newM1 =>
-            onChange([newM1, m2 - newM1, TOTAL_REHEARSAL_HOURS - m2])
-          }
-        />
-        <Marker
-          hours={m2}
-          minHours={m1 + 1}
-          maxHours={TOTAL_REHEARSAL_HOURS - 1}
-          barWidth={barWidth}
-          onChange={newM2 =>
-            onChange([m1, newM2 - m1, TOTAL_REHEARSAL_HOURS - newM2])
-          }
-        />
+        {workCount === 2 ? (
+          <Marker
+            hours={m1}
+            minHours={1}
+            maxHours={TOTAL_REHEARSAL_HOURS - 1}
+            barWidth={barWidth}
+            onChange={newM1 =>
+              onChange([newM1, TOTAL_REHEARSAL_HOURS - newM1, 0])
+            }
+          />
+        ) : (
+          <>
+            <Marker
+              hours={m1}
+              minHours={1}
+              maxHours={m2 - 1}
+              barWidth={barWidth}
+              onChange={newM1 =>
+                onChange([newM1, m2 - newM1, TOTAL_REHEARSAL_HOURS - m2])
+              }
+            />
+            <Marker
+              hours={m2}
+              minHours={m1 + 1}
+              maxHours={TOTAL_REHEARSAL_HOURS - 1}
+              barWidth={barWidth}
+              onChange={newM2 =>
+                onChange([m1, newM2 - m1, TOTAL_REHEARSAL_HOURS - newM2])
+              }
+            />
+          </>
+        )}
       </div>
-      <div className="rehearsal-labels">
-        {[0, 1, 2].map(i => {
+      <div className={`rehearsal-labels rehearsal-labels-${workCount}`}>
+        {activeSlots.map(i => {
           const work = slotWorks[i]
           const needed = perWorkHoursNeeded[i]
           return (
@@ -348,6 +390,11 @@ function RehearsalAllocator({
 interface RepertoireShelfProps {
   works: Work[]
   usedIds: Set<string>
+  selectedEra: Era
+  selectedComposer: string
+  onEraChange: (era: Era) => void
+  onComposerChange: (composer: string) => void
+  onCardDragStart: () => void
   onCardDragEnd: (id: string, point: { x: number; y: number }) => void
   registerRef: (el: HTMLDivElement | null) => void
 }
@@ -355,14 +402,66 @@ interface RepertoireShelfProps {
 function RepertoireShelf({
   works,
   usedIds,
+  selectedEra,
+  selectedComposer,
+  onEraChange,
+  onComposerChange,
+  onCardDragStart,
   onCardDragEnd,
   registerRef,
 }: RepertoireShelfProps) {
+  const eras = ERA_ORDER.filter(era => works.some(w => w.era === era))
+  const worksInEra = works.filter(w => w.era === selectedEra)
+  const composers = Array.from(new Set(worksInEra.map(w => w.composer))).sort((a, b) =>
+    a.localeCompare(b),
+  )
+  const visibleWorks = worksInEra
+    .filter(w => w.composer === selectedComposer)
+    .sort(sortWorksForComposer)
+
   return (
     <div ref={registerRef} className="repertoire-shelf">
-      <h3 className="repertoire-title">Repertoire</h3>
+      <div className="repertoire-library-header">
+        <h3 className="repertoire-title">Repertoire</h3>
+        <span className="repertoire-context">
+          {ERA_LABELS[selectedEra]} / {selectedComposer}
+        </span>
+      </div>
+
+      <div className="repertoire-ladder">
+        <div className="repertoire-ladder-column" aria-label="Era">
+          {eras.map(era => (
+            <button
+              key={era}
+              type="button"
+              className={`ladder-button${selectedEra === era ? ' ladder-button-active' : ''}`}
+              onClick={() => onEraChange(era)}
+            >
+              <span>{ERA_LABELS[era]}</span>
+              <span className="ladder-count">{works.filter(w => w.era === era).length}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="repertoire-ladder-column" aria-label="Composer">
+          {composers.map(composer => (
+            <button
+              key={composer}
+              type="button"
+              className={`ladder-button${selectedComposer === composer ? ' ladder-button-active' : ''}`}
+              onClick={() => onComposerChange(composer)}
+            >
+              <span>{composer}</span>
+              <span className="ladder-count">
+                {worksInEra.filter(w => w.composer === composer).length}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="repertoire-cards">
-        {works.map(w => {
+        {visibleWorks.map(w => {
           const used = usedIds.has(w.id)
           return (
             <motion.div
@@ -372,6 +471,7 @@ function RepertoireShelf({
               dragSnapToOrigin
               dragElastic={0.7}
               whileDrag={{ scale: 1.06, zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+              onDragStart={onCardDragStart}
               onDragEnd={(_, info: PanInfo) => onCardDragEnd(w.id, info.point)}
             >
               <div className="repertoire-card-header">
@@ -383,6 +483,12 @@ function RepertoireShelf({
                 )}
               </div>
               <div className="repertoire-card-composer">{w.composer}</div>
+              <div className="repertoire-card-stats">
+                <span>Draw {w.audienceDraw}</span>
+                <span>Prestige {w.artisticPrestige}</span>
+                <span>Donor {w.donorComfort}</span>
+                <span>Novelty {w.novelty}</span>
+              </div>
               <div className="repertoire-card-footer">
                 <span>{w.durationMinutes}m</span>
                 <span>load {w.rehearsalLoad}</span>
@@ -401,14 +507,38 @@ export default function ProgramBuilder({
   works,
   program,
   forecast,
+  rightPanel,
   onProgramChange,
   onRunConcert,
 }: ProgramBuilderProps) {
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
   const repertoireRef = useRef<HTMLDivElement | null>(null)
+  const [isDraggingRepertoireCard, setIsDraggingRepertoireCard] = useState(false)
+  const [selectedEra, setSelectedEra] = useState<Era>(DEFAULT_ERA)
+  const [selectedComposer, setSelectedComposer] = useState(DEFAULT_COMPOSER)
 
   const slotWorks = program.workIds.map(id => findWork(works, id)) as SlotTuple<Work | null>
   const usedIds = new Set(program.workIds.filter((id): id is string => id !== null))
+  const activeSlotIndexes = useMemo(
+    () => Array.from({ length: program.workCount }, (_, i) => i),
+    [program.workCount],
+  )
+
+  function composersForEra(era: Era): string[] {
+    return Array.from(new Set(works.filter(w => w.era === era).map(w => w.composer))).sort((a, b) =>
+      a.localeCompare(b),
+    )
+  }
+
+  function chooseEra(era: Era) {
+    const composers = composersForEra(era)
+    setSelectedEra(era)
+    setSelectedComposer(
+      era === DEFAULT_ERA && composers.includes(DEFAULT_COMPOSER)
+        ? DEFAULT_COMPOSER
+        : composers[0] ?? '',
+    )
+  }
 
   function pointInRect(point: { x: number; y: number }, el: HTMLElement | null): boolean {
     if (!el) return false
@@ -417,7 +547,7 @@ export default function ProgramBuilder({
   }
 
   function findDropTarget(point: { x: number; y: number }): number | 'repertoire' | null {
-    for (let i = 0; i < SLOT_COUNT; i++) {
+    for (let i = 0; i < program.workCount; i++) {
       if (pointInRect(point, slotRefs.current[i])) return i
     }
     if (pointInRect(point, repertoireRef.current)) return 'repertoire'
@@ -425,6 +555,7 @@ export default function ProgramBuilder({
   }
 
   function handleRepertoireDrop(id: string, point: { x: number; y: number }) {
+    setIsDraggingRepertoireCard(false)
     const target = findDropTarget(point)
     if (target === null || target === 'repertoire') return
     const slotIdx = target
@@ -464,61 +595,77 @@ export default function ProgramBuilder({
     onProgramChange({ ...program, intermissionAfter: next })
   }
 
+  function setProgramWorkCount(workCount: 2 | 3) {
+    if (program.workCount === workCount) return
+    if (workCount === 2) {
+      onProgramChange({
+        ...program,
+        workCount,
+        workIds: [program.workIds[0], program.workIds[1], null],
+        intermissionAfter: 0,
+        rehearsalAllocation: [10, 10, 0],
+      })
+      return
+    }
+    onProgramChange({
+      ...program,
+      workCount,
+      intermissionAfter: 1,
+      rehearsalAllocation: [7, 7, 6],
+    })
+  }
+
   function setAllocation(allocation: SlotTuple<number>) {
     onProgramChange({ ...program, rehearsalAllocation: allocation })
   }
 
   return (
-    <div className="program-builder">
+    <div className={`program-builder${isDraggingRepertoireCard ? ' program-builder-dragging' : ''}`}>
       <div className="program-builder-grid">
         <div className="program-stage">
           <h2 className="program-stage-title">Tonight's Program</h2>
+          <div className="program-size-control" aria-label="Program size">
+            <button
+              type="button"
+              className={program.workCount === 2 ? 'program-size-active' : ''}
+              onClick={() => setProgramWorkCount(2)}
+            >
+              2 Works
+            </button>
+            <button
+              type="button"
+              className={program.workCount === 3 ? 'program-size-active' : ''}
+              onClick={() => setProgramWorkCount(3)}
+            >
+              3 Works
+            </button>
+          </div>
 
-          <SlotCard
-            index={0}
-            work={slotWorks[0]}
-            perWorkRisk={forecast.perWorkPerformanceRisk[0]}
-            hoursNeeded={forecast.perWorkRehearsalHoursNeeded[0]}
-            hours={program.rehearsalAllocation[0]}
-            registerRef={el => (slotRefs.current[0] = el)}
-            onDragEnd={point => handleSlotDrop(0, point)}
-          />
-
-          <IntermissionToggle
-            position={0}
-            active={program.intermissionAfter === 0}
-            onToggle={() => toggleIntermission(0)}
-          />
-
-          <SlotCard
-            index={1}
-            work={slotWorks[1]}
-            perWorkRisk={forecast.perWorkPerformanceRisk[1]}
-            hoursNeeded={forecast.perWorkRehearsalHoursNeeded[1]}
-            hours={program.rehearsalAllocation[1]}
-            registerRef={el => (slotRefs.current[1] = el)}
-            onDragEnd={point => handleSlotDrop(1, point)}
-          />
-
-          <IntermissionToggle
-            position={1}
-            active={program.intermissionAfter === 1}
-            onToggle={() => toggleIntermission(1)}
-          />
-
-          <SlotCard
-            index={2}
-            work={slotWorks[2]}
-            perWorkRisk={forecast.perWorkPerformanceRisk[2]}
-            hoursNeeded={forecast.perWorkRehearsalHoursNeeded[2]}
-            hours={program.rehearsalAllocation[2]}
-            registerRef={el => (slotRefs.current[2] = el)}
-            onDragEnd={point => handleSlotDrop(2, point)}
-          />
+          {activeSlotIndexes.map((index, order) => (
+            <div key={index} className="program-slot-group">
+              {order > 0 && (
+                <IntermissionToggle
+                  position={(order - 1) as 0 | 1}
+                  active={program.intermissionAfter === order - 1}
+                  onToggle={() => toggleIntermission((order - 1) as 0 | 1)}
+                />
+              )}
+              <SlotCard
+                index={index}
+                work={slotWorks[index]}
+                perWorkRisk={forecast.perWorkPerformanceRisk[index]}
+                hoursNeeded={forecast.perWorkRehearsalHoursNeeded[index]}
+                hours={program.rehearsalAllocation[index]}
+                registerRef={el => (slotRefs.current[index] = el)}
+                onDragEnd={point => handleSlotDrop(index, point)}
+              />
+            </div>
+          ))}
 
           <DurationBar
             slotWorks={slotWorks}
             intermissionAfter={program.intermissionAfter}
+            workCount={program.workCount}
           />
 
           <RehearsalAllocator
@@ -526,6 +673,7 @@ export default function ProgramBuilder({
             slotWorks={slotWorks}
             perWorkPressure={forecast.perWorkRehearsalPressure}
             perWorkHoursNeeded={forecast.perWorkRehearsalHoursNeeded}
+            workCount={program.workCount}
             onChange={setAllocation}
           />
 
@@ -567,16 +715,24 @@ export default function ProgramBuilder({
           >
             {forecast.isComplete
               ? 'Run Concert →'
-              : `Fill all ${SLOT_COUNT} slots to continue`}
+              : `Fill ${program.workCount} works to continue`}
           </button>
         </div>
 
-        <RepertoireShelf
-          works={works}
-          usedIds={usedIds}
-          registerRef={el => (repertoireRef.current = el)}
-          onCardDragEnd={handleRepertoireDrop}
-        />
+        <div className="program-side-rail">
+          <RepertoireShelf
+            works={works}
+            usedIds={usedIds}
+            selectedEra={selectedEra}
+            selectedComposer={selectedComposer}
+            onEraChange={chooseEra}
+            onComposerChange={setSelectedComposer}
+            registerRef={el => (repertoireRef.current = el)}
+            onCardDragStart={() => setIsDraggingRepertoireCard(true)}
+            onCardDragEnd={handleRepertoireDrop}
+          />
+          {rightPanel}
+        </div>
       </div>
     </div>
   )

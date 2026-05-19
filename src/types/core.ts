@@ -76,6 +76,7 @@ export interface InstitutionState {
 export type SlotTuple<T> = [T, T, T]
 
 export interface ConcertProgram {
+  workCount: 2 | 3
   workIds: SlotTuple<string | null>
   intermissionAfter: 0 | 1 | null
   rehearsalAllocation: SlotTuple<number>

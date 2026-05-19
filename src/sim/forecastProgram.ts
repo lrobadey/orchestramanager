@@ -29,12 +29,18 @@ export interface ForecastInput {
 }
 
 function resolveSlotWorks(input: ForecastInput): SlotTuple<Work | null> {
-  return input.program.workIds.map(id => {
-    if (id === null) return null
+  return input.program.workIds.map((id, i) => {
+    if (i >= input.program.workCount || id === null) return null
     const w = input.works.find(w => w.id === id)
     if (!w) throw new Error(`Work not found: ${id}`)
     return w
   }) as SlotTuple<Work | null>
+}
+
+function activeSlotWorks(slotWorks: SlotTuple<Work | null>, program: ConcertProgram): Work[] {
+  return slotWorks
+    .slice(0, program.workCount)
+    .filter((w): w is Work => w !== null)
 }
 
 function computeSectionStress(
@@ -169,17 +175,20 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
 
   const slotWorks = resolveSlotWorks(input)
   const { institution, principals, audienceSegments, program } = input
+  const displaySlotWorks = slotWorks.map((work, i) =>
+    i < program.workCount ? work : null,
+  ) as SlotTuple<Work | null>
 
   // Compute per-slot divisor and hours needed before any completeness guard so
   // partial programs (1–2 pieces) still show real rehearsal figures in the UI.
-  const perWorkRehearsalDivisor = slotWorks.map(work =>
+  const perWorkRehearsalDivisor = displaySlotWorks.map(work =>
     work ? computeRehearsalDivisor(work, principals) : null,
   ) as SlotTuple<number | null>
-  const perWorkRehearsalHoursNeeded = slotWorks.map((work, i) =>
+  const perWorkRehearsalHoursNeeded = displaySlotWorks.map((work, i) =>
     work ? rehearsalHoursNeeded(work.rehearsalLoad, perWorkRehearsalDivisor[i]!) : null,
   ) as SlotTuple<number | null>
 
-  const filled = slotWorks.filter((w): w is Work => w !== null)
+  const filled = activeSlotWorks(displaySlotWorks, program)
 
   if (filled.length === 0) {
     return emptyForecast(
@@ -188,10 +197,10 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
       perWorkRehearsalHoursNeeded,
     )
   }
-  if (filled.length < 3) {
-    const remaining = 3 - filled.length
+  if (filled.length < program.workCount) {
+    const remaining = program.workCount - filled.length
     return emptyForecast(
-      `Add ${remaining} more piece${remaining === 1 ? '' : 's'} to see the full forecast.`,
+      `Add ${remaining} more piece${remaining === 1 ? '' : 's'} to complete this ${program.workCount}-work program.`,
       perWorkRehearsalDivisor,
       perWorkRehearsalHoursNeeded,
     )
@@ -210,10 +219,10 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const adjustedDraw = clamp(programDraw + marketingBoost - pricePen, 0, 100)
 
   // Per-piece rehearsal pressure: each slot's piece compared against its own allocation
-  const perWorkRehearsalHoursAllocated = slotWorks.map((work, i) =>
+  const perWorkRehearsalHoursAllocated = displaySlotWorks.map((work, i) =>
     work ? program.rehearsalAllocation[i] : null,
   ) as SlotTuple<number | null>
-  const perWorkRehearsalPressure = slotWorks.map((work, i) => {
+  const perWorkRehearsalPressure = displaySlotWorks.map((work, i) => {
     if (!work) return null
     return pressureFromHoursGap(
       perWorkRehearsalHoursNeeded[i]!,
@@ -264,7 +273,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const donorResponse = clamp(programDonorComfort - programNovelty * 0.3, 0, 100)
 
   const forecastNotes = buildForecastNotes(
-    slotWorks,
+    displaySlotWorks,
     perWorkRehearsalPressure,
     rehearsalPressure,
     sectionStress,

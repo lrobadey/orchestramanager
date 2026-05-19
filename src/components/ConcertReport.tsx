@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { type ConcertReport, type Work } from '../types/core'
 
 interface ConcertReportProps {
@@ -35,7 +36,7 @@ function deltaStr(d: number): string {
   return d >= 0 ? `+${d}` : `${d}`
 }
 
-function ReportRow({ label, value }: { label: string; value: React.ReactNode }) {
+function ReportRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="forecast-item">
       <span className="forecast-key">{label}</span>
