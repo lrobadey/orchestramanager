@@ -1,7 +1,5 @@
-import type { Work } from '../types/core'
+import type { Work, ProgramArcPlacementRole, ProgramArcWorkSalience, ProgramArcSalienceResult } from '../types/core'
 import { average, clamp } from './scoring'
-
-export type ProgramArcPlacementRole = 'opener' | 'middle' | 'finale'
 
 export interface ProgramArcWorkInput {
   slotIndex: number
@@ -9,27 +7,6 @@ export interface ProgramArcWorkInput {
   work: Work
   rehearsalPressure: number
   performanceRisk: number
-}
-
-export interface ProgramArcWorkSalience {
-  workId: string
-  slotIndex: number
-  placementRole: ProgramArcPlacementRole
-  durationWeight: number
-  placementWeight: number
-  familiarityWeight: number
-  prestigeWeight: number
-  noveltyVolatilityWeight: number
-  perceivedDamage: number
-  perceivedUpside: number
-}
-
-export interface ProgramArcSalienceResult {
-  perWork: ProgramArcWorkSalience[]
-  aggregatePerceivedDamage: number
-  aggregatePerceivedUpside: number
-  memoryAnchorWorkId: string | null
-  notes: string[]
 }
 
 function placementRole(slotIndex: number, workCount: 2 | 3): ProgramArcPlacementRole {

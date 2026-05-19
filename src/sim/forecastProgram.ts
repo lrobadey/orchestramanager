@@ -8,6 +8,7 @@ import {
   AudienceBreakdown,
   SlotTuple,
   TOTAL_REHEARSAL_HOURS,
+  ProgramArcSalienceResult,
 } from '../types/core'
 import {
   clamp,
@@ -21,6 +22,14 @@ import {
   BASE_CONCERT_COST,
 } from './scoring'
 import { computeProgramArcSalience } from './programArcSalience'
+
+const EMPTY_ARC_SALIENCE: ProgramArcSalienceResult = {
+  perWork: [],
+  aggregatePerceivedDamage: 0,
+  aggregatePerceivedUpside: 0,
+  memoryAnchorWorkId: null,
+  notes: [],
+}
 
 export interface ForecastInput {
   works: Work[]
@@ -206,7 +215,7 @@ function emptyForecast(
   perWorkRehearsalDivisor: SlotTuple<number | null> = [null, null, null],
   perWorkRehearsalHoursNeeded: SlotTuple<number | null> = [null, null, null],
 ): ConcertForecast {
-  const arcSalience = computeProgramArcSalience([])
+  const arcSalience = EMPTY_ARC_SALIENCE
   return {
     projectedAttendance: 0,
     projectedRevenue: 0,
