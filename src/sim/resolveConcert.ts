@@ -97,7 +97,11 @@ function buildNotableMoments(
   }
 
   if (memoryAnchorWork && memoryAnchorWork.id !== works[works.length - 1]?.id) {
-    moments.push(`${memoryAnchorWork.title} became the evening's memory anchor despite not closing the program.`)
+    const anchorIdx = works.findIndex(w => w.id === memoryAnchorWork.id)
+    const anchorDamage = anchorIdx >= 0 ? (perWorkArcDamage[anchorIdx] ?? 0) : 0
+    if (anchorDamage > 20) {
+      moments.push(`${memoryAnchorWork.title} became the evening's memory anchor despite not closing the program.`)
+    }
   }
 
   if (programNovelty > 65 && performanceQuality > 60)

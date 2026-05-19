@@ -297,6 +297,21 @@ describe('program arc forecast and resolve integration', () => {
     expect(second.memoryAnchorWorkId).toBe('work-a')
   })
 
+  it('does not inflate arcPerceivedDamage for a fully prepared program', () => {
+    const workA = makeWork({ id: 'ready-a', rehearsalLoad: 30, novelty: 10 })
+    const workB = makeWork({ id: 'ready-b', rehearsalLoad: 30, novelty: 10 })
+    const workC = makeWork({ id: 'ready-c', rehearsalLoad: 30, novelty: 10 })
+    const forecast = forecastProgram(makeInput(
+      [workA, workB, workC],
+      makeProgram(['ready-a', 'ready-b', 'ready-c'], [7, 7, 6]),
+    ))
+
+    forecast.perWorkRehearsalPressure.forEach(p => {
+      if (p !== null) expect(p).toBeLessThanOrEqual(0)
+    })
+    expect(forecast.arcPerceivedDamage).toBeCloseTo(0, 1)
+  })
+
   it('makes an under-rehearsed finale land worse than the same under-rehearsed middle work', () => {
     const anchor = makeWork({
       id: 'anchor-work',
