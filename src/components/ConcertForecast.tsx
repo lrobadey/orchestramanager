@@ -5,6 +5,7 @@ import { type ConcertForecast, type SlotTuple, type Work } from '../types/core'
 interface ConcertForecastProps {
   forecast: ConcertForecast
   slotWorks: SlotTuple<Work | undefined>
+  workCount: 2 | 3
 }
 
 function fmt(n: number): string {
@@ -49,7 +50,7 @@ function ForecastRow({ label, value, animKey }: { label: string; value: ReactNod
   )
 }
 
-export default function ConcertForecast({ forecast, slotWorks }: ConcertForecastProps) {
+export default function ConcertForecast({ forecast, slotWorks, workCount }: ConcertForecastProps) {
   if (!forecast.isComplete) {
     return (
       <div className="forecast-panel forecast-panel-empty">
@@ -164,7 +165,7 @@ export default function ConcertForecast({ forecast, slotWorks }: ConcertForecast
       <section className="forecast-section">
         <h3 className="forecast-section-title">Per-Piece Risk</h3>
         <div className="forecast-perpiece-list">
-          {slotWorks.map((work, i) => {
+          {slotWorks.slice(0, workCount).map((work, i) => {
             const risk = forecast.perWorkPerformanceRisk[i]
             const need = forecast.perWorkRehearsalHoursNeeded[i]
             const alloc = forecast.perWorkRehearsalHoursAllocated[i]

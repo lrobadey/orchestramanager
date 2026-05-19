@@ -8,6 +8,7 @@ import { startingInstitution } from '../src/data/institution'
 import { ConcertProgram, SeasonState } from '../src/types/core'
 
 const safeProgram: ConcertProgram = {
+  workCount: 3,
   workIds: ['beethoven-5', 'beethoven-7', 'tchaikovsky-6'],
   intermissionAfter: 1,
   rehearsalAllocation: [7, 7, 6],
@@ -16,6 +17,7 @@ const safeProgram: ConcertProgram = {
 }
 
 const adventurousProgram: ConcertProgram = {
+  workCount: 3,
   workIds: ['harbor-grid', 'glacier-index', 'night-ferry'],
   intermissionAfter: 1,
   rehearsalAllocation: [7, 7, 6],

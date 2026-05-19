@@ -112,7 +112,7 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   if (!forecast.isComplete) {
     throw new Error('Cannot resolve concert: program is incomplete (empty slots).')
   }
-  const works = input.program.workIds.map(id => {
+  const works = input.program.workIds.slice(0, input.program.workCount).map(id => {
     if (id === null) throw new Error('Cannot resolve concert: empty slot.')
     const w = input.works.find(w => w.id === id)
     if (!w) throw new Error(`Work not found: ${id}`)

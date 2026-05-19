@@ -24,12 +24,11 @@ import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 type Phase = 'planning' | 'report'
 
 const evenAllocation = (): SlotTuple<number> => {
-  const each = Math.floor(TOTAL_REHEARSAL_HOURS / 3)
-  const remainder = TOTAL_REHEARSAL_HOURS - each * 3
-  return [each + remainder, each, each]
+  return [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 }
 
 const emptyProgram = (): ConcertProgram => ({
+  workCount: 3,
   workIds: [null, null, null],
   intermissionAfter: 1,
   rehearsalAllocation: evenAllocation(),
@@ -94,7 +93,9 @@ export default function App() {
     program.workIds[1] ? works.find(w => w.id === program.workIds[1]) : undefined,
     program.workIds[2] ? works.find(w => w.id === program.workIds[2]) : undefined,
   ]
-  const filledSlotWorks = slotWorks.filter((w): w is NonNullable<typeof w> => w !== undefined)
+  const filledSlotWorks = slotWorks
+    .slice(0, program.workCount)
+    .filter((w): w is NonNullable<typeof w> => w !== undefined)
 
   const currentSlotName = !seasonComplete
     ? season.slots[season.currentSlotIndex].name
@@ -126,10 +127,16 @@ export default function App() {
                 works={works}
                 program={program}
                 forecast={forecast}
+                rightPanel={
+                  <ConcertForecastView
+                    forecast={forecast}
+                    slotWorks={slotWorks}
+                    workCount={program.workCount}
+                  />
+                }
                 onProgramChange={setProgram}
                 onRunConcert={handleRunConcert}
               />
-              <ConcertForecastView forecast={forecast} slotWorks={slotWorks} />
             </div>
           )}
           {phase === 'report' && report && (

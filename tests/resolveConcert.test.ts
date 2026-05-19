@@ -13,6 +13,7 @@ import { ConcertProgram } from '../src/types/core'
 // principals (~5.3 weighted divisor for balanced programs) these want ~5.7/6.6/8.5h respectively.
 // With [7,7,6] allocation this is near-balanced but slightly under on Tchaikovsky 6.
 const safeProgram: ConcertProgram = {
+  workCount: 3,
   workIds: ['beethoven-5', 'beethoven-7', 'tchaikovsky-6'],
   intermissionAfter: 1,
   rehearsalAllocation: [7, 7, 6],
@@ -24,6 +25,7 @@ const safeProgram: ConcertProgram = {
 // starting principals. With a 20hr total and [7,7,6] allocation every piece
 // will be deeply under-rehearsed.
 const adventurousProgram: ConcertProgram = {
+  workCount: 3,
   workIds: ['harbor-grid', 'glacier-index', 'night-ferry'],
   intermissionAfter: 1,
   rehearsalAllocation: [7, 7, 6],
@@ -117,6 +119,62 @@ describe('forecastProgram', () => {
       expect(val).toBeGreaterThanOrEqual(0)
       expect(val).toBeLessThanOrEqual(100)
     }
+  })
+
+  it('supports a complete two-work program', () => {
+    const twoWorkProgram: ConcertProgram = {
+      workCount: 2,
+      workIds: ['beethoven-9', 'tchaikovsky-manfred', null],
+      intermissionAfter: 0,
+      rehearsalAllocation: [10, 10, 0],
+      marketingSpend: 20_000,
+      ticketPrice: 85,
+    }
+    const forecast = forecastProgram(makeInput(twoWorkProgram))
+    expect(forecast.isComplete).toBe(true)
+    expect(forecast.perWorkPerformanceRisk[0]).not.toBeNull()
+    expect(forecast.perWorkPerformanceRisk[1]).not.toBeNull()
+    expect(forecast.perWorkPerformanceRisk[2]).toBeNull()
+  })
+
+  it('ignores inactive third slot for two-work programs', () => {
+    const twoWorkProgram: ConcertProgram = {
+      workCount: 2,
+      workIds: ['beethoven-9', 'tchaikovsky-manfred', 'missing-work'],
+      intermissionAfter: 0,
+      rehearsalAllocation: [10, 10, 0],
+      marketingSpend: 20_000,
+      ticketPrice: 85,
+    }
+    expect(() => forecastProgram(makeInput(twoWorkProgram))).not.toThrow()
+  })
+
+  it('keeps two-work programs incomplete until both active slots are filled', () => {
+    const incompleteTwoWorkProgram: ConcertProgram = {
+      workCount: 2,
+      workIds: ['beethoven-9', null, null],
+      intermissionAfter: 0,
+      rehearsalAllocation: [10, 10, 0],
+      marketingSpend: 20_000,
+      ticketPrice: 85,
+    }
+    const forecast = forecastProgram(makeInput(incompleteTwoWorkProgram))
+    expect(forecast.isComplete).toBe(false)
+    expect(() => resolveConcert({ ...makeInput(incompleteTwoWorkProgram), roll: 50 })).toThrow(
+      /program is incomplete/,
+    )
+  })
+
+  it('requires two-work rehearsal allocation to still sum to 20', () => {
+    const badTwoWorkProgram: ConcertProgram = {
+      workCount: 2,
+      workIds: ['beethoven-9', 'tchaikovsky-manfred', null],
+      intermissionAfter: 0,
+      rehearsalAllocation: [8, 8, 0],
+      marketingSpend: 20_000,
+      ticketPrice: 85,
+    }
+    expect(() => forecastProgram(makeInput(badTwoWorkProgram))).toThrow(/sum to 20/)
   })
 })
 
