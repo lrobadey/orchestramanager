@@ -6,15 +6,80 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Current Status
 
-**Last updated:** 2026-05-18
-**Current milestone:** Milestone 1 complete — Four-Concert Season Loop
-**Current playable state:** Full four-concert season loop is playable. Player can choose 2- or 3-work programs from a nested Era -> Composer -> Works repertoire library, allocate rehearsal hours via drag interface, set marketing spend and ticket price, view a live forecast, run each concert, read section-level reports, watch institutional meters persist across concerts, and receive a season summary after all four concerts. The roster is fully expanded to 15 named principals across all sections with per-piece familiarity scores and leadership-driven rehearsal divisors.
-**Latest PR:** Issue #13 repertoire expansion and nested program builder
-**Known blockers:** None.
-**Current risks:** Browser-plugin verification could not complete in the final pass because the in-app browser backend blocked or lost loopback access; `npm test`, `npm run build`, and `git diff --check` are clean.
-**Next recommended action:** Re-run browser verification in a stable browser session, then tune the expanded repertoire balance through actual four-concert season playthroughs before moving fully into Milestone 2 hiring decisions.
+**Last updated:** 2026-05-19
+**Current milestone:** Milestone 1 — Four-Concert Season Loop, with a tight Milestone 3 audience/finance slice
+**Current playable state:** Full four-concert season loop is playable. Player can choose 2- or 3-work programs from a nested Era -> Composer -> Works repertoire library, allocate rehearsal hours, set marketing spend and standard price, enable optional student tickets, view projected audience mix and segment-aware revenue, run each concert, read actual audience mix in reports, and receive a season summary after all four concerts.
+**Latest PR:** Audience ticket pricing and student tickets slice
+**Known blockers:** None currently recorded.
+**Current risks:** Audience segmentation is still deterministic and intentionally narrow; no student ticket cap, audience trust delta, targeted marketing, subscription model, or full audience tab exists yet.
+**Next recommended action:** Play through a complete season and review whether the new audience mix makes pricing decisions legible without overcrowding the single-screen loop.
 
 ## Log Entries
+
+### 2026-05-19 — Audience ticket pricing and student tickets
+
+**Primary milestone:** Milestone 3 — Audience and Finance Systems
+**Secondary milestone:** Milestone 1 — Four-Concert Season Loop
+
+**Summary**
+
+Added a narrow audience-pricing layer inside the existing season planning loop. `ConcertProgram` now carries optional student-ticket policy. Forecasts and reports now include segment-level audience mix, and ticket revenue is calculated from segment attendance times each segment's effective ticket price instead of `totalAttendance * standardTicketPrice`.
+
+**Rationale**
+
+The change makes price affect who comes, not just how many people come. Student tickets are a visible production choice that can restore Students & Educators attendance at high standard prices while lowering average yield. Institutional meters remain unchanged for this slice; the feature affects audience mix and money only.
+
+**Files changed**
+
+- `src/types/core.ts`
+- `src/sim/forecastProgram.ts`
+- `src/sim/resolveConcert.ts`
+- `src/App.tsx`
+- `src/components/ProgramBuilder.tsx`
+- `src/components/ConcertForecast.tsx`
+- `src/components/ConcertReport.tsx`
+- `src/styles/app.css`
+- `vite.config.ts`
+- `.gitignore`
+- `tests/resolveConcert.test.ts`
+- `tests/season.test.ts`
+- `docs/PROGRESS.md`
+
+**Tests run and results**
+
+```
+npm test
+
+ Test Files  4 passed (4)
+      Tests  51 passed (51)
+```
+
+```
+npm run build
+
+✓ built in 496ms
+```
+
+Live UI check:
+- Ran `npm run dev -- --host 127.0.0.1`.
+- Verified the planning screen renders Student Tickets and Student Price controls.
+- Verified the student-ticket checkbox toggles from Off to Enabled in the browser.
+
+**Known issues / risks**
+
+- `.gitignore` and Vitest excludes now keep local agent/browser tooling folders out of staged changes and test discovery.
+- Browser tooling confirmed the new controls, but its limited drag/drop API did not complete a live repertoire-card drag to verify the completed forecast panel visually. Forecast/report audience mix is covered by simulation tests and production build.
+- No student ticket cap, targeted marketing, subscription model, or audience-trust delta was added.
+
+**Handoff note**
+
+The audience-pricing layer preserves the current architecture: `ConcertProgram` stores player policy, `forecastProgram` owns deterministic segment math, `resolveConcert` applies concert variance to the forecasted mix, and React components only display/control the state. Revenue totals in forecast, report, cash delta, and season summary now flow from segment revenue.
+
+**Next recommended action**
+
+Play a full four-concert season with contrasting programs and prices to tune whether Students & Educators and Young Professionals fall off sharply enough without making high-price prestige programs too reliable.
+
+---
 
 ### 2026-05-18 — Issue #13 repertoire expansion and nested picker
 

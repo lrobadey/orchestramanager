@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { type ConcertReport, type Work } from '../types/core'
+import { type AudienceBreakdown, type ConcertReport, type Work } from '../types/core'
 
 interface ConcertReportProps {
   report: ConcertReport
@@ -45,6 +45,23 @@ function ReportRow({ label, value }: { label: string; value: ReactNode }) {
   )
 }
 
+function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
+  return (
+    <div className="audience-mix-list">
+      {rows.map(row => (
+        <div key={row.segmentId} className="audience-mix-row audience-mix-row-report">
+          <span className="audience-segment-name">{row.segmentName}</span>
+          <span className="audience-segment-count">{row.attendance.toLocaleString()}</span>
+          <span className="audience-segment-share">
+            {Math.round(row.shareOfHouse * 100)}%
+          </span>
+          <span className="audience-segment-revenue">{fmt(row.ticketRevenue)}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function outcomeClass(quality: number): string {
   if (quality >= 70) return 'outcome-pass'
   if (quality >= 40) return 'outcome-ok'
@@ -62,6 +79,11 @@ export default function ConcertReport({ report, selectedWorks, onDone, concertNu
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
           {selectedWorks.map(w => w.title).join(' · ')}
         </p>
+      </div>
+
+      <div className="panel" style={{ marginBottom: '0.75rem' }}>
+        <h3 style={{ marginBottom: '0.75rem' }}>Audience Mix</h3>
+        <AudienceMix rows={report.audienceBreakdown} />
       </div>
 
       <div className="panel" style={{ marginBottom: '0.75rem' }}>

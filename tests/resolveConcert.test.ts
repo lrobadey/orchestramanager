@@ -19,6 +19,8 @@ const safeProgram: ConcertProgram = {
   rehearsalAllocation: [7, 7, 6],
   marketingSpend: 15_000,
   ticketPrice: 65,
+  studentTicketsEnabled: false,
+  studentTicketPrice: 25,
 }
 
 // Contemporary-heavy program — loads 65/60/58, needing ~12-13h each with the
@@ -31,6 +33,8 @@ const adventurousProgram: ConcertProgram = {
   rehearsalAllocation: [7, 7, 6],
   marketingSpend: 5_000,
   ticketPrice: 55,
+  studentTicketsEnabled: false,
+  studentTicketPrice: 25,
 }
 
 function makeInput(program: ConcertProgram): ForecastInput {
@@ -107,6 +111,140 @@ describe('forecastProgram', () => {
     expect(cheap.projectedAttendance).toBeGreaterThan(expensive.projectedAttendance)
   })
 
+  it('calculates projected attendance and revenue from segment breakdown', () => {
+    const forecast = forecastProgram(makeInput(safeProgram))
+    const attendanceFromSegments = forecast.projectedAudienceBreakdown.reduce(
+      (sum, row) => sum + row.attendance,
+      0,
+    )
+    const revenueFromSegments = forecast.projectedAudienceBreakdown.reduce(
+      (sum, row) => sum + row.ticketRevenue,
+      0,
+    )
+
+    expect(forecast.projectedAudienceBreakdown).toHaveLength(audienceSegments.length)
+    expect(forecast.projectedAttendance).toBe(attendanceFromSegments)
+    expect(forecast.projectedRevenue).toBe(revenueFromSegments)
+  })
+
+  it('student tickets materially restore student attendance without affecting other segments', () => {
+    const standardHigh = forecastProgram(
+      makeInput({
+        ...safeProgram,
+        ticketPrice: 70,
+        studentTicketsEnabled: false,
+        studentTicketPrice: 25,
+      }),
+    )
+    const withStudents = forecastProgram(
+      makeInput({
+        ...safeProgram,
+        ticketPrice: 70,
+        studentTicketsEnabled: true,
+        studentTicketPrice: 25,
+      }),
+    )
+
+    const beforeStudents = standardHigh.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'students-educators',
+    )!
+    const afterStudents = withStudents.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'students-educators',
+    )!
+    expect(afterStudents.attendance).toBeGreaterThan(beforeStudents.attendance * 1.25)
+    expect(afterStudents.effectiveTicketPrice).toBe(25)
+
+    for (const row of withStudents.projectedAudienceBreakdown) {
+      if (row.segmentId === 'students-educators') continue
+      const before = standardHigh.projectedAudienceBreakdown.find(
+        beforeRow => beforeRow.segmentId === row.segmentId,
+      )!
+      expect(row.attendance).toBe(before.attendance)
+      expect(row.effectiveTicketPrice).toBe(70)
+    }
+  })
+
+  it('student tickets lower average yield while increasing total attendance', () => {
+    const standardHigh = forecastProgram(
+      makeInput({
+        ...safeProgram,
+        ticketPrice: 70,
+        studentTicketsEnabled: false,
+        studentTicketPrice: 25,
+      }),
+    )
+    const withStudents = forecastProgram(
+      makeInput({
+        ...safeProgram,
+        ticketPrice: 70,
+        studentTicketsEnabled: true,
+        studentTicketPrice: 25,
+      }),
+    )
+
+    const standardYield = standardHigh.projectedRevenue / standardHigh.projectedAttendance
+    const studentYield = withStudents.projectedRevenue / withStudents.projectedAttendance
+
+    expect(withStudents.projectedAttendance).toBeGreaterThan(standardHigh.projectedAttendance)
+    expect(studentYield).toBeLessThan(standardYield)
+  })
+
+  it('high standard prices hit students harder than prestige-friendly patrons', () => {
+    const moderate = forecastProgram(makeInput({ ...safeProgram, ticketPrice: 50 }))
+    const high = forecastProgram(makeInput({ ...safeProgram, ticketPrice: 110 }))
+
+    const moderateStudents = moderate.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'students-educators',
+    )!
+    const highStudents = high.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'students-educators',
+    )!
+    const moderateDonors = moderate.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'donors-patrons',
+    )!
+    const highDonors = high.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'donors-patrons',
+    )!
+
+    expect(highStudents.priceAccessibilityScore).toBeLessThan(
+      moderateStudents.priceAccessibilityScore - 30,
+    )
+    expect(highDonors.priceAccessibilityScore).toBeGreaterThan(
+      highStudents.priceAccessibilityScore + 40,
+    )
+    expect(highDonors.attendance).toBeGreaterThanOrEqual(moderateDonors.attendance - 2)
+  })
+
+  it('high-price prestige lift stays small and requires donor-friendly programming', () => {
+    const prestigeModerate = forecastProgram(makeInput({ ...safeProgram, ticketPrice: 70 }))
+    const prestigeHigh = forecastProgram(makeInput({ ...safeProgram, ticketPrice: 110 }))
+    const weakModerate = forecastProgram(makeInput({ ...adventurousProgram, ticketPrice: 70 }))
+    const weakHigh = forecastProgram(makeInput({ ...adventurousProgram, ticketPrice: 110 }))
+
+    const prestigeDonorsModerate = prestigeModerate.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'donors-patrons',
+    )!
+    const prestigeDonorsHigh = prestigeHigh.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'donors-patrons',
+    )!
+    const weakDonorsModerate = weakModerate.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'donors-patrons',
+    )!
+    const weakDonorsHigh = weakHigh.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'donors-patrons',
+    )!
+    const prestigeSupportersModerate = prestigeModerate.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'seasoned-supporters',
+    )!
+    const prestigeSupportersHigh = prestigeHigh.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'seasoned-supporters',
+    )!
+
+    expect(prestigeDonorsHigh.attendance - prestigeDonorsModerate.attendance).toBeLessThanOrEqual(2)
+    expect(prestigeSupportersHigh.attendance - prestigeSupportersModerate.attendance).toBeLessThanOrEqual(8)
+    expect(weakDonorsHigh.attendance).toBeLessThanOrEqual(weakDonorsModerate.attendance)
+  })
+
   it('contemporary-heavy program has lower donorResponse than canon program', () => {
     const canonForecast = forecastProgram(makeInput(safeProgram))
     const adventurousForecast = forecastProgram(makeInput(adventurousProgram))
@@ -129,6 +267,8 @@ describe('forecastProgram', () => {
       rehearsalAllocation: [10, 10, 0],
       marketingSpend: 20_000,
       ticketPrice: 85,
+      studentTicketsEnabled: false,
+      studentTicketPrice: 25,
     }
     const forecast = forecastProgram(makeInput(twoWorkProgram))
     expect(forecast.isComplete).toBe(true)
@@ -145,6 +285,8 @@ describe('forecastProgram', () => {
       rehearsalAllocation: [10, 10, 0],
       marketingSpend: 20_000,
       ticketPrice: 85,
+      studentTicketsEnabled: false,
+      studentTicketPrice: 25,
     }
     expect(() => forecastProgram(makeInput(twoWorkProgram))).not.toThrow()
   })
@@ -157,6 +299,8 @@ describe('forecastProgram', () => {
       rehearsalAllocation: [10, 10, 0],
       marketingSpend: 20_000,
       ticketPrice: 85,
+      studentTicketsEnabled: false,
+      studentTicketPrice: 25,
     }
     const forecast = forecastProgram(makeInput(incompleteTwoWorkProgram))
     expect(forecast.isComplete).toBe(false)
@@ -173,6 +317,8 @@ describe('forecastProgram', () => {
       rehearsalAllocation: [8, 8, 0],
       marketingSpend: 20_000,
       ticketPrice: 85,
+      studentTicketsEnabled: false,
+      studentTicketPrice: 25,
     }
     expect(() => forecastProgram(makeInput(badTwoWorkProgram))).toThrow(/sum to 20/)
   })
@@ -185,6 +331,7 @@ describe('resolveConcert', () => {
     const report = resolveConcert({ ...makeInput(safeProgram), roll: 50 })
     expect(report.attendance).toBeGreaterThan(0)
     expect(report.revenue).toBeGreaterThan(0)
+    expect(report.audienceBreakdown).toHaveLength(audienceSegments.length)
     expect(report.expenses).toBeGreaterThan(0)
     expect(typeof report.net).toBe('number')
     expect(report.performanceQuality).toBeGreaterThanOrEqual(0)
@@ -205,6 +352,41 @@ describe('resolveConcert', () => {
     const bad = resolveConcert({ ...makeInput(safeProgram), roll: 10 })
     const good = resolveConcert({ ...makeInput(safeProgram), roll: 90 })
     expect(good.performanceQuality).toBeGreaterThan(bad.performanceQuality)
+  })
+
+  it('turns projected segment breakdown into actual segment breakdown with revenue math preserved', () => {
+    const forecast = forecastProgram(
+      makeInput({ ...safeProgram, ticketPrice: 70, studentTicketsEnabled: true }),
+    )
+    const report = resolveConcert({
+      ...makeInput({ ...safeProgram, ticketPrice: 70, studentTicketsEnabled: true }),
+      roll: 80,
+    })
+    const reportAttendance = report.audienceBreakdown.reduce(
+      (sum, row) => sum + row.attendance,
+      0,
+    )
+    const reportRevenue = report.audienceBreakdown.reduce(
+      (sum, row) => sum + row.ticketRevenue,
+      0,
+    )
+    const studentForecast = forecast.projectedAudienceBreakdown.find(
+      row => row.segmentId === 'students-educators',
+    )!
+    const studentReport = report.audienceBreakdown.find(
+      row => row.segmentId === 'students-educators',
+    )!
+
+    expect(report.attendance).toBe(reportAttendance)
+    expect(report.revenue).toBe(reportRevenue)
+    expect(report.net).toBe(reportRevenue - report.expenses)
+    expect(studentReport.attendance).toBeGreaterThan(studentForecast.attendance)
+    expect(studentReport.ticketRevenue).toBe(
+      studentReport.attendance * studentReport.effectiveTicketPrice,
+    )
+    expect(
+      report.audienceBreakdown.reduce((sum, row) => sum + row.shareOfHouse, 0),
+    ).toBeCloseTo(1)
   })
 
   it('under-rehearsed adventurous program has higher risk than safe prepared program', () => {

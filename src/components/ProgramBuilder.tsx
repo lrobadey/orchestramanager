@@ -706,6 +706,40 @@ export default function ProgramBuilder({
               />
               <span className="slider-value">${program.ticketPrice}</span>
             </div>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={program.studentTicketsEnabled}
+                onChange={e =>
+                  onProgramChange({
+                    ...program,
+                    studentTicketsEnabled: e.target.checked,
+                  })
+                }
+              />
+              <span className="slider-label">Student Tickets</span>
+              <span className="checkbox-value">
+                {program.studentTicketsEnabled ? 'Enabled' : 'Off'}
+              </span>
+            </label>
+            <div className="slider-row">
+              <span className="slider-label">Student Price</span>
+              <input
+                type="range"
+                min={10}
+                max={50}
+                step={5}
+                value={program.studentTicketPrice}
+                disabled={!program.studentTicketsEnabled}
+                onChange={e =>
+                  onProgramChange({
+                    ...program,
+                    studentTicketPrice: Number(e.target.value),
+                  })
+                }
+              />
+              <span className="slider-value">${program.studentTicketPrice}</span>
+            </div>
           </div>
 
           <button

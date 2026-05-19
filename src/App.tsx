@@ -34,6 +34,8 @@ const emptyProgram = (): ConcertProgram => ({
   rehearsalAllocation: evenAllocation(),
   marketingSpend: 15_000,
   ticketPrice: 70,
+  studentTicketsEnabled: false,
+  studentTicketPrice: 25,
 })
 
 export default function App() {

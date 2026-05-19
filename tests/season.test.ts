@@ -14,6 +14,8 @@ const safeProgram: ConcertProgram = {
   rehearsalAllocation: [7, 7, 6],
   marketingSpend: 15_000,
   ticketPrice: 65,
+  studentTicketsEnabled: false,
+  studentTicketPrice: 25,
 }
 
 const adventurousProgram: ConcertProgram = {
@@ -23,6 +25,8 @@ const adventurousProgram: ConcertProgram = {
   rehearsalAllocation: [7, 7, 6],
   marketingSpend: 10_000,
   ticketPrice: 55,
+  studentTicketsEnabled: false,
+  studentTicketPrice: 25,
 }
 
 function makeReport(program: ConcertProgram, institution = startingInstitution) {

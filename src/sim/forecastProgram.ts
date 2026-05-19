@@ -5,6 +5,7 @@ import {
   InstitutionState,
   ConcertProgram,
   ConcertForecast,
+  AudienceBreakdown,
   SlotTuple,
   TOTAL_REHEARSAL_HOURS,
 } from '../types/core'
@@ -66,11 +67,20 @@ function computeAttendance(
   segments: AudienceSegment[],
   adjustedDraw: number,
   prestige: number,
+  donorComfort: number,
   novelty: number,
-  ticketPrice: number,
-): number {
-  let total = 0
-  for (const seg of segments) {
+  program: ConcertProgram,
+): AudienceBreakdown[] {
+  const prestigeSignal = Math.max(prestige, donorComfort)
+  const donorPrestigeLift = program.ticketPrice > 80 && prestigeSignal > 70
+    ? clamp(((program.ticketPrice - 80) / 80) * ((prestigeSignal - 70) / 30) * 8, 0, 6)
+    : 0
+
+  const breakdown = segments.map(seg => {
+    const effectiveTicketPrice =
+      seg.id === 'students-educators' && program.studentTicketsEnabled
+        ? program.studentTicketPrice
+        : program.ticketPrice
     const canonScore = 100 - novelty
     const contemporaryScore = novelty
     const tasteMatch =
@@ -78,14 +88,62 @@ function computeAttendance(
         seg.contemporaryAffinity * (contemporaryScore / 100) +
         seg.prestigeAffinity * (prestige / 100)) /
       3
-    const segPricePenalty =
+    const priceAccessibilityScore = priceAccessibilityForSegment(seg, effectiveTicketPrice)
+    const prestigeLift = donorPrestigeLiftForSegment(seg.id, donorPrestigeLift)
+    const interestRate =
+      clamp((tasteMatch + adjustedDraw) / 2 + prestigeLift, 0, 100) / 100
+    const attendance =
+      seg.size * (seg.loyalty / 100) * interestRate * (priceAccessibilityScore / 100)
+
+    return {
+      segmentId: seg.id,
+      segmentName: seg.name,
+      attendance: Math.round(attendance),
+      shareOfHouse: 0,
+      effectiveTicketPrice,
+      ticketRevenue: Math.round(attendance) * effectiveTicketPrice,
+      priceAccessibilityScore: Math.round(priceAccessibilityScore),
+    }
+  })
+
+  return withHouseShares(breakdown)
+}
+
+function priceAccessibilityForSegment(segment: AudienceSegment, ticketPrice: number): number {
+  let penalty = 0
+
+  if (segment.id === 'students-educators') {
+    penalty = ticketPrice <= 25 ? 0 : Math.pow((ticketPrice - 25) / 45, 1.35) * 55
+  } else if (segment.id === 'young-professionals') {
+    penalty = ticketPrice <= 45 ? 0 : Math.pow((ticketPrice - 45) / 55, 1.25) * 38
+  } else if (segment.id === 'cultural-explorers') {
+    penalty = ticketPrice <= 60 ? 0 : Math.pow((ticketPrice - 60) / 70, 1.1) * 24
+  } else if (segment.id === 'seasoned-supporters') {
+    penalty = ticketPrice <= 65 ? 0 : ((ticketPrice - 65) / 90) * 18
+  } else if (segment.id === 'donors-patrons') {
+    penalty = ticketPrice <= 95 ? 0 : ((ticketPrice - 95) / 120) * 8
+  } else {
+    penalty =
       ticketPrice > 60
-        ? ((ticketPrice - 60) / 120) * (seg.priceSensitivity / 100) * 30
+        ? ((ticketPrice - 60) / 120) * (segment.priceSensitivity / 100) * 30
         : 0
-    const interestRate = clamp((tasteMatch + adjustedDraw) / 2 - segPricePenalty, 0, 100) / 100
-    total += seg.size * (seg.loyalty / 100) * interestRate
   }
-  return Math.round(total)
+
+  return clamp(100 - penalty, 20, 100)
+}
+
+function donorPrestigeLiftForSegment(segmentId: string, lift: number): number {
+  if (segmentId === 'donors-patrons') return lift
+  if (segmentId === 'seasoned-supporters') return lift * 0.45
+  return 0
+}
+
+function withHouseShares(breakdown: AudienceBreakdown[]): AudienceBreakdown[] {
+  const totalAttendance = breakdown.reduce((sum, row) => sum + row.attendance, 0)
+  return breakdown.map(row => ({
+    ...row,
+    shareOfHouse: totalAttendance > 0 ? row.attendance / totalAttendance : 0,
+  }))
 }
 
 function buildForecastNotes(
@@ -147,6 +205,7 @@ function emptyForecast(
   return {
     projectedAttendance: 0,
     projectedRevenue: 0,
+    projectedAudienceBreakdown: [],
     projectedExpenses: 0,
     projectedNet: 0,
     performanceRisk: 0,
@@ -257,14 +316,22 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     )
   }) as SlotTuple<number | null>
 
-  const projectedAttendance = computeAttendance(
+  const projectedAudienceBreakdown = computeAttendance(
     audienceSegments,
     adjustedDraw,
     programPrestige,
+    programDonorComfort,
     programNovelty,
-    program.ticketPrice,
+    program,
   )
-  const projectedRevenue = projectedAttendance * program.ticketPrice
+  const projectedAttendance = projectedAudienceBreakdown.reduce(
+    (sum, row) => sum + row.attendance,
+    0,
+  )
+  const projectedRevenue = projectedAudienceBreakdown.reduce(
+    (sum, row) => sum + row.ticketRevenue,
+    0,
+  )
   const totalRehearsalHours = program.rehearsalAllocation.reduce((s, h) => s + h, 0)
   const projectedExpenses =
     BASE_CONCERT_COST + totalRehearsalHours * REHEARSAL_COST_PER_HOUR + program.marketingSpend
@@ -285,6 +352,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   return {
     projectedAttendance,
     projectedRevenue,
+    projectedAudienceBreakdown,
     projectedExpenses,
     projectedNet,
     performanceRisk,

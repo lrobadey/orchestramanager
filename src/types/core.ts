@@ -82,6 +82,8 @@ export interface ConcertProgram {
   rehearsalAllocation: SlotTuple<number>
   marketingSpend: number
   ticketPrice: number
+  studentTicketsEnabled: boolean
+  studentTicketPrice: number
 }
 
 export const TOTAL_REHEARSAL_HOURS = 20
@@ -89,6 +91,7 @@ export const TOTAL_REHEARSAL_HOURS = 20
 export interface ConcertForecast {
   projectedAttendance: number
   projectedRevenue: number
+  projectedAudienceBreakdown: AudienceBreakdown[]
   projectedExpenses: number
   projectedNet: number
   performanceRisk: number
@@ -127,9 +130,20 @@ export interface InstitutionalDeltas {
   identity: Partial<IdentityProfile>
 }
 
+export interface AudienceBreakdown {
+  segmentId: string
+  segmentName: string
+  attendance: number
+  shareOfHouse: number
+  effectiveTicketPrice: number
+  ticketRevenue: number
+  priceAccessibilityScore: number
+}
+
 export interface ConcertReport {
   attendance: number
   revenue: number
+  audienceBreakdown: AudienceBreakdown[]
   expenses: number
   net: number
   performanceQuality: number
