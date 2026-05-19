@@ -2,6 +2,7 @@ import {
   ConcertReport,
   SectionOutcome,
   InstitutionalDeltas,
+  AudienceBreakdown,
 } from '../types/core'
 import { ForecastInput, forecastProgram } from './forecastProgram'
 import { clamp, average } from './scoring'
@@ -103,6 +104,27 @@ function buildNotableMoments(
   return moments.slice(0, 4)
 }
 
+function resolveAudienceBreakdown(
+  projectedBreakdown: AudienceBreakdown[],
+  variance: number,
+): AudienceBreakdown[] {
+  const resolved = projectedBreakdown.map(row => {
+    const attendance = Math.round(clamp(row.attendance * (1 + variance * 0.15), 0, 2000))
+    return {
+      ...row,
+      attendance,
+      shareOfHouse: 0,
+      ticketRevenue: attendance * row.effectiveTicketPrice,
+    }
+  })
+
+  const totalAttendance = resolved.reduce((sum, row) => sum + row.attendance, 0)
+  return resolved.map(row => ({
+    ...row,
+    shareOfHouse: totalAttendance > 0 ? row.attendance / totalAttendance : 0,
+  }))
+}
+
 export function resolveConcert(input: ResolveInput): ConcertReport {
   const roll = input.roll ?? 50
   // Variance factor: -1 to +1 centered on 0 at roll=50
@@ -131,11 +153,12 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     )
   const performanceQuality = Math.round(clamp(baseQuality + variance * 12, 0, 100))
 
-  // Attendance: forecast with variance
-  const attendance = Math.round(
-    clamp(forecast.projectedAttendance * (1 + variance * 0.15), 0, 2000),
+  const audienceBreakdown = resolveAudienceBreakdown(
+    forecast.projectedAudienceBreakdown,
+    variance,
   )
-  const revenue = attendance * input.program.ticketPrice
+  const attendance = audienceBreakdown.reduce((sum, row) => sum + row.attendance, 0)
+  const revenue = audienceBreakdown.reduce((sum, row) => sum + row.ticketRevenue, 0)
   const expenses = forecast.projectedExpenses
   const net = revenue - expenses
 
@@ -194,6 +217,7 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   return {
     attendance,
     revenue,
+    audienceBreakdown,
     expenses,
     net,
     performanceQuality,

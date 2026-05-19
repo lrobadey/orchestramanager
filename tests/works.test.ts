@@ -79,6 +79,8 @@ function makeProgram(ids: [string, string]): ConcertProgram {
     rehearsalAllocation: [10, 10, 0],
     marketingSpend: 15_000,
     ticketPrice: 70,
+    studentTicketsEnabled: false,
+    studentTicketPrice: 25,
   }
 }
 

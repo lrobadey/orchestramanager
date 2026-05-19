@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { type ConcertForecast, type SlotTuple, type Work } from '../types/core'
+import { type AudienceBreakdown, type ConcertForecast, type SlotTuple, type Work } from '../types/core'
 
 interface ConcertForecastProps {
   forecast: ConcertForecast
@@ -50,6 +50,22 @@ function ForecastRow({ label, value, animKey }: { label: string; value: ReactNod
   )
 }
 
+function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
+  return (
+    <div className="audience-mix-list">
+      {rows.map(row => (
+        <div key={row.segmentId} className="audience-mix-row">
+          <span className="audience-segment-name">{row.segmentName}</span>
+          <span className="audience-segment-count">{row.attendance.toLocaleString()}</span>
+          <span className="audience-segment-share">
+            {Math.round(row.shareOfHouse * 100)}%
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function ConcertForecast({ forecast, slotWorks, workCount }: ConcertForecastProps) {
   if (!forecast.isComplete) {
     return (
@@ -93,6 +109,11 @@ export default function ConcertForecast({ forecast, slotWorks, workCount }: Conc
             animKey={forecast.projectedNet}
           />
         </div>
+      </section>
+
+      <section className="forecast-section">
+        <h3 className="forecast-section-title">Audience Mix</h3>
+        <AudienceMix rows={forecast.projectedAudienceBreakdown} />
       </section>
 
       <section className="forecast-section">
