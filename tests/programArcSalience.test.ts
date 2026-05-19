@@ -226,6 +226,26 @@ describe('computeProgramArcSalience', () => {
 
     expect(highNovelty.noveltyVolatilityWeight).toBeGreaterThan(lowNovelty.noveltyVolatilityWeight)
     expect(highNovelty.perceivedUpside).toBeGreaterThan(lowNovelty.perceivedUpside)
+    expect(lowNovelty.perceivedUpside).toBeLessThan(10)
+  })
+
+  it('does not label low-novelty prestige as novelty upside', () => {
+    const result = computeProgramArcSalience([{
+      slotIndex: 1,
+      workCount: 2,
+      work: makeWork({
+        id: 'prestige-warhorse',
+        title: 'Prestige Warhorse',
+        novelty: 5,
+        artisticPrestige: 95,
+        durationMinutes: 60,
+      }),
+      rehearsalPressure: 0,
+      performanceRisk: 5,
+    }])
+
+    expect(result.aggregatePerceivedUpside).toBeLessThan(10)
+    expect(result.notes.some(note => note.includes('convert novelty into identity upside'))).toBe(false)
   })
 })
 
