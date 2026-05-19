@@ -73,11 +73,18 @@ function computePerceivedDamage(
 
 function computePerceivedUpside(
   performanceRisk: number,
+  novelty: number,
   noveltyVolatility: number,
   prestige: number,
   placement: number,
 ): number {
-  const rawUpside = Math.max(0, 100 - performanceRisk) * noveltyVolatility * prestige * placement
+  const noveltyFactor = clamp(novelty, 0, 100) / 100
+  const rawUpside =
+    Math.max(0, 100 - performanceRisk) *
+    noveltyFactor *
+    noveltyVolatility *
+    prestige *
+    placement
   return clamp(rawUpside / 2, 0, 100)
 }
 
@@ -112,7 +119,13 @@ function buildNotes(
 
   const upside = [...perWork].sort((a, b) => b.perceivedUpside - a.perceivedUpside)[0]
   const upsideInput = input.find(work => work.work.id === upside.workId && work.slotIndex === upside.slotIndex)
-  if (upside && upsideInput && upside.perceivedUpside >= 45 && upside.perceivedDamage < 30) {
+  if (
+    upside &&
+    upsideInput &&
+    upsideInput.work.novelty >= 50 &&
+    upside.perceivedUpside >= 45 &&
+    upside.perceivedDamage < 30
+  ) {
     notes.push(`${upsideInput.work.title} can convert novelty into identity upside if the performance lands.`)
   }
 
@@ -146,6 +159,7 @@ export function computeProgramArcSalience(input: ProgramArcWorkInput[]): Program
       ),
       perceivedUpside: computePerceivedUpside(
         performanceRisk,
+        work.novelty,
         noveltyVolatility,
         prestige,
         placement,
