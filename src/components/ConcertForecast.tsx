@@ -80,6 +80,9 @@ export default function ConcertForecast({ forecast, slotWorks, workCount }: Conc
   }
 
   const netClass = forecast.projectedNet >= 0 ? 'risk-low' : 'risk-high'
+  const memoryAnchor = slotWorks
+    .slice(0, workCount)
+    .find(work => work?.id === forecast.memoryAnchorWorkId)
 
   return (
     <div className="forecast-panel">
@@ -170,6 +173,33 @@ export default function ConcertForecast({ forecast, slotWorks, workCount }: Conc
       </section>
 
       <section className="forecast-section">
+        <h3 className="forecast-section-title">Program Arc</h3>
+        <div className="forecast-grid">
+          <ForecastRow
+            label="Arc Risk"
+            value={
+              <span className={riskClass(forecast.arcPerceivedDamage)}>
+                {Math.round(forecast.arcPerceivedDamage)}
+              </span>
+            }
+            animKey={Math.round(forecast.arcPerceivedDamage)}
+          />
+          <ForecastRow
+            label="Arc Upside"
+            value={
+              <span className={qualityClass(forecast.arcPerceivedUpside)}>
+                {Math.round(forecast.arcPerceivedUpside)}
+              </span>
+            }
+            animKey={Math.round(forecast.arcPerceivedUpside)}
+          />
+        </div>
+        {memoryAnchor && (
+          <p className="forecast-arc-note">Memory anchor: {memoryAnchor.title}</p>
+        )}
+      </section>
+
+      <section className="forecast-section">
         <h3 className="forecast-section-title">Section Stress</h3>
         <div className="forecast-grid">
           {(Object.entries(forecast.sectionStress) as [string, number][]).map(([section, stress]) => (
@@ -188,6 +218,7 @@ export default function ConcertForecast({ forecast, slotWorks, workCount }: Conc
         <div className="forecast-perpiece-list">
           {slotWorks.slice(0, workCount).map((work, i) => {
             const risk = forecast.perWorkPerformanceRisk[i]
+            const arcDamage = forecast.perWorkArcDamage[i]
             const need = forecast.perWorkRehearsalHoursNeeded[i]
             const alloc = forecast.perWorkRehearsalHoursAllocated[i]
             const gap = need !== null && alloc !== null ? need - alloc : 0
@@ -201,6 +232,9 @@ export default function ConcertForecast({ forecast, slotWorks, workCount }: Conc
                   <span className={`forecast-perpiece-risk ${riskClass(risk)}`}>
                     {Math.round(risk)}
                   </span>
+                )}
+                {arcDamage !== null && arcDamage > 15 && (
+                  <span className="forecast-perpiece-pressure">arc {Math.round(arcDamage)}</span>
                 )}
                 {gap > 0 && (
                   <span className="forecast-perpiece-pressure">+{Math.round(gap)}h short</span>

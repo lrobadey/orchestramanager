@@ -7,14 +7,64 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 ## Current Status
 
 **Last updated:** 2026-05-19
-**Current milestone:** Milestone 1 — Four-Concert Season Loop, with a tight Milestone 3 audience/finance slice
-**Current playable state:** Full four-concert season loop is playable. Player can choose 2- or 3-work programs from a nested Era -> Composer -> Works repertoire library, allocate rehearsal hours, set marketing spend and standard price, enable optional student tickets, view projected audience mix and segment-aware revenue, run each concert, read actual audience mix in reports, and receive a season summary after all four concerts.
-**Latest PR:** Audience ticket pricing and student tickets slice
+**Current milestone:** Milestone 1 — Four-Concert Season Loop, with a placement-aware concert perception slice
+**Current playable state:** Full four-concert season loop is playable. Player can choose 2- or 3-work programs from a nested Era -> Composer -> Works repertoire library, allocate rehearsal hours, set marketing spend and standard price, enable optional student tickets, view projected audience mix and segment-aware revenue, see program-arc salience/memory-anchor readouts in the forecast, run each concert, read actual audience mix in reports, and receive a season summary after all four concerts.
+**Latest PR:** Program Arc Salience for placement-aware concert perception
 **Known blockers:** None currently recorded.
-**Current risks:** Audience segmentation is still deterministic and intentionally narrow; no student ticket cap, audience trust delta, targeted marketing, subscription model, or full audience tab exists yet.
-**Next recommended action:** Play through a complete season and review whether the new audience mix makes pricing decisions legible without overcrowding the single-screen loop.
+**Current risks:** Arc-salience coefficients are intentionally first-pass tuning values. Local `npm test` / `npm run build` validation was not available in the connector environment; rely on PR CI before merge.
+**Next recommended action:** Play through several reordered versions of the same program and tune whether finale/opener/familiarity/duration penalties feel strong enough without making the middle slot irrelevant.
 
 ## Log Entries
+
+### 2026-05-19 — Program Arc Salience
+
+**Primary milestone:** Milestone 1 — Four-Concert Season Loop
+**Secondary milestone:** Concert perception / programming strategy slice
+
+**Summary**
+
+Added a pure Program Arc Salience layer so program order now affects perceived concert risk. The forecast keeps the existing raw rehearsal-pressure concept, but now also computes arc perceived damage, arc perceived upside, per-work arc damage, and a memory-anchor work. Concert resolution uses arc damage to shape audience response, prestige-weighted critic penalties, notable moments, and adventurous identity upside.
+
+**Rationale**
+
+The old model treated a concert like a bag of pieces: the worst-prepared work dominated the evening regardless of whether it opened, sat in the middle, or closed. This change makes programming order mechanically meaningful while staying narrow: underprepared finales and famous/long/prestigious works become more publicly exposed, while well-executed high-novelty works can create identity upside.
+
+**Files changed**
+
+- `src/types/core.ts`
+- `src/sim/programArcSalience.ts`
+- `src/sim/forecastProgram.ts`
+- `src/sim/resolveConcert.ts`
+- `src/components/ConcertForecast.tsx`
+- `tests/programArcSalience.test.ts`
+- `docs/PROGRESS.md`
+
+**Tests run and results**
+
+Not run locally. The remote execution environment available to this agent could not clone/install the repository dependencies, so validation should come from GitHub Actions on the PR.
+
+Recommended checks before merge:
+
+```
+npm test
+npm run build
+```
+
+**Known issues / risks**
+
+- Weight coefficients are first-pass balance values, not final tuning.
+- The UI adds only a compact forecast readout; it does not add a large program-arc dashboard.
+- No per-audience-segment salience, LLM review generation, save/load changes, or new repertoire data were added.
+
+**Handoff note**
+
+The helper is pure and React-free. `forecastProgram` owns salience calculation after per-work pressure/risk is known. `resolveConcert` consumes the forecasted salience rather than recomputing it. The old `rehearsalPressure` field remains available as the raw pressure signal for compatibility and tuning.
+
+**Next recommended action**
+
+Run full PR CI, then manually compare the same under-rehearsed work as opener, middle, and finale. Tune `placementWeight`, damage normalization, and the audience/critic penalty coefficients if the finale effect feels too weak or too punitive.
+
+---
 
 ### 2026-05-19 — Audience ticket pricing and student tickets
 
@@ -223,7 +273,7 @@ Replaced the flat rehearsal-pressure model with a leadership-weighted, section-a
 **What was added / changed**
 
 New simulation logic in `src/sim/scoring.ts`:
-- `computeRehearsalDivisor(work, principals)` — weighted average of per-section divisors (3.5–7), where each section's divisor is driven by its average principal leadership. Sections with no principals fall back to leadership 50 (divisor 5.25).
+- `computeRehearsalDivisor(work, principals)` — weighted average of per-section divisors (3.5–7), where each section's divisor is driven by each section's average principal leadership. Sections with no principals fall back to leadership 50 (divisor 5.25).
 - `rehearsalHoursNeeded(rehearsalLoad, divisor)` — converts load units to hours
 - `pressureFromHoursGap(hoursNeeded, hoursAllocated)` — converts hours gap back to the pressure scale (-40..100)
 
@@ -291,30 +341,6 @@ Not run; no simulation or logic changes.
 **Handoff note**
 
 Visual polish only. No component or simulation changes.
-
----
-
-### 2026-05-18 — PR #8: Bespoke concert program builder with live forecast
-
-**Primary milestone:** Milestone 0 — Opening Night Foundation (UI rewrite)
-
-**Summary**
-
-Replaced the placeholder program builder with a fully bespoke concert programming interface. Rehearsal hours are allocated via Framer Motion drag handles (one per work). The live forecast updates as the player adjusts the program, showing per-work rehearsal pressure and a real-time institutional forecast panel.
-
-**What was added / changed**
-
-- `src/components/ProgramBuilder.tsx` — complete rewrite with drag-based rehearsal allocation and live per-work stats
-- `src/components/ConcertForecast.tsx` — updated to render inline next to the builder
-- Fixed three correctness bugs in the original builder (wrong section stress calculation, misapplied price penalty, intermission not included in displayed total duration)
-
-**Tests run and results**
-
-Not run; no simulation changes (only UI).
-
-**Handoff note**
-
-The program builder is now the primary planning surface. The drag interaction makes rehearsal tradeoffs tactile. The live forecast makes consequences immediate.
 
 ---
 
