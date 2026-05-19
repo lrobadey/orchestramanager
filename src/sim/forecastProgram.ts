@@ -20,6 +20,7 @@ import {
   REHEARSAL_COST_PER_HOUR,
   BASE_CONCERT_COST,
 } from './scoring'
+import { computeProgramArcSalience } from './programArcSalience'
 
 export interface ForecastInput {
   works: Work[]
@@ -154,6 +155,7 @@ function buildForecastNotes(
   donorResponse: number,
   projectedNet: number,
   programNovelty: number,
+  arcNotes: string[],
 ): string[] {
   const notes: string[] = []
 
@@ -171,6 +173,8 @@ function buildForecastNotes(
 
   if (notes.length === 0 && rehearsalPressure < -10)
     notes.push('Well-prepared program — rehearsal surplus should stabilize performance quality.')
+
+  notes.push(...arcNotes)
 
   if (sectionStress.brass > 55)
     notes.push('Brass section will face significant exposed passages; principal reliability is critical.')
@@ -202,6 +206,7 @@ function emptyForecast(
   perWorkRehearsalDivisor: SlotTuple<number | null> = [null, null, null],
   perWorkRehearsalHoursNeeded: SlotTuple<number | null> = [null, null, null],
 ): ConcertForecast {
+  const arcSalience = computeProgramArcSalience([])
   return {
     projectedAttendance: 0,
     projectedRevenue: 0,
@@ -210,6 +215,11 @@ function emptyForecast(
     projectedNet: 0,
     performanceRisk: 0,
     rehearsalPressure: 0,
+    arcSalience,
+    arcPerceivedDamage: 0,
+    arcPerceivedUpside: 0,
+    perWorkArcDamage: [null, null, null],
+    memoryAnchorWorkId: null,
     audienceFit: 0,
     donorResponse: 0,
     identityImpact: 0,
@@ -289,7 +299,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     )
   }) as SlotTuple<number | null>
 
-  // Aggregate pressure: the weakest-prepared piece dominates the evening
+  // Aggregate pressure remains available as the raw weakest-prepared-piece signal.
   const validPressures = perWorkRehearsalPressure.filter((p): p is number => p !== null)
   const rehearsalPressure = validPressures.length > 0 ? Math.max(...validPressures) : 0
 
@@ -297,7 +307,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const avgSectionStress = average(Object.values(sectionStress))
 
   const performanceRisk = clamp(
-    Math.max(0, rehearsalPressure) * 0.4 +
+    Math.max(0, rehearsalPressure) * 0.3 +
       avgSectionStress * 0.35 -
       institution.technicalQuality * 0.15,
     0,
@@ -314,6 +324,27 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
       0,
       100,
     )
+  }) as SlotTuple<number | null>
+
+  const arcSalience = computeProgramArcSalience(
+    displaySlotWorks.flatMap((work, slotIndex) => {
+      const rehearsalPressure = perWorkRehearsalPressure[slotIndex]
+      const performanceRisk = perWorkPerformanceRisk[slotIndex]
+      if (!work || rehearsalPressure === null || performanceRisk === null) return []
+      return [{
+        slotIndex,
+        workCount: program.workCount,
+        work,
+        rehearsalPressure,
+        performanceRisk,
+      }]
+    }),
+  )
+  const arcPerceivedDamage = arcSalience.aggregatePerceivedDamage
+  const arcPerceivedUpside = arcSalience.aggregatePerceivedUpside
+  const perWorkArcDamage = displaySlotWorks.map((work, slotIndex) => {
+    if (!work) return null
+    return arcSalience.perWork.find(salience => salience.slotIndex === slotIndex)?.perceivedDamage ?? null
   }) as SlotTuple<number | null>
 
   const projectedAudienceBreakdown = computeAttendance(
@@ -347,6 +378,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     donorResponse,
     projectedNet,
     programNovelty,
+    arcSalience.notes,
   )
 
   return {
@@ -355,8 +387,13 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     projectedAudienceBreakdown,
     projectedExpenses,
     projectedNet,
-    performanceRisk,
+    performanceRisk: clamp(performanceRisk + arcPerceivedDamage * 0.12, 0, 100),
     rehearsalPressure,
+    arcSalience,
+    arcPerceivedDamage,
+    arcPerceivedUpside,
+    perWorkArcDamage,
+    memoryAnchorWorkId: arcSalience.memoryAnchorWorkId,
     audienceFit: adjustedDraw,
     donorResponse,
     identityImpact: programIdentityValue,
