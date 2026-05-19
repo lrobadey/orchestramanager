@@ -3,6 +3,7 @@ import {
   SectionOutcome,
   InstitutionalDeltas,
   AudienceBreakdown,
+  Work,
 } from '../types/core'
 import { ForecastInput, forecastProgram } from './forecastProgram'
 import { clamp, average } from './scoring'
@@ -63,29 +64,40 @@ function buildNotableMoments(
   programNovelty: number,
   rehearsalPressure: number,
   perWorkRehearsalPressure: (number | null)[],
-  workTitles: string[],
+  perWorkArcDamage: (number | null)[],
+  works: Work[],
+  memoryAnchorWork: Work | null,
 ): string[] {
   const moments: string[] = []
 
   const weakest = [...sectionOutcomes].sort((a, b) => a.quality - b.quality)[0]
   const strongest = [...sectionOutcomes].sort((a, b) => b.quality - a.quality)[0]
+  const anchorTitle = memoryAnchorWork?.title ?? works[works.length - 1]?.title ?? 'the final work'
 
   if (weakest.quality < 35)
-    moments.push(`${weakest.section} faltered in the exposed passages of ${workTitles[workTitles.length - 1]}.`)
+    moments.push(`${weakest.section} faltered in the exposed passages of ${anchorTitle}.`)
   if (strongest.quality > 82)
     moments.push(`${strongest.section} delivered the strongest playing of the evening.`)
 
   if (rehearsalPressure > 30) {
     let worstIdx = 0
-    let worstPressure = -Infinity
+    let worstScore = -Infinity
     for (let i = 0; i < perWorkRehearsalPressure.length; i++) {
-      const p = perWorkRehearsalPressure[i]
-      if (p !== null && p > worstPressure) {
-        worstPressure = p
-        worstIdx = i
+      const pressure = perWorkRehearsalPressure[i]
+      const arcDamage = perWorkArcDamage[i]
+      if (pressure !== null && arcDamage !== null) {
+        const score = pressure * 0.5 + arcDamage * 0.5
+        if (score > worstScore) {
+          worstScore = score
+          worstIdx = i
+        }
       }
     }
-    moments.push(`${workTitles[worstIdx]} showed signs of under-preparation — ensemble coordination was uneven.`)
+    moments.push(`${works[worstIdx].title} became the perceptual weak point of the program — ensemble coordination was uneven.`)
+  }
+
+  if (memoryAnchorWork && memoryAnchorWork.id !== works[works.length - 1]?.id) {
+    moments.push(`${memoryAnchorWork.title} became the evening's memory anchor despite not closing the program.`)
   }
 
   if (programNovelty > 65 && performanceQuality > 60)
@@ -125,6 +137,14 @@ function resolveAudienceBreakdown(
   }))
 }
 
+function prestigeWeightedArcDamage(works: Work[], perWorkArcDamage: (number | null)[]): number {
+  const weighted = works.map((work, index) => {
+    const damage = perWorkArcDamage[index] ?? 0
+    return damage * (0.75 + (work.artisticPrestige / 100) * 0.5)
+  })
+  return average(weighted)
+}
+
 export function resolveConcert(input: ResolveInput): ConcertReport {
   const roll = input.roll ?? 50
   // Variance factor: -1 to +1 centered on 0 at roll=50
@@ -140,13 +160,18 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     if (!w) throw new Error(`Work not found: ${id}`)
     return w
   })
+  const memoryAnchorWork = forecast.memoryAnchorWorkId
+    ? works.find(work => work.id === forecast.memoryAnchorWorkId) ?? null
+    : null
 
-  // Performance quality: institution quality + variance swing
+  // Performance quality: institution quality + variance swing, now using arc salience
+  // as the public-perception layer over raw rehearsal pressure.
   const baseQuality =
     clamp(
       input.institution.technicalQuality +
         input.institution.musicianMorale * 0.15 -
-        Math.max(0, forecast.rehearsalPressure) * 0.4 -
+        Math.max(0, forecast.rehearsalPressure) * 0.32 -
+        forecast.arcPerceivedDamage * 0.18 -
         average(Object.values(forecast.sectionStress)) * 0.25,
       0,
       100,
@@ -162,17 +187,24 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const expenses = forecast.projectedExpenses
   const net = revenue - expenses
 
-  // Audience response: draw adjusted by actual performance
+  // Audience response: draw and quality still matter, but arc damage captures
+  // where the failure occurred in the evening.
   const audienceResponse = Math.round(
-    clamp(forecast.audienceFit * 0.6 + performanceQuality * 0.4, 0, 100),
+    clamp(
+      forecast.audienceFit * 0.55 + performanceQuality * 0.35 - forecast.arcPerceivedDamage * 0.1,
+      0,
+      100,
+    ),
   )
 
-  // Critic response: prestige-seekers; quality and novelty both matter
+  // Critic response: prestige-seekers; quality, novelty, and prestige-weighted
+  // failures all matter.
   const programPrestige = average(works.map(w => w.artisticPrestige))
   const programNovelty = average(works.map(w => w.novelty))
+  const criticArcPenalty = prestigeWeightedArcDamage(works, forecast.perWorkArcDamage) * 0.1
   const criticResponse = Math.round(
     clamp(
-      performanceQuality * 0.5 + programPrestige * 0.3 + programNovelty * 0.2,
+      performanceQuality * 0.45 + programPrestige * 0.3 + programNovelty * 0.2 - criticArcPenalty,
       0,
       100,
     ),
@@ -185,7 +217,9 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     programNovelty,
     forecast.rehearsalPressure,
     forecast.perWorkRehearsalPressure,
-    works.map(w => w.title),
+    forecast.perWorkArcDamage,
+    works,
+    memoryAnchorWork,
   )
 
   // Institutional deltas
@@ -197,9 +231,13 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const moraleDelta = Math.round(clamp((performanceQuality - 50) * 0.2, -8, 8))
   const qualityDelta = performanceQuality > 70 ? 2 : performanceQuality < 40 ? -1 : 0
 
-  const identityDelta =
+  const adventurousUpside =
     programNovelty > 50
-      ? { adventurous: Math.round(programNovelty / 25) }
+      ? Math.round(clamp(programNovelty / 30 + Math.max(0, forecast.arcPerceivedUpside - forecast.arcPerceivedDamage) / 40, 1, 5))
+      : 0
+  const identityDelta =
+    adventurousUpside > 0
+      ? { adventurous: adventurousUpside }
       : programPrestige > 75
         ? { scholarly: 1 }
         : {}
@@ -223,6 +261,7 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     performanceQuality,
     audienceResponse,
     criticResponse,
+    memoryAnchorWorkId: forecast.memoryAnchorWorkId,
     sectionOutcomes,
     notableMoments,
     institutionalDeltas,
