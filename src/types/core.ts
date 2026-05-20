@@ -115,6 +115,29 @@ export interface ConcertProgram {
 
 export const TOTAL_REHEARSAL_HOURS = 20
 
+export type ProgramArcPlacementRole = 'opener' | 'middle' | 'finale'
+
+export interface ProgramArcWorkSalience {
+  workId: string
+  slotIndex: number
+  placementRole: ProgramArcPlacementRole
+  durationWeight: number
+  placementWeight: number
+  familiarityWeight: number
+  prestigeWeight: number
+  noveltyVolatilityWeight: number
+  perceivedDamage: number
+  perceivedUpside: number
+}
+
+export interface ProgramArcSalienceResult {
+  perWork: ProgramArcWorkSalience[]
+  aggregatePerceivedDamage: number
+  aggregatePerceivedUpside: number
+  memoryAnchorWorkId: string | null
+  notes: string[]
+}
+
 export interface ConcertForecast {
   projectedAttendance: number
   projectedRevenue: number
@@ -123,6 +146,11 @@ export interface ConcertForecast {
   projectedNet: number
   performanceRisk: number
   rehearsalPressure: number
+  arcSalience: ProgramArcSalienceResult
+  arcPerceivedDamage: number
+  arcPerceivedUpside: number
+  perWorkArcDamage: SlotTuple<number | null>
+  memoryAnchorWorkId: string | null
   audienceFit: number
   donorResponse: number
   identityImpact: number
@@ -188,6 +216,7 @@ export interface ConcertReport {
   performanceQuality: number
   audienceResponse: number
   criticResponse: number
+  memoryAnchorWorkId: string | null
   sectionOutcomes: SectionOutcome[]
   rosterChanges: PrincipalRosterChange[]
   notableMoments: string[]
