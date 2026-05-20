@@ -256,6 +256,7 @@ export interface SeasonState {
 export interface SeasonSummary {
   totalAttendance: number
   totalRevenue: number
+  totalDonorSupport: number
   totalExpenses: number
   totalNet: number
   startingInstitution: InstitutionState

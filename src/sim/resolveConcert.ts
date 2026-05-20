@@ -169,16 +169,22 @@ function buildFinancialNotes(
   const coveragePercent = expenses > 0 ? Math.round((totalIncome / expenses) * 100) : 100
 
   if (net < 0) {
-    const { rehearsal, marketing, production } = expenseBreakdown
-    const drivers: [string, number][] = [
-      ['high rehearsal overhead', rehearsal],
-      ['marketing spend', marketing],
-      ['production costs', production],
-    ]
-    const [driverName] = drivers.sort((a, b) => b[1] - a[1])[0]
-    notes.push(
-      `Income of ${fmt$(totalIncome)} covered ${coveragePercent}% of costs — the shortfall came primarily from ${driverName}.`,
-    )
+    if (totalIncome < expenseBreakdown.baseConcert) {
+      notes.push(
+        `Ticket sales and donor support (${fmt$(totalIncome)}) did not cover the base hall cost of ${fmt$(expenseBreakdown.baseConcert)} — growing the audience is the primary lever.`,
+      )
+    } else {
+      const { rehearsal, marketing, production } = expenseBreakdown
+      const drivers: [string, number][] = [
+        ['high rehearsal overhead', rehearsal],
+        ['marketing spend', marketing],
+        ['production costs', production],
+      ].filter(([, v]) => (v as number) > 0) as [string, number][]
+      const [driverName] = drivers.sort((a, b) => b[1] - a[1])[0]
+      notes.push(
+        `Income of ${fmt$(totalIncome)} covered ${coveragePercent}% of costs — the shortfall came primarily from ${driverName}.`,
+      )
+    }
   } else if (net > 5_000) {
     const attendanceRate = attendance / HALL_CAPACITY
     const driver =
@@ -189,7 +195,7 @@ function buildFinancialNotes(
   }
 
   const seasonedRow = audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
-  if (seasonedRow && seasonedRow.shareOfHouse > 0.45) {
+  if (seasonedRow && seasonedRow.shareOfHouse > 0.45 && net >= 0) {
     const pct = Math.round(seasonedRow.shareOfHouse * 100)
     notes.push(`Seasoned Supporters made up ${pct}% of the house — their loyalty carried the evening financially.`)
   }

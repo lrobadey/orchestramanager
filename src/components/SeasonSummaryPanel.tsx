@@ -79,9 +79,15 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
           <span className="report-stat-num">{summary.averageCapacityPercent}%</span>
         </div>
         <div className="report-stat">
-          <span className="report-stat-label">Total revenue</span>
+          <span className="report-stat-label">Ticket revenue</span>
           <span className="report-stat-num">{fmt$(summary.totalRevenue)}</span>
         </div>
+        {summary.totalDonorSupport > 0 && (
+          <div className="report-stat">
+            <span className="report-stat-label">Donor support</span>
+            <span className="report-stat-num aurora">{fmt$(summary.totalDonorSupport)}</span>
+          </div>
+        )}
         <div className="report-stat">
           <span className="report-stat-label">Total expenses</span>
           <span className="report-stat-num">{fmt$(summary.totalExpenses)}</span>
