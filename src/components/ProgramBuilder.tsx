@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, PanInfo, useMotionValue } from 'framer-motion'
 import {
   ConcertForecast,
@@ -13,21 +13,13 @@ interface ProgramBuilderProps {
   program: ConcertProgram
   forecast: ConcertForecast
   slotName: string
+  rightRail: ReactNode
   registerSlotRef: (index: number, el: HTMLDivElement | null) => void
   isDragging: boolean
   onOpenRepertoire: () => void
-  onOpenForecast: () => void
   onSlotDragEnd: (sourceIdx: number, point: { x: number; y: number }) => void
   onProgramChange: (next: ConcertProgram) => void
   onRunConcert: () => void
-}
-
-function fmt$(n: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(n)
 }
 
 function riskTone(risk: number | null): string {
@@ -43,6 +35,19 @@ function findWork(works: Work[], id: string | null): Work | null {
 }
 
 const ROMAN = ['I', 'II', 'III']
+const SECTIONS: Array<'strings' | 'winds' | 'brass' | 'percussion'> = [
+  'strings',
+  'winds',
+  'brass',
+  'percussion',
+]
+const SECTION_LABEL = { strings: 'S', winds: 'W', brass: 'B', percussion: 'P' } as const
+
+function demandTone(value: number): string {
+  if (value >= 70) return 'high'
+  if (value >= 40) return 'mid'
+  return ''
+}
 
 // ── Slot row ─────────────────────────────────────────────────
 
@@ -74,37 +79,32 @@ function SlotRow({
   }
 
   const needRatio =
-    hoursNeeded && hoursNeeded > 0 ? Math.min(120, (hours / hoursNeeded) * 100) : 0
+    hoursNeeded && hoursNeeded > 0 ? Math.min(100, (hours / hoursNeeded) * 100) : 0
 
   return (
     <div ref={registerRef} className="program-slot-row">
-      <div className={`slot-roman ${work ? 'active' : ''}`}>{ROMAN[index]}.</div>
+      <div className={`slot-roman ${work ? 'active' : ''}`}>{ROMAN[index]}</div>
       <div className="slot-content">
         <AnimatePresence mode="wait">
           {work ? (
             <motion.div
               key={work.id}
               className="slot-piece"
-              initial={{ opacity: 0, y: -6 }}
+              initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 6 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.18 }}
               drag
               dragSnapToOrigin
               dragElastic={0.6}
-              whileDrag={{ opacity: 0.7, zIndex: 60 }}
+              whileDrag={{ opacity: 0.65, zIndex: 60 }}
               onDragEnd={(_, info: PanInfo) => onSlotDragEnd(info.point)}
             >
-              <div className="slot-title">{work.title}</div>
+              <div className="slot-title" title={work.title}>{work.title}</div>
               <div className="slot-meta">
                 <span className="slot-meta-composer">{work.composer}</span>
-                <span>{work.durationMinutes} min</span>
+                <span>{work.durationMinutes}m</span>
                 <span>{work.era.replace('-', ' ')}</span>
-                {perWorkRisk !== null && (
-                  <span className={`slot-risk-inline ${riskTone(perWorkRisk)}`}>
-                    Risk {Math.round(perWorkRisk)}
-                  </span>
-                )}
               </div>
             </motion.div>
           ) : (
@@ -115,7 +115,7 @@ function SlotRow({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
+              transition={{ duration: 0.12 }}
               onClick={onOpenRepertoire}
             >
               <span className="plus">+</span>Add work
@@ -123,20 +123,55 @@ function SlotRow({
           )}
         </AnimatePresence>
       </div>
+
+      <div className="slot-demand" aria-label="Section demand">
+        {work
+          ? SECTIONS.map(s => {
+              const d = work.demands[s]
+              return (
+                <div key={s} className="slot-demand-cell" title={`${s}: ${d}`}>
+                  <div className="slot-demand-bar">
+                    <i
+                      className={demandTone(d)}
+                      style={{ ['--demand' as string]: `${Math.max(0, Math.min(100, d))}%` }}
+                    />
+                  </div>
+                  <span className="slot-demand-label">{SECTION_LABEL[s]}</span>
+                </div>
+              )
+            })
+          : SECTIONS.map(s => (
+              <div key={s} className="slot-demand-cell">
+                <div className="slot-demand-bar" />
+                <span className="slot-demand-label">{SECTION_LABEL[s]}</span>
+              </div>
+            ))}
+      </div>
+
       <div className="slot-rehearsal">
         <div className="slot-rehearsal-line">
           <span>{hours}h</span>
-          {hoursNeeded !== null && (
+          {hoursNeeded !== null ? (
             <span className="slot-rehearsal-need">
               / {Math.round(hoursNeeded * 10) / 10}h
             </span>
+          ) : (
+            <span className="slot-rehearsal-need">/ —</span>
           )}
         </div>
         <div className="slot-bar-wrap">
           <div className="slot-bar">
-            <i className={barClass} style={{ width: `${Math.min(100, needRatio)}%` }} />
+            <i className={barClass} style={{ width: `${needRatio}%` }} />
           </div>
         </div>
+      </div>
+
+      <div className="slot-risk-cell">
+        {work && perWorkRisk !== null && (
+          <span className={`slot-risk-inline ${riskTone(perWorkRisk)}`} title="Performance risk">
+            {Math.round(perWorkRisk)}
+          </span>
+        )}
       </div>
     </div>
   )
@@ -218,7 +253,7 @@ function RehearsalAllocator({ allocation, workCount, perWorkPressure, onChange }
       <div className="rehearsal-allocator-head">
         <span className="eyebrow">Rehearsal</span>
         <span className="rehearsal-allocator-total">
-          {TOTAL_REHEARSAL_HOURS} h across {workCount} pieces
+          {TOTAL_REHEARSAL_HOURS} h / {workCount} pieces
         </span>
       </div>
       <div ref={barRef} className="rehearsal-allocator-bar">
@@ -292,10 +327,10 @@ export default function ProgramBuilder({
   program,
   forecast,
   slotName,
+  rightRail,
   registerSlotRef,
   isDragging,
   onOpenRepertoire,
-  onOpenForecast,
   onSlotDragEnd,
   onProgramChange,
   onRunConcert,
@@ -337,174 +372,164 @@ export default function ProgramBuilder({
       ? 15
       : 0)
 
-  const netForPill =
-    forecast.isComplete
-      ? `${forecast.projectedNet >= 0 ? '+' : ''}${fmt$(forecast.projectedNet)}`
-      : '—'
-
   const activeSlotIndexes = Array.from({ length: program.workCount }, (_, i) => i)
 
   return (
     <div className={`program-page ${isDragging ? 'dragging-mode' : ''}`}>
-      <div className="program-head">
-        <div className="program-head-left">
-          <span className="eyebrow">{slotName}</span>
-          <h1 className="headline">Program</h1>
-        </div>
-        <div className="program-head-actions">
-          <div className="program-size-toggle" role="group" aria-label="Program size">
-            <button
-              type="button"
-              className={program.workCount === 2 ? 'active' : ''}
-              onClick={() => setProgramWorkCount(2)}
-            >
-              2 Works
-            </button>
-            <button
-              type="button"
-              className={program.workCount === 3 ? 'active' : ''}
-              onClick={() => setProgramWorkCount(3)}
-            >
-              3 Works
-            </button>
-          </div>
-          <button type="button" className="cta-ghost" onClick={onOpenRepertoire}>
-            + Repertoire
-          </button>
-          <button type="button" className="forecast-pill" onClick={onOpenForecast}>
-            <span className="forecast-pill-label">Net</span>
-            <span className={`forecast-pill-value ${forecast.isComplete ? (forecast.projectedNet >= 0 ? 'positive' : 'negative') : ''}`}>
-              {netForPill}
-            </span>
-          </button>
-        </div>
-      </div>
-
-      <div className="program-slots">
-        {activeSlotIndexes.map((index, order) => (
-          <div key={index}>
-            {order > 0 && order < program.workCount && (
-              <div className="intermission-line">
-                <span className="intermission-line-rule" />
+      <div className="cockpit-grid">
+        <div>
+          <div className="program-head">
+            <div className="program-head-left">
+              <span className="eyebrow">{slotName}</span>
+              <h1 className="headline">Program</h1>
+            </div>
+            <div className="program-head-actions">
+              <div className="program-size-toggle" role="group" aria-label="Program size">
                 <button
                   type="button"
-                  className={program.intermissionAfter === (order - 1) ? 'active' : ''}
-                  onClick={() => toggleIntermission((order - 1) as 0 | 1)}
-                  aria-pressed={program.intermissionAfter === order - 1}
+                  className={program.workCount === 2 ? 'active' : ''}
+                  onClick={() => setProgramWorkCount(2)}
                 >
-                  {program.intermissionAfter === order - 1 ? '— Intermission —' : 'Insert intermission'}
+                  2 Works
                 </button>
-                <span className="intermission-line-rule" />
+                <button
+                  type="button"
+                  className={program.workCount === 3 ? 'active' : ''}
+                  onClick={() => setProgramWorkCount(3)}
+                >
+                  3 Works
+                </button>
               </div>
-            )}
-            <SlotRow
-              index={index}
-              work={slotWorks[index]}
-              perWorkRisk={forecast.perWorkPerformanceRisk[index]}
-              hoursNeeded={forecast.perWorkRehearsalHoursNeeded[index]}
-              hours={program.rehearsalAllocation[index]}
-              onOpenRepertoire={onOpenRepertoire}
-              onSlotDragEnd={point => onSlotDragEnd(index, point)}
-              registerRef={el => registerSlotRef(index, el)}
-            />
+              <button type="button" className="cta-ghost" onClick={onOpenRepertoire}>
+                + Repertoire
+              </button>
+            </div>
           </div>
-        ))}
-      </div>
 
-      <div className="program-totals">
-        <div className="program-total-num">{totalMin}</div>
-        <div>
-          <div className="program-total-label">Minutes total</div>
-          <div className="program-total-note">
-            {program.intermissionAfter !== null && totalMin > 0
-              ? `${totalMin - 15} music + 15 intermission`
-              : 'no intermission'}
+          <div className="program-slots">
+            {activeSlotIndexes.map((index, order) => (
+              <div key={index}>
+                {order > 0 && order < program.workCount && (
+                  <div className="intermission-line">
+                    <span className="intermission-line-rule" />
+                    <button
+                      type="button"
+                      className={program.intermissionAfter === (order - 1) ? 'active' : ''}
+                      onClick={() => toggleIntermission((order - 1) as 0 | 1)}
+                      aria-pressed={program.intermissionAfter === order - 1}
+                    >
+                      {program.intermissionAfter === order - 1 ? 'Intermission' : '+ Intermission'}
+                    </button>
+                    <span className="intermission-line-rule" />
+                  </div>
+                )}
+                <SlotRow
+                  index={index}
+                  work={slotWorks[index]}
+                  perWorkRisk={forecast.perWorkPerformanceRisk[index]}
+                  hoursNeeded={forecast.perWorkRehearsalHoursNeeded[index]}
+                  hours={program.rehearsalAllocation[index]}
+                  onOpenRepertoire={onOpenRepertoire}
+                  onSlotDragEnd={point => onSlotDragEnd(index, point)}
+                  registerRef={el => registerSlotRef(index, el)}
+                />
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
 
-      <RehearsalAllocator
-        allocation={program.rehearsalAllocation}
-        workCount={program.workCount}
-        perWorkPressure={forecast.perWorkRehearsalPressure}
-        onChange={alloc => onProgramChange({ ...program, rehearsalAllocation: alloc })}
-      />
-
-      <div className="program-production">
-        <div className="production-cell">
-          <div className="production-row">
-            <span className="production-label">Tickets</span>
-            <span className="production-value">${program.ticketPrice}</span>
+          <div className="program-totals">
+            <div className="program-total-num">{totalMin}</div>
+            <div>
+              <div className="program-total-label">Minutes total</div>
+              <div className="program-total-note">
+                {program.intermissionAfter !== null && totalMin > 0
+                  ? `${totalMin - 15} music + 15 intermission`
+                  : 'no intermission'}
+              </div>
+            </div>
           </div>
-          <input
-            className="production-range"
-            type="range"
-            min={20}
-            max={120}
-            step={5}
-            value={program.ticketPrice}
-            onChange={e => onProgramChange({ ...program, ticketPrice: Number(e.target.value) })}
+
+          <RehearsalAllocator
+            allocation={program.rehearsalAllocation}
+            workCount={program.workCount}
+            perWorkPressure={forecast.perWorkRehearsalPressure}
+            onChange={alloc => onProgramChange({ ...program, rehearsalAllocation: alloc })}
           />
-        </div>
-        <div className="production-cell">
-          <div className="production-row">
-            <span className="production-label">Marketing</span>
-            <span className="production-value">${(program.marketingSpend / 1000).toFixed(0)}K</span>
-          </div>
-          <input
-            className="production-range"
-            type="range"
-            min={5000}
-            max={30000}
-            step={1000}
-            value={program.marketingSpend}
-            onChange={e => onProgramChange({ ...program, marketingSpend: Number(e.target.value) })}
-          />
-        </div>
-        <div className="production-cell">
-          <label className="production-toggle">
-            <input
-              type="checkbox"
-              checked={program.studentTicketsEnabled}
-              onChange={e =>
-                onProgramChange({ ...program, studentTicketsEnabled: e.target.checked })
-              }
-            />
-            <span>Student Tickets {program.studentTicketsEnabled ? '· On' : '· Off'}</span>
-          </label>
-          <div className="production-row" style={{ marginTop: '0.4rem' }}>
-            <span className="production-label">Student price</span>
-            <span className="production-value">${program.studentTicketPrice}</span>
-          </div>
-          <input
-            className="production-range"
-            type="range"
-            min={10}
-            max={50}
-            step={5}
-            value={program.studentTicketPrice}
-            disabled={!program.studentTicketsEnabled}
-            onChange={e =>
-              onProgramChange({ ...program, studentTicketPrice: Number(e.target.value) })
-            }
-          />
-        </div>
-      </div>
 
-      <div className="program-launch">
-        <button
-          type="button"
-          className="cta-aurora"
-          onClick={onRunConcert}
-          disabled={!forecast.isComplete}
-        >
-          {forecast.isComplete ? 'Run Concert' : `Fill ${program.workCount} works to continue`}
-        </button>
-        {!forecast.isComplete && (
-          <span className="program-launch-note">
-            Open <span style={{ color: 'var(--aurora)' }}>+ Repertoire</span> to add pieces
-          </span>
-        )}
+          <div className="program-production">
+            <div className="production-cell">
+              <div className="production-row">
+                <span className="production-label">Tickets</span>
+                <span className="production-value">${program.ticketPrice}</span>
+              </div>
+              <input
+                className="production-range"
+                type="range"
+                min={20}
+                max={120}
+                step={5}
+                value={program.ticketPrice}
+                onChange={e => onProgramChange({ ...program, ticketPrice: Number(e.target.value) })}
+              />
+            </div>
+            <div className="production-cell">
+              <div className="production-row">
+                <span className="production-label">Marketing</span>
+                <span className="production-value">${(program.marketingSpend / 1000).toFixed(0)}K</span>
+              </div>
+              <input
+                className="production-range"
+                type="range"
+                min={5000}
+                max={30000}
+                step={1000}
+                value={program.marketingSpend}
+                onChange={e => onProgramChange({ ...program, marketingSpend: Number(e.target.value) })}
+              />
+            </div>
+            <div className="production-cell">
+              <label className="production-toggle">
+                <input
+                  type="checkbox"
+                  checked={program.studentTicketsEnabled}
+                  onChange={e =>
+                    onProgramChange({ ...program, studentTicketsEnabled: e.target.checked })
+                  }
+                />
+                <span>Students {program.studentTicketsEnabled ? '· On' : '· Off'}</span>
+              </label>
+              <div className="production-row">
+                <span className="production-label">Student $</span>
+                <span className="production-value">${program.studentTicketPrice}</span>
+              </div>
+              <input
+                className="production-range"
+                type="range"
+                min={10}
+                max={50}
+                step={5}
+                value={program.studentTicketPrice}
+                disabled={!program.studentTicketsEnabled}
+                onChange={e =>
+                  onProgramChange({ ...program, studentTicketPrice: Number(e.target.value) })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="program-launch">
+            <button
+              type="button"
+              className="cta-aurora"
+              onClick={onRunConcert}
+              disabled={!forecast.isComplete}
+            >
+              {forecast.isComplete ? 'Run Concert' : `Fill ${program.workCount} works to continue`}
+            </button>
+          </div>
+        </div>
+
+        <aside className="right-rail">{rightRail}</aside>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { works } from './data/works'
 import { principals } from './data/principals'
 import { audienceSegments } from './data/audienceSegments'
@@ -22,7 +22,6 @@ import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
 import RepertoireDrawer from './components/RepertoireDrawer'
-import Drawer from './components/Drawer'
 
 type Phase = 'planning' | 'report'
 type MainView = 'program' | 'roster'
@@ -51,8 +50,8 @@ export default function App() {
   const [mainView, setMainView] = useState<MainView>('program')
   const [report, setReport] = useState<ConcertReport | null>(null)
   const [repertoireOpen, setRepertoireOpen] = useState(false)
-  const [forecastOpen, setForecastOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const repertoireAutoOpenedRef = useRef(false)
 
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
 
@@ -72,6 +71,20 @@ export default function App() {
     [institution, livePrincipals, program],
   )
 
+  // Auto-open repertoire on first paint when program is empty and we're planning.
+  useEffect(() => {
+    if (
+      mainView === 'program' &&
+      phase === 'planning' &&
+      !seasonComplete &&
+      !repertoireAutoOpenedRef.current &&
+      program.workIds.every(id => id === null)
+    ) {
+      repertoireAutoOpenedRef.current = true
+      setRepertoireOpen(true)
+    }
+  }, [mainView, phase, seasonComplete, program.workIds])
+
   function handleRunConcert() {
     if (!forecast.isComplete) return
     const result = resolveConcert({
@@ -84,7 +97,6 @@ export default function App() {
     })
     setReport(result)
     setPhase('report')
-    setForecastOpen(false)
     setRepertoireOpen(false)
   }
 
@@ -95,6 +107,7 @@ export default function App() {
     setReport(null)
     setPhase('planning')
     setMainView('program')
+    repertoireAutoOpenedRef.current = false
   }
 
   function handleNewSeason() {
@@ -103,6 +116,7 @@ export default function App() {
     setReport(null)
     setPhase('planning')
     setMainView('program')
+    repertoireAutoOpenedRef.current = false
   }
 
   const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
@@ -154,7 +168,6 @@ export default function App() {
     const target = findSlotTarget(point)
     const next = [...program.workIds] as SlotTuple<string | null>
     if (target === null) {
-      // dropped outside any slot → clear that slot
       next[sourceIdx] = null
       setProgram({ ...program, workIds: next })
       return
@@ -218,10 +231,16 @@ export default function App() {
             registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
             isDragging={isDragging}
             onOpenRepertoire={() => setRepertoireOpen(true)}
-            onOpenForecast={() => setForecastOpen(true)}
             onSlotDragEnd={handleSlotDrop}
             onProgramChange={setProgram}
             onRunConcert={handleRunConcert}
+            rightRail={
+              <ConcertForecastView
+                forecast={forecast}
+                slotWorks={slotWorks}
+                workCount={program.workCount}
+              />
+            }
           />
           <RepertoireDrawer
             open={repertoireOpen}
@@ -231,17 +250,6 @@ export default function App() {
             onDragStart={() => setIsDragging(true)}
             onDragEnd={handleRepertoireDrop}
           />
-          <Drawer
-            open={forecastOpen}
-            title="Live Forecast"
-            onClose={() => setForecastOpen(false)}
-          >
-            <ConcertForecastView
-              forecast={forecast}
-              slotWorks={slotWorks}
-              workCount={program.workCount}
-            />
-          </Drawer>
         </>
       ) : report ? (
         <ConcertReportView

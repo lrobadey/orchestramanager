@@ -46,59 +46,66 @@ function Vital({ label, value, pct, delta, deltaIsCash, noBar }: VitalProps) {
 }
 
 export default function VitalsStrip({ institution, deltas }: VitalsStripProps) {
+  const id = institution.identity
+  const dominant = ['adventurous', 'communityFocused', 'scholarly'].reduce<keyof typeof id>(
+    (acc, k) => (id[k as keyof typeof id] > id[acc] ? (k as keyof typeof id) : acc),
+    'adventurous',
+  )
+
   return (
     <div className="vitals-strip">
       <div className="vitals-strip-inner">
-        <Vital
-          label="Cash"
-          value={fmtCash(institution.cash)}
-          delta={deltas?.cash}
-          deltaIsCash
-          noBar
-        />
-        <Vital
-          label="Reputation"
-          value={institution.artisticReputation}
-          pct={institution.artisticReputation}
-          delta={deltas?.artisticReputation}
-        />
-        <Vital
-          label="Trust"
-          value={institution.audienceTrust}
-          pct={institution.audienceTrust}
-          delta={deltas?.audienceTrust}
-        />
-        <Vital
-          label="Donors"
-          value={institution.donorConfidence}
-          pct={institution.donorConfidence}
-          delta={deltas?.donorConfidence}
-        />
-        <Vital
-          label="Morale"
-          value={institution.musicianMorale}
-          pct={institution.musicianMorale}
-          delta={deltas?.musicianMorale}
-        />
-        <Vital
-          label="Tech"
-          value={institution.technicalQuality}
-          pct={institution.technicalQuality}
-          delta={deltas?.technicalQuality}
-        />
-        <Vital
-          label="Identity"
-          value={Math.max(
-            institution.identity.adventurous,
-            institution.identity.communityFocused,
-            institution.identity.scholarly,
-          )}
-          pct={Math.max(
-            institution.identity.adventurous,
-            institution.identity.communityFocused,
-            institution.identity.scholarly,
-          )}
-        />
+        <div className="vitals-row">
+          <Vital
+            label="Cash"
+            value={fmtCash(institution.cash)}
+            delta={deltas?.cash}
+            deltaIsCash
+            noBar
+          />
+          <Vital
+            label="Reputation"
+            value={institution.artisticReputation}
+            pct={institution.artisticReputation}
+            delta={deltas?.artisticReputation}
+          />
+          <Vital
+            label="Trust"
+            value={institution.audienceTrust}
+            pct={institution.audienceTrust}
+            delta={deltas?.audienceTrust}
+          />
+          <Vital
+            label="Donors"
+            value={institution.donorConfidence}
+            pct={institution.donorConfidence}
+            delta={deltas?.donorConfidence}
+          />
+          <Vital
+            label="Morale"
+            value={institution.musicianMorale}
+            pct={institution.musicianMorale}
+            delta={deltas?.musicianMorale}
+          />
+          <Vital
+            label="Tech"
+            value={institution.technicalQuality}
+            pct={institution.technicalQuality}
+            delta={deltas?.technicalQuality}
+          />
+        </div>
+        <div className="vitals-identity">
+          <span className="vitals-identity-label">Identity</span>
+          <span className={`vitals-identity-item ${dominant === 'adventurous' ? 'dominant' : ''}`}>
+            Adventurous <strong>{id.adventurous}</strong>
+          </span>
+          <span className={`vitals-identity-item ${dominant === 'communityFocused' ? 'dominant' : ''}`}>
+            Community <strong>{id.communityFocused}</strong>
+          </span>
+          <span className={`vitals-identity-item ${dominant === 'scholarly' ? 'dominant' : ''}`}>
+            Scholarly <strong>{id.scholarly}</strong>
+          </span>
+        </div>
       </div>
     </div>
   )

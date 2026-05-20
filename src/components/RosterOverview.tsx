@@ -1,4 +1,4 @@
-import { type CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { type ConcertForecast, type Principal, type RosterState, type SectionKey } from '../types/core'
 import { calculateSectionStrengths } from '../sim/roster'
 
@@ -29,6 +29,22 @@ function strengthLabel(value: number): string {
   return 'an orchestra in crisis'
 }
 
+function summarizePrincipal(principal: Principal): string {
+  const attributes = [
+    ['leadership', principal.leadership],
+    ['stress resistance', principal.stressResistance],
+    ['endurance', principal.endurance],
+    ['blend', principal.blend],
+    ['solo reliability', principal.soloReliability],
+    ['new music', principal.newMusicFluency],
+    ['classical', principal.classicalFluency],
+    ['romantic', principal.romanticFluency],
+  ] as const
+  const strongest = [...attributes].sort((a, b) => b[1] - a[1])[0]
+  const weakest = [...attributes].sort((a, b) => a[1] - b[1])[0]
+  return `Best: ${strongest[0]}. Watch: ${weakest[0]}.`
+}
+
 function PrincipalRow({ principal }: { principal: Principal }) {
   const overallTone = strengthTone(principal.overall)
   return (
@@ -55,6 +71,7 @@ function PrincipalRow({ principal }: { principal: Principal }) {
           <i style={{ width: `${principal.morale}%` }} />
         </div>
       </div>
+      <span className="roster-principal-note">{summarizePrincipal(principal)}</span>
     </div>
   )
 }
@@ -67,40 +84,51 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
     strengths.reduce((sum, row) => sum + row.strength, 0) / strengths.length,
   )
   const overallTone = strengthTone(orchestraStrength)
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
+  const activePrincipals = activeSection
+    ? roster.principals.filter(p => p.section === activeSection)
+    : []
 
   return (
     <div className="roster-page">
       <section className="roster-hero">
-        <span className="eyebrow">{currentSlotName ?? 'Season complete'} · Orchestra Strength</span>
         <div className={`roster-hero-num ${overallTone}`}>{orchestraStrength}</div>
-        <p className="roster-hero-sub">
-          A score of <strong style={{ color: 'var(--birch)' }}>{orchestraStrength}</strong> reads as {strengthLabel(orchestraStrength)}.
-        </p>
-        <div
-          className="roster-spectrum"
-          style={{ ['--strength' as string]: `${orchestraStrength}%` } as CSSProperties}
-          aria-label={`Overall orchestra strength ${orchestraStrength} out of 100`}
-        >
-          <i />
-          <span className="roster-spectrum-marker" />
-        </div>
-        <div className="roster-spectrum-scale">
-          <span>fragile</span>
-          <span>stable</span>
-          <span>commanding</span>
+        <div className="roster-hero-info">
+          <span className="eyebrow">{currentSlotName ?? 'Season complete'} · Orchestra Strength</span>
+          <p className="roster-hero-sub">
+            <strong style={{ color: 'var(--birch)' }}>{orchestraStrength}</strong> reads as {strengthLabel(orchestraStrength)}.
+          </p>
+          <div
+            className="roster-spectrum"
+            style={{ ['--strength' as string]: `${orchestraStrength}%` } as CSSProperties}
+            aria-label={`Overall orchestra strength ${orchestraStrength} out of 100`}
+          >
+            <i />
+            <span className="roster-spectrum-marker" />
+          </div>
+          <div className="roster-spectrum-scale">
+            <span>fragile</span>
+            <span>stable</span>
+            <span>commanding</span>
+          </div>
         </div>
       </section>
 
-      <div>
+      <div className="roster-grid">
         {strengths.map(row => {
           const fitRow = fit.find(c => c.section === row.section)
           const tone = strengthTone(row.strength)
-          const principalsInSection = roster.principals.filter(p => p.section === row.section)
+          const principalsInSection = roster.principals.filter(p => p.section === row.section).slice(0, 3)
+          const isActive = activeSection === row.section
           return (
-            <section key={row.section} className="roster-section">
-              <div className="roster-section-head">
-                <h2 className="roster-section-name">{SECTION_LABELS[row.section]}</h2>
-                <div className={`roster-section-score ${tone}`}>{row.strength}</div>
+            <button
+              key={row.section}
+              type="button"
+              className={`roster-section-cell ${isActive ? 'active' : ''}`}
+              onClick={() => setActiveSection(prev => (prev === row.section ? null : row.section))}
+            >
+              <div>
+                <h3 className="roster-section-name">{SECTION_LABELS[row.section]}</h3>
                 <p className="roster-section-note">{fitRow?.note ?? row.note}</p>
                 {fitRow && (
                   <div className="roster-section-pressure">
@@ -108,16 +136,39 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
                     <span>Stress {fitRow.stress}</span>
                   </div>
                 )}
+                <div className="roster-section-cell-preview">
+                  {principalsInSection.map(p => (
+                    <div key={p.id} className="roster-section-cell-preview-row">
+                      <strong>{p.name}</strong>
+                      <span>{p.position} · {p.overall}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="roster-section-cell-inspect">
+                  {isActive ? '— Showing below' : 'Inspect →'}
+                </div>
               </div>
-              <div className="roster-principals">
-                {principalsInSection.map(p => (
-                  <PrincipalRow key={p.id} principal={p} />
-                ))}
-              </div>
-            </section>
+              <div className={`roster-section-score ${tone}`}>{row.strength}</div>
+            </button>
           )
         })}
       </div>
+
+      {activeSection && activePrincipals.length > 0 && (
+        <div className="roster-principal-ledger">
+          <div className="roster-principal-ledger-head">
+            <span className="eyebrow">{SECTION_LABELS[activeSection]} · Principal Ledger</span>
+            <button type="button" className="text-link" onClick={() => setActiveSection(null)}>
+              Close ✕
+            </button>
+          </div>
+          <div className="roster-principals">
+            {activePrincipals.map(p => (
+              <PrincipalRow key={p.id} principal={p} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

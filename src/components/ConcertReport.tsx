@@ -17,9 +17,9 @@ function fmt$(n: number): string {
 }
 
 function qualityClass(value: number): string {
-  if (value >= 70) return 'risk-low'
-  if (value >= 40) return 'risk-med'
-  return 'risk-high'
+  if (value >= 70) return 'aurora'
+  if (value >= 40) return ''
+  return 'berry'
 }
 
 function qualityLabel(value: number): string {
@@ -106,44 +106,29 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
             {fmt$(report.net)}
           </span>
         </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Quality</span>
+          <span className={`report-stat-num ${qualityClass(report.performanceQuality)}`}>
+            {report.performanceQuality}
+          </span>
+          <span className="text-muted text-mono" style={{ fontSize: '0.55rem', letterSpacing: '0.1em', marginTop: '0.1rem' }}>
+            {qualityLabel(report.performanceQuality)}
+          </span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Critics</span>
+          <span className={`report-stat-num ${qualityClass(report.criticResponse)}`}>
+            {report.criticResponse}
+          </span>
+          <span className="text-muted text-mono" style={{ fontSize: '0.55rem', letterSpacing: '0.1em', marginTop: '0.1rem' }}>
+            {qualityLabel(report.criticResponse)}
+          </span>
+        </div>
       </div>
 
       <div className="report-block">
         <span className="eyebrow report-block-title">Audience Mix</span>
         <AudienceMix rows={report.audienceBreakdown} />
-      </div>
-
-      <div className="report-block">
-        <span className="eyebrow report-block-title">Performance</span>
-        <div className="report-stat-row" style={{ borderTop: 'none', borderBottom: 'none', padding: 0, gridTemplateColumns: 'repeat(3, 1fr)' }}>
-          <div className="report-stat">
-            <span className="report-stat-label">Quality</span>
-            <span className={`report-stat-num ${qualityClass(report.performanceQuality) === 'risk-low' ? 'aurora' : qualityClass(report.performanceQuality) === 'risk-high' ? 'berry' : ''}`}>
-              {report.performanceQuality}
-            </span>
-            <span className="text-muted text-mono" style={{ fontSize: '0.65rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
-              {qualityLabel(report.performanceQuality)}
-            </span>
-          </div>
-          <div className="report-stat">
-            <span className="report-stat-label">Audience</span>
-            <span className={`report-stat-num ${qualityClass(report.audienceResponse) === 'risk-low' ? 'aurora' : qualityClass(report.audienceResponse) === 'risk-high' ? 'berry' : ''}`}>
-              {report.audienceResponse}
-            </span>
-            <span className="text-muted text-mono" style={{ fontSize: '0.65rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
-              {qualityLabel(report.audienceResponse)}
-            </span>
-          </div>
-          <div className="report-stat">
-            <span className="report-stat-label">Critics</span>
-            <span className={`report-stat-num ${qualityClass(report.criticResponse) === 'risk-low' ? 'aurora' : qualityClass(report.criticResponse) === 'risk-high' ? 'berry' : ''}`}>
-              {report.criticResponse}
-            </span>
-            <span className="text-muted text-mono" style={{ fontSize: '0.65rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
-              {qualityLabel(report.criticResponse)}
-            </span>
-          </div>
-        </div>
       </div>
 
       <div className="report-block">
@@ -176,7 +161,7 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
           {report.rosterChanges
             .filter(c => c.formDelta !== 0 || c.moraleDelta !== 0)
             .sort((a, b) => Math.abs(b.formDelta) + Math.abs(b.moraleDelta) - Math.abs(a.formDelta) - Math.abs(a.moraleDelta))
-            .slice(0, 6)
+            .slice(0, 8)
             .map(change => (
               <div key={change.principalId} className="report-roster-row">
                 <span className="report-roster-name">
@@ -193,7 +178,7 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
               </div>
             ))}
           {report.rosterChanges.every(c => c.formDelta === 0 && c.moraleDelta === 0) && (
-            <p className="text-muted">The principals held steady; no form or morale movement this concert.</p>
+            <p className="text-muted">The principals held steady; no form or morale movement.</p>
           )}
         </div>
       </div>
@@ -214,7 +199,7 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
             </span>
           </div>
           <div className="report-delta">
-            <span className="report-delta-label">Audience Trust</span>
+            <span className="report-delta-label">Trust</span>
             <span className={`report-delta-value ${deltaCls(d.audienceTrust)}`}>
               {deltaStr(d.audienceTrust)}
             </span>
@@ -232,7 +217,7 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
             </span>
           </div>
           <div className="report-delta">
-            <span className="report-delta-label">Tech Quality</span>
+            <span className="report-delta-label">Tech</span>
             <span className={`report-delta-value ${deltaCls(d.technicalQuality)}`}>
               {deltaStr(d.technicalQuality)}
             </span>

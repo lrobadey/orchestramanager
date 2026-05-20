@@ -46,7 +46,6 @@ export default function RepertoireDrawer({
     a.localeCompare(b),
   )
   if (!composers.includes(selectedComposer) && composers.length > 0) {
-    // soft fallback — pick first composer
     setSelectedComposer(composers[0])
   }
   const visibleWorks = worksInEra
@@ -112,6 +111,9 @@ export default function RepertoireDrawer({
                 <span>{w.durationMinutes}m</span>
                 <span>Load {w.rehearsalLoad}</span>
                 <span>Draw {w.audienceDraw}</span>
+                <span>Prestige {w.artisticPrestige}</span>
+                <span>Donor {w.donorComfort}</span>
+                <span>Novelty {w.novelty}</span>
                 <span className={`rep-item-tag ${w.isContemporary ? '' : 'canon'}`}>
                   {w.isContemporary ? 'New' : 'Canon'}
                 </span>
@@ -120,7 +122,7 @@ export default function RepertoireDrawer({
           )
         })}
         {visibleWorks.length === 0 && (
-          <p className="text-muted" style={{ padding: '2rem 0' }}>
+          <p className="text-muted" style={{ padding: '1.5rem 0' }}>
             No works under this filter.
           </p>
         )}
