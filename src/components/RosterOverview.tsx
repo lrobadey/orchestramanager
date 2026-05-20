@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+import { useState, type CSSProperties } from 'react'
 import { type ConcertForecast, type Principal, type RosterState, type SectionKey } from '../types/core'
 import { calculateSectionStrengths } from '../sim/roster'
 
@@ -8,13 +8,29 @@ interface RosterOverviewProps {
   currentSlotName: string | null
 }
 
-const sections: SectionKey[] = ['strings', 'winds', 'brass', 'percussion']
-
 const sectionLabels: Record<SectionKey, string> = {
   strings: 'Strings',
   winds: 'Winds',
   brass: 'Brass',
   percussion: 'Percussion',
+}
+
+const principalOrder: Record<string, number> = {
+  'Concertmaster': 10,
+  'Principal Second Violin': 20,
+  'Principal Viola': 30,
+  'Principal Cello': 40,
+  'Principal Double Bass': 50,
+  'Principal Flute': 10,
+  'Principal Oboe': 20,
+  'Principal Clarinet': 30,
+  'Principal Bassoon': 40,
+  'Principal Horn': 10,
+  'Principal Trumpet': 20,
+  'Principal Trombone': 30,
+  'Principal Tuba': 40,
+  'Timpani': 10,
+  'Principal Percussion': 20,
 }
 
 function ratingClass(value: number): string {
@@ -45,36 +61,42 @@ function summarizePrincipal(principal: Principal): string {
   return `Best: ${strongest[0]}. Watch: ${weakest[0]}.`
 }
 
-function PrincipalCard({ principal }: { principal: Principal }) {
+function sortedPrincipals(principals: Principal[], section: SectionKey): Principal[] {
+  return principals
+    .filter(principal => principal.section === section)
+    .sort((a, b) => (principalOrder[a.position] ?? 100) - (principalOrder[b.position] ?? 100))
+}
+
+function PrincipalRow({ principal }: { principal: Principal }) {
   return (
-    <article className="principal-card">
-      <div className="principal-card-header">
-        <div>
-          <h4>{principal.name}</h4>
-          <p>{principal.position}</p>
+    <div className="principal-ledger-row">
+      <div className="principal-ledger-identity">
+        <span>{principal.position}</span>
+        <strong>{principal.name}</strong>
+      </div>
+      <div className="principal-ledger-score">
+        <span>Overall</span>
+        <strong className={ratingClass(principal.overall)}>{principal.overall}</strong>
+      </div>
+      <div className="principal-ledger-meter">
+        <span>Form {principal.form}</span>
+        <div className="principal-mini-track">
+          <i style={{ width: `${principal.form}%` }} />
         </div>
-        <span className={`principal-overall ${ratingClass(principal.overall)}`}>
-          {principal.overall}
-        </span>
       </div>
-      <div className="principal-meter-grid">
-        <span>Form</span>
-        <strong className={ratingClass(principal.form)}>{principal.form}</strong>
-        <span>Morale</span>
-        <strong className={ratingClass(principal.morale)}>{principal.morale}</strong>
-        <span>Stress</span>
-        <strong className={ratingClass(principal.stressResistance)}>
-          {principal.stressResistance}
-        </strong>
-        <span>Lead</span>
-        <strong className={ratingClass(principal.leadership)}>{principal.leadership}</strong>
+      <div className="principal-ledger-meter">
+        <span>Morale {principal.morale}</span>
+        <div className="principal-mini-track">
+          <i style={{ width: `${principal.morale}%` }} />
+        </div>
       </div>
-      <p className="principal-note">{summarizePrincipal(principal)}</p>
-    </article>
+      <p>{summarizePrincipal(principal)}</p>
+    </div>
   )
 }
 
 export default function RosterOverview({ roster, forecast, currentSlotName }: RosterOverviewProps) {
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
   const strengths = forecast.sectionStrengths.length > 0
     ? forecast.sectionStrengths
     : calculateSectionStrengths(roster.principals)
@@ -82,6 +104,15 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
   const orchestraStrength = Math.round(
     strengths.reduce((sum, row) => sum + row.strength, 0) / strengths.length,
   )
+  const activeStrength = activeSection
+    ? strengths.find(row => row.section === activeSection)
+    : null
+  const activeFit = activeSection
+    ? fit.find(row => row.section === activeSection)
+    : null
+  const activePrincipals = activeSection
+    ? sortedPrincipals(roster.principals, activeSection)
+    : []
 
   return (
     <div className="roster-view">
@@ -121,7 +152,11 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
             return (
               <div
                 key={row.section}
-                className="section-strength-rail"
+                className={
+                  activeSection === row.section
+                    ? 'section-strength-rail section-strength-rail-active'
+                    : 'section-strength-rail'
+                }
                 style={{ '--strength': `${row.strength}%` } as CSSProperties}
               >
                 <div className="section-strength-readout">
@@ -144,24 +179,42 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
                   </div>
                 )}
                 <p>{fitRow?.note ?? row.note}</p>
+                <button
+                  className="section-inspect-button"
+                  onClick={() => setActiveSection(row.section)}
+                >
+                  Inspect {row.label}
+                </button>
               </div>
             )
           })}
         </div>
       </section>
 
-      {sections.map(section => (
-        <section key={section} className="roster-section">
-          <h3>{sectionLabels[section]}</h3>
-          <div className="principal-grid">
-            {roster.principals
-              .filter(principal => principal.section === section)
-              .map(principal => (
-                <PrincipalCard key={principal.id} principal={principal} />
-              ))}
+      <section className="roster-section-detail">
+        {activeSection === null ? (
+          <div className="roster-section-empty">
+            <span>Choose a section above to inspect the principal desks.</span>
           </div>
-        </section>
-      ))}
+        ) : (
+          <>
+            <div className="roster-section-detail-header">
+              <div>
+                <span>{sectionLabels[activeSection]}</span>
+                <strong className={`strength-tone-${strengthTone(activeStrength?.strength ?? 0)}`}>
+                  {activeStrength?.strength ?? 0}
+                </strong>
+              </div>
+              <p>{activeFit?.note ?? activeStrength?.note}</p>
+            </div>
+            <div className="principal-ledger">
+              {activePrincipals.map(principal => (
+                <PrincipalRow key={principal.id} principal={principal} />
+              ))}
+            </div>
+          </>
+        )}
+      </section>
     </div>
   )
 }

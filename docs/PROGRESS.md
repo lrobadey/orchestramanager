@@ -22,7 +22,7 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 **Summary**
 
-Added a stateful principal-roster layer to the existing four-concert season loop. `SeasonState` now owns a live `RosterState`, forecasts and concert resolution use the live principals, and concert reports emit form/morale changes that carry into the next concert. The roster screen now opens with a graphic orchestra-strength instrument: one aggregate score, a large 0-100 gradient gauge, and four connected section rails.
+Added a stateful principal-roster layer to the existing four-concert season loop. `SeasonState` now owns a live `RosterState`, forecasts and concert resolution use the live principals, and concert reports emit form/morale changes that carry into the next concert. The roster screen now opens with a graphic orchestra-strength instrument: one aggregate score, a large 0-100 gradient gauge, and four connected section rails. Each section rail has an `Inspect` control that populates a non-carded principal ledger below the board.
 
 **Rationale**
 
@@ -60,7 +60,7 @@ Tests       58 passed (58)
 ```
 npm run build
 
-✓ built in 521ms
+✓ built in 509ms
 ```
 
 Browser verification:

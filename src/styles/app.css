@@ -827,6 +827,8 @@ input[type='range'] {
 .section-strength-rail {
   position: relative;
   min-width: 0;
+  padding-bottom: 0.2rem;
+  transition: opacity 0.18s, filter 0.18s;
 }
 
 .section-strength-rail::before {
@@ -880,6 +882,33 @@ input[type='range'] {
   margin-top: 0.34rem;
 }
 
+.section-strength-rail-active {
+  filter: brightness(1.12);
+}
+
+.section-strength-rail-active::before {
+  background: rgba(230, 223, 210, 0.5);
+  box-shadow: 0 0 14px rgba(230, 223, 210, 0.28);
+}
+
+.section-inspect-button {
+  margin-top: 0.56rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.section-inspect-button:hover {
+  background: transparent;
+  color: var(--text);
+  transform: none;
+}
+
 @keyframes strengthPulse {
   0%, 100% {
     filter: brightness(0.95);
@@ -907,76 +936,123 @@ input[type='range'] {
   }
 }
 
-.roster-section {
+.roster-section-detail {
+  min-height: 9rem;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 0.9rem;
+}
+
+.roster-section-empty {
+  display: flex;
+  min-height: 7.5rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+}
+
+.roster-section-detail-header {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: baseline;
+  margin-bottom: 0.65rem;
+}
+
+.roster-section-detail-header div {
+  display: flex;
+  gap: 0.7rem;
+  align-items: baseline;
+}
+
+.roster-section-detail-header span {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+}
+
+.roster-section-detail-header strong {
+  font-family: var(--font-display);
+  font-size: 2.1rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.roster-section-detail-header p {
+  color: var(--text-muted);
+  font-size: 0.84rem;
+}
+
+.principal-ledger {
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
 }
 
-.principal-grid {
+.principal-ledger-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.65rem;
-}
-
-.principal-card {
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 0.78rem;
-}
-
-.principal-card-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  align-items: flex-start;
-  margin-bottom: 0.55rem;
-}
-
-.principal-card h4 {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-bottom: 0.1rem;
-}
-
-.principal-card p {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-}
-
-.principal-overall {
-  font-family: var(--font-mono);
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  padding: 0.1rem 0.32rem;
-  font-size: 0.82rem;
-}
-
-.principal-meter-grid {
-  display: grid;
-  grid-template-columns: 1fr 2.2rem 1fr 2.2rem;
-  gap: 0.24rem 0.45rem;
-  align-items: baseline;
-  padding-top: 0.45rem;
+  grid-template-columns: minmax(12rem, 1.35fr) 4.8rem minmax(7rem, 0.75fr) minmax(7rem, 0.75fr) minmax(12rem, 1.15fr);
+  gap: 0.85rem;
+  align-items: center;
+  padding: 0.58rem 0;
   border-top: 1px solid var(--border-soft);
 }
 
-.principal-meter-grid span {
+.principal-ledger-row:last-child {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.principal-ledger-identity,
+.principal-ledger-score,
+.principal-ledger-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.principal-ledger-identity span,
+.principal-ledger-score span,
+.principal-ledger-meter span {
   color: var(--text-muted);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.principal-meter-grid strong {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  text-align: right;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.principal-note {
-  margin-top: 0.55rem;
+.principal-ledger-identity strong {
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+
+.principal-ledger-score strong {
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+.principal-mini-track {
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(239, 224, 196, 0.08);
+}
+
+.principal-mini-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+}
+
+.principal-ledger-row p {
+  color: var(--text-muted);
+  font-size: 0.78rem;
 }
 
 /* ── Season timeline ── */
@@ -1826,5 +1902,23 @@ input[type='range'] {
     max-height: none;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: none;
+  }
+
+  .section-strength-routes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .section-strength-routes::before,
+  .section-strength-rail::before {
+    display: none;
+  }
+
+  .roster-section-detail-header,
+  .principal-ledger-row {
+    grid-template-columns: 1fr;
+  }
+
+  .principal-ledger-row {
+    gap: 0.5rem;
   }
 }
