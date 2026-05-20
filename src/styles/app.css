@@ -438,8 +438,7 @@ button { font-family: inherit; }
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-rows: max-content minmax(0, 1fr);
-  gap: 1rem;
+  grid-template-rows: 1fr;
   overflow: hidden;
 }
 .program-workspace { min-height: 0; }
@@ -952,16 +951,44 @@ button { font-family: inherit; }
    REPERTOIRE SHELF
    ============================================================ */
 
+.rep-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 24;
+  cursor: default;
+}
+.rep-resize-handle {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ns-resize;
+  margin: 0 -1rem;
+  flex-shrink: 0;
+}
+.rep-resize-handle::after {
+  content: '';
+  width: 36px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--hairline-strong);
+}
 .repertoire-shelf {
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 25;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  background: color-mix(in srgb, var(--bark) 92%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border-top: 1px solid var(--hairline-strong);
-  border-bottom: 1px solid var(--hairline);
-  background: color-mix(in srgb, var(--bark) 82%, transparent);
-  padding: 0.55rem 1rem 0.8rem;
+  box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  padding: 0 1rem 0.8rem;
+  will-change: transform;
 }
 .repertoire-shelf-title {
   min-width: 8rem;
@@ -1048,8 +1075,7 @@ button { font-family: inherit; }
   overscroll-behavior: contain;
   padding-right: 0.35rem;
 }
-.program-page.dragging-mode .repertoire-shelf,
-.program-page.dragging-mode .rep-list {
+.program-page.dragging-mode .repertoire-shelf {
   overflow: visible;
 }
 .rep-item {

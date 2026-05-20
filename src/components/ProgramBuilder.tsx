@@ -14,7 +14,6 @@ interface ProgramBuilderProps {
   forecast: ConcertForecast
   slotName: string
   rightRail: ReactNode
-  repertoireShelf: ReactNode
   registerSlotRef: (index: number, el: HTMLDivElement | null) => void
   isDragging: boolean
   onToggleRepertoire: () => void
@@ -329,7 +328,6 @@ export default function ProgramBuilder({
   forecast,
   slotName,
   rightRail,
-  repertoireShelf,
   registerSlotRef,
   isDragging,
   onToggleRepertoire,
@@ -533,7 +531,6 @@ export default function ProgramBuilder({
 
         <aside className="right-rail">{rightRail}</aside>
       </div>
-      {repertoireShelf}
     </div>
   )
 }
