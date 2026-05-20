@@ -15,24 +15,6 @@ const sectionLabels: Record<SectionKey, string> = {
   percussion: 'Percussion',
 }
 
-const principalOrder: Record<string, number> = {
-  'Concertmaster': 10,
-  'Principal Second Violin': 20,
-  'Principal Viola': 30,
-  'Principal Cello': 40,
-  'Principal Double Bass': 50,
-  'Principal Flute': 10,
-  'Principal Oboe': 20,
-  'Principal Clarinet': 30,
-  'Principal Bassoon': 40,
-  'Principal Horn': 10,
-  'Principal Trumpet': 20,
-  'Principal Trombone': 30,
-  'Principal Tuba': 40,
-  'Timpani': 10,
-  'Principal Percussion': 20,
-}
-
 function ratingClass(value: number): string {
   if (value >= 70) return 'risk-low'
   if (value >= 50) return 'risk-med'
@@ -62,9 +44,7 @@ function summarizePrincipal(principal: Principal): string {
 }
 
 function sortedPrincipals(principals: Principal[], section: SectionKey): Principal[] {
-  return principals
-    .filter(principal => principal.section === section)
-    .sort((a, b) => (principalOrder[a.position] ?? 100) - (principalOrder[b.position] ?? 100))
+  return principals.filter(principal => principal.section === section)
 }
 
 function PrincipalRow({ principal }: { principal: Principal }) {
