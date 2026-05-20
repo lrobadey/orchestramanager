@@ -14,9 +14,10 @@ interface ProgramBuilderProps {
   forecast: ConcertForecast
   slotName: string
   rightRail: ReactNode
+  repertoireShelf: ReactNode
   registerSlotRef: (index: number, el: HTMLDivElement | null) => void
   isDragging: boolean
-  onOpenRepertoire: () => void
+  onToggleRepertoire: () => void
   onSlotDragEnd: (sourceIdx: number, point: { x: number; y: number }) => void
   onProgramChange: (next: ConcertProgram) => void
   onRunConcert: () => void
@@ -57,7 +58,7 @@ interface SlotRowProps {
   perWorkRisk: number | null
   hoursNeeded: number | null
   hours: number
-  onOpenRepertoire: () => void
+  onToggleRepertoire: () => void
   onSlotDragEnd: (point: { x: number; y: number }) => void
   registerRef: (el: HTMLDivElement | null) => void
 }
@@ -68,7 +69,7 @@ function SlotRow({
   perWorkRisk,
   hoursNeeded,
   hours,
-  onOpenRepertoire,
+  onToggleRepertoire,
   onSlotDragEnd,
   registerRef,
 }: SlotRowProps) {
@@ -116,7 +117,7 @@ function SlotRow({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.12 }}
-              onClick={onOpenRepertoire}
+              onClick={onToggleRepertoire}
             >
               <span className="plus">+</span>Add work
             </motion.button>
@@ -328,9 +329,10 @@ export default function ProgramBuilder({
   forecast,
   slotName,
   rightRail,
+  repertoireShelf,
   registerSlotRef,
   isDragging,
-  onOpenRepertoire,
+  onToggleRepertoire,
   onSlotDragEnd,
   onProgramChange,
   onRunConcert,
@@ -377,7 +379,7 @@ export default function ProgramBuilder({
   return (
     <div className={`program-page ${isDragging ? 'dragging-mode' : ''}`}>
       <div className="cockpit-grid">
-        <div>
+        <div className="program-workspace">
           <div className="program-head">
             <div className="program-head-left">
               <span className="eyebrow">{slotName}</span>
@@ -400,7 +402,7 @@ export default function ProgramBuilder({
                   3 Works
                 </button>
               </div>
-              <button type="button" className="cta-ghost" onClick={onOpenRepertoire}>
+              <button type="button" className="cta-ghost" onClick={onToggleRepertoire}>
                 + Repertoire
               </button>
             </div>
@@ -429,7 +431,7 @@ export default function ProgramBuilder({
                   perWorkRisk={forecast.perWorkPerformanceRisk[index]}
                   hoursNeeded={forecast.perWorkRehearsalHoursNeeded[index]}
                   hours={program.rehearsalAllocation[index]}
-                  onOpenRepertoire={onOpenRepertoire}
+                  onToggleRepertoire={onToggleRepertoire}
                   onSlotDragEnd={point => onSlotDragEnd(index, point)}
                   registerRef={el => registerSlotRef(index, el)}
                 />
@@ -531,6 +533,7 @@ export default function ProgramBuilder({
 
         <aside className="right-rail">{rightRail}</aside>
       </div>
+      {repertoireShelf}
     </div>
   )
 }

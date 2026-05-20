@@ -230,7 +230,17 @@ export default function App() {
             slotName={currentSlotName ?? ''}
             registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
             isDragging={isDragging}
-            onOpenRepertoire={() => setRepertoireOpen(true)}
+            repertoireShelf={
+              <RepertoireDrawer
+                open={repertoireOpen}
+                onClose={() => setRepertoireOpen(false)}
+                works={works}
+                usedIds={usedIds}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={handleRepertoireDrop}
+              />
+            }
+            onToggleRepertoire={() => setRepertoireOpen(open => !open)}
             onSlotDragEnd={handleSlotDrop}
             onProgramChange={setProgram}
             onRunConcert={handleRunConcert}
@@ -241,14 +251,6 @@ export default function App() {
                 workCount={program.workCount}
               />
             }
-          />
-          <RepertoireDrawer
-            open={repertoireOpen}
-            onClose={() => setRepertoireOpen(false)}
-            works={works}
-            usedIds={usedIds}
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={handleRepertoireDrop}
           />
         </>
       ) : report ? (

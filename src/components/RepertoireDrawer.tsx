@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { motion, PanInfo } from 'framer-motion'
 import { Era, Work } from '../types/core'
-import Drawer from './Drawer'
 
 interface RepertoireDrawerProps {
   open: boolean
@@ -39,6 +38,7 @@ export default function RepertoireDrawer({
 }: RepertoireDrawerProps) {
   const [selectedEra, setSelectedEra] = useState<Era>('romantic')
   const [selectedComposer, setSelectedComposer] = useState<string>('Beethoven')
+  const [search, setSearch] = useState('')
 
   const eras = ERA_ORDER.filter(era => works.some(w => w.era === era))
   const worksInEra = works.filter(w => w.era === selectedEra)
@@ -48,47 +48,75 @@ export default function RepertoireDrawer({
   if (!composers.includes(selectedComposer) && composers.length > 0) {
     setSelectedComposer(composers[0])
   }
+  const searchTerm = search.trim().toLowerCase()
   const visibleWorks = worksInEra
     .filter(w => w.composer === selectedComposer)
+    .filter(w => {
+      if (!searchTerm) return true
+      const searchable = `${w.title} ${w.composer} ${ERA_LABELS[w.era]}`.toLowerCase()
+      return searchable.includes(searchTerm)
+    })
     .sort(sortWorksForComposer)
 
+  if (!open) return null
+
   return (
-    <Drawer open={open} title="Repertoire" onClose={onClose}>
+    <section className="repertoire-shelf" aria-label="Repertoire shelf">
       <div className="rep-filters-block">
-        <div className="rep-filter-label">Era</div>
-        <div className="rep-filters-row">
-          {eras.map(era => (
-            <button
-              key={era}
-              type="button"
-              className={`rep-chip ${selectedEra === era ? 'active' : ''}`}
-              onClick={() => {
-                setSelectedEra(era)
-                const newComposers = Array.from(new Set(works.filter(w => w.era === era).map(w => w.composer))).sort()
-                setSelectedComposer(newComposers[0] ?? '')
-              }}
-            >
-              {ERA_LABELS[era]}
-              <span className="rep-chip-count">{works.filter(w => w.era === era).length}</span>
-            </button>
-          ))}
+        <div className="repertoire-shelf-title">
+          <span className="eyebrow">Library</span>
+          <h2>Repertoire</h2>
         </div>
-        <div className="rep-filter-label">Composer</div>
-        <div className="rep-filters-row">
-          {composers.map(c => (
-            <button
-              key={c}
-              type="button"
-              className={`rep-chip ${selectedComposer === c ? 'active' : ''}`}
-              onClick={() => setSelectedComposer(c)}
-            >
-              {c}
-              <span className="rep-chip-count">
-                {worksInEra.filter(w => w.composer === c).length}
-              </span>
-            </button>
-          ))}
+        <label className="rep-search">
+          <span className="rep-filter-label">Search</span>
+          <input
+            type="search"
+            value={search}
+            placeholder="Title, composer, or era"
+            onChange={e => setSearch(e.target.value)}
+          />
+        </label>
+        <div className="rep-filter-group">
+          <span className="rep-filter-label">Era</span>
+          <div className="rep-filters-row">
+            {eras.map(era => (
+              <button
+                key={era}
+                type="button"
+                className={`rep-chip ${selectedEra === era ? 'active' : ''}`}
+                onClick={() => {
+                  setSelectedEra(era)
+                  const newComposers = Array.from(new Set(works.filter(w => w.era === era).map(w => w.composer))).sort()
+                  setSelectedComposer(newComposers[0] ?? '')
+                }}
+              >
+                {ERA_LABELS[era]}
+                <span className="rep-chip-count">{works.filter(w => w.era === era).length}</span>
+              </button>
+            ))}
+          </div>
         </div>
+        <div className="rep-filter-group">
+          <span className="rep-filter-label">Composer</span>
+          <div className="rep-filters-row">
+            {composers.map(c => (
+              <button
+                key={c}
+                type="button"
+                className={`rep-chip ${selectedComposer === c ? 'active' : ''}`}
+                onClick={() => setSelectedComposer(c)}
+              >
+                {c}
+                <span className="rep-chip-count">
+                  {worksInEra.filter(w => w.composer === c).length}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <button type="button" className="drawer-close" onClick={onClose}>
+          Close
+        </button>
       </div>
 
       <div className="rep-list">
@@ -127,6 +155,6 @@ export default function RepertoireDrawer({
           </p>
         )}
       </div>
-    </Drawer>
+    </section>
   )
 }

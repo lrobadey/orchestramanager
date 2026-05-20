@@ -8,13 +8,71 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 **Last updated:** 2026-05-20
 **Current milestone:** Milestone 2 — Roster and Section Leader System
-**Current playable state:** Full four-concert season loop is playable with program-arc salience and a stateful principal roster layered into the loop. Player can choose 2- or 3-work programs from the nested repertoire library, allocate rehearsal hours, set ticket policy, see audience mix, program-arc salience, memory-anchor readouts, roster-informed section stress, and repertoire fit in the forecast, switch to the Roster view, inspect all 15 named principals by section, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert.
-**Latest PR:** Stateful roster vertical slice
+**Current playable state:** Full four-concert season loop is playable with program-arc salience and a stateful principal roster layered into the loop. Player can choose 2- or 3-work programs from a bottom repertoire shelf with era/composer filters and text search inside a single-viewport planning workspace, allocate rehearsal hours, set ticket policy, see audience mix, program-arc salience, memory-anchor readouts, roster-informed section stress, and repertoire fit in the forecast, switch to the Roster view, inspect all 15 named principals by section, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert.
+**Latest PR:** Repertoire bottom shelf
 **Known blockers:** None currently recorded.
-**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. Arc-salience coefficients are still first-pass tuning values. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system.
-**Next recommended action:** Browser-check the new Roster view, forecast Program Arc and Roster Fit panels, concert report Roster Aftermath block, and verify that applying one concert changes principal form/morale for the next planning screen.
+**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. Arc-salience coefficients are still first-pass tuning values. The repertoire shelf is a presentation change only; it still depends on drag/drop into program slots and may need density tuning after browser review. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system.
+**Next recommended action:** User browser-check the bottom repertoire shelf, including open/close, era/composer filters, text search, drag/drop into slots, and mobile-width layout if visual signoff is needed.
 
 ## Log Entries
+
+### 2026-05-20 — Repertoire bottom shelf
+
+**Primary milestone:** Milestone 2 — Roster and Section Leader System
+
+**Summary**
+
+Replaced the side-overlay repertoire drawer with an in-flow bottom shelf on the program planning screen. The planning screen now uses a bounded viewport frame, with the program builder and forecast above the shelf and only the shelf work list scrolling internally. The existing nested Era -> Composer -> Works browsing remains intact, and the shelf adds a lightweight text search over the currently selected catalog slice.
+
+**Rationale**
+
+The repertoire library is part of the planning surface, not a separate modal interruption. A bottom shelf keeps the player inside the program-building system, and the single-viewport layout keeps work cards and target slots visible together so drag/drop does not require page scrolling.
+
+**Files changed**
+
+- `src/App.tsx`
+- `src/components/ProgramBuilder.tsx`
+- `src/components/RepertoireDrawer.tsx`
+- `src/styles/app.css`
+- `docs/PROGRESS.md`
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  6 passed (6)
+Tests       71 passed (71)
+```
+
+```
+npm run build
+
+✓ built in 545ms
+```
+
+Browser verification:
+- Not run by agent at user request.
+- Agent will open the dev server in the in-app browser for user review.
+
+**Known issues / risks**
+
+- This is intentionally UI-only: no repertoire data, scoring, roster, or concert-resolution behavior changed.
+- The shelf preserves the existing drag/drop interaction, so adding works still depends on dragging repertoire cards into slots.
+- The viewport fit is intentionally dense and should be browser-reviewed for visual comfort across common laptop sizes.
+- During repertoire drags, the shelf/list temporarily allows overflow so cards are not clipped while moving toward program slots.
+- The shelf controls were compressed into one toolbar row so the shelf can reserve most of its height for browsing work cards.
+- `Drawer.tsx` remains in the codebase for now; it was not refactored or removed in this narrow change.
+
+**Handoff note**
+
+The repertoire surface now enters `ProgramBuilder` as `repertoireShelf` and renders below the cockpit grid. `RepertoireDrawer` keeps its current name to avoid churn, but it now returns a shelf section rather than wrapping content in the fixed drawer shell. `ProgramBuilder` owns the single-viewport composition; the app shell is bounded to `100dvh`, the shelf list is the only scrolling region in the repertoire surface, and `dragging-mode` lets active drag cards escape shelf clipping.
+
+**Next recommended action**
+
+Review the planning screen in the browser and tune the shelf height/card density if it feels too tall or too compressed during actual program building.
+
+---
 
 ### 2026-05-20 — Stateful roster vertical slice
 
