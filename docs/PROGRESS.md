@@ -8,13 +8,65 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 **Last updated:** 2026-05-20
 **Current milestone:** Milestone 2 — Roster and Section Leader System
-**Current playable state:** Full four-concert season loop is playable with program-arc salience and a stateful principal roster layered into the loop. Player can choose 2- or 3-work programs from a bottom repertoire shelf with era/composer filters and text search inside a single-viewport planning workspace, allocate rehearsal hours, set ticket policy, see audience mix, program-arc salience, memory-anchor readouts, roster-informed section stress, and repertoire fit in the forecast, switch to the Roster view, inspect all 15 named principals by section, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert.
-**Latest PR:** Repertoire bottom shelf
+**Current playable state:** Full four-concert season loop is playable with program-arc salience and a stateful principal roster layered into the loop. Player can choose 2- or 3-work programs from a bottom repertoire shelf with era/composer filters and text search inside a fixed single-viewport planning workspace, allocate rehearsal hours, set ticket policy, see audience mix, program-arc salience, memory-anchor readouts, roster-informed section stress, and repertoire fit in the forecast, switch to the Roster view, inspect all 15 named principals by section, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert. The Finnish visual direction and pop-out repertoire shelf are preserved while roster, report, and season-summary screens use contained inner scrolling.
+**Latest PR:** Finnish UI / viewport merge synthesis
 **Known blockers:** None currently recorded.
-**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. Arc-salience coefficients are still first-pass tuning values. The repertoire shelf is a presentation change only; it still depends on drag/drop into program slots and may need density tuning after browser review. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system.
-**Next recommended action:** User browser-check the bottom repertoire shelf, including open/close, era/composer filters, text search, drag/drop into slots, and mobile-width layout if visual signoff is needed.
+**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. Arc-salience coefficients are still first-pass tuning values. The repertoire shelf is a presentation change only; it still depends on drag/drop into program slots and may need density tuning after browser review. The merged viewport contract has test/build coverage but still needs manual browser inspection across common desktop and mobile viewport sizes. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system.
+**Next recommended action:** Browser-check the merged viewport contract across planning, repertoire shelf open/close and drag/drop, roster, concert report, and season summary.
 
 ## Log Entries
+
+### 2026-05-20 — Finnish UI / viewport merge synthesis
+
+**Primary milestone:** Milestone 2 — Roster and Section Leader System
+**Secondary milestone:** Milestone 6 — Vertical Slice Release
+
+**Summary**
+
+Resolved the divergence between the newer Finnish visual pass with the pop-out bottom repertoire shelf and the local fixed-viewport work. The resulting app keeps the remote shelf/planning structure and applies the local viewport contract to roster, concert report, and season-summary surfaces so they scroll inside the shell rather than pushing the browser page.
+
+**Rationale**
+
+The repertoire shelf is now part of the planning instrument, so the viewport fix needed to be integrated around that newer structure instead of restoring the older two-column planning surface. This keeps the newest visual hierarchy while preserving the local goal: a contained management cockpit with stable shell chrome and inner scrolling where dense screens need it.
+
+**Files changed**
+
+- `src/App.tsx`
+- `src/components/ConcertReport.tsx`
+- `src/components/SeasonSummaryPanel.tsx`
+- `src/styles/app.css`
+- `docs/PROGRESS.md`
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  6 passed (6)
+Tests       71 passed (71)
+```
+
+```
+npm run build
+
+✓ built in 529ms
+```
+
+**Known issues / risks**
+
+- Manual browser verification is still recommended for desktop and mobile viewport sizes.
+- This was intentionally presentation-only: no simulation formulas, data behavior, roster state transitions, or repertoire data changed.
+- The repertoire shelf still depends on drag/drop into program slots.
+
+**Handoff note**
+
+The rebase keeps the bottom repertoire shelf from `origin/main` and ports the local viewport work as shared `.screen` containment plus screen-specific wrappers. `AppShell` remains the height owner; roster, report, and summary scroll internally.
+
+**Next recommended action**
+
+Open the app and verify planning with the repertoire shelf, roster, report, and season summary across common viewport sizes.
+
+---
 
 ### 2026-05-20 — Repertoire bottom shelf
 

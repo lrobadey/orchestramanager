@@ -82,7 +82,7 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
   const d = report.institutionalDeltas
 
   return (
-    <div className="report-page">
+    <div className="screen screen-report report-page">
       <span className="eyebrow report-eyebrow">Concert {concertNumber ?? ''} Report</span>
       <h1 className="report-lede">{ledeFor(report, selectedWorks)}</h1>
       <p className="report-byline">{selectedWorks.map(w => w.title).join(' · ')}</p>

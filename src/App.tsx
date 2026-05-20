@@ -211,11 +211,13 @@ export default function App() {
       nav={nav}
     >
       {mainView === 'roster' ? (
-        <RosterOverview
-          roster={season.roster}
-          forecast={forecast}
-          currentSlotName={currentSlotName}
-        />
+        <div className="screen screen-roster">
+          <RosterOverview
+            roster={season.roster}
+            forecast={forecast}
+            currentSlotName={currentSlotName}
+          />
+        </div>
       ) : seasonComplete ? (
         <SeasonSummaryPanel
           summary={summarizeSeason(season)!}

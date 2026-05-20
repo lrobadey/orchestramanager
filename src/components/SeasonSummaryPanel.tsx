@@ -65,7 +65,7 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
   const cashDelta = fi.cash - si.cash
 
   return (
-    <div className="summary-page">
+    <div className="screen screen-summary summary-page">
       <p className="summary-byline">Season I · Debut · Four concerts complete</p>
       <h1 className="summary-lede">{ledeFor(summary)}</h1>
 

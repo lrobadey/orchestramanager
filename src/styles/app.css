@@ -53,10 +53,14 @@ html, body {
   font-family: var(--font-sans);
   font-size: 13px;
   line-height: 1.45;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-body { margin: 0; }
+body {
+  min-width: 320px;
+  margin: 0;
+}
 
 button { font-family: inherit; }
 
@@ -322,6 +326,21 @@ button { font-family: inherit; }
   padding: 1rem 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
+}
+
+.screen {
+  width: 100%;
+  min-height: 0;
+}
+
+.screen-roster,
+.screen-report,
+.screen-summary {
+  flex: 1 1 auto;
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.35rem;
 }
 
 /* ============================================================
@@ -1325,7 +1344,11 @@ button { font-family: inherit; }
    ROSTER
    ============================================================ */
 
-.roster-page { display: flex; flex-direction: column; }
+.roster-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 
 .roster-hero {
   display: grid;
@@ -1568,7 +1591,10 @@ button { font-family: inherit; }
    CONCERT REPORT
    ============================================================ */
 
-.report-page { max-width: 900px; margin: 0 auto; }
+.report-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
 
 .report-eyebrow { margin-bottom: 0.5rem; }
 
@@ -1699,7 +1725,10 @@ button { font-family: inherit; }
    SEASON SUMMARY
    ============================================================ */
 
-.summary-page { max-width: 900px; margin: 0 auto; }
+.summary-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
 .summary-byline {
   font-family: var(--font-mono);
   font-size: 0.65rem;
