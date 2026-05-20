@@ -90,10 +90,6 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
           <p className="concert-slot-label">{currentSlotName ?? 'Season complete'}</p>
           <h2>Roster Room</h2>
         </div>
-        <p>
-          Principals are the live bottlenecks of the orchestra. Form and morale move
-          across the season after each concert.
-        </p>
       </div>
 
       <section className="orchestra-strength-hero" aria-label="Orchestra strength">
