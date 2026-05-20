@@ -1,27 +1,29 @@
 import React from 'react'
 
 interface AppShellProps {
-  left: React.ReactNode
+  vitals: React.ReactNode
   children: React.ReactNode
-  timeline?: React.ReactNode
+  position?: React.ReactNode
   nav?: React.ReactNode
+  seasonDots?: React.ReactNode
 }
 
-export default function AppShell({ left, children, timeline, nav }: AppShellProps) {
+export default function AppShell({ vitals, children, position, nav, seasonDots }: AppShellProps) {
   return (
     <div className="shell-root">
       <header className="shell-header">
         <div className="shell-header-inner">
-          <span className="shell-title">Orchestra Manager</span>
-          <span className="shell-subtitle">Seattle · Debut Season</span>
-          {nav && <div className="shell-nav">{nav}</div>}
+          <div className="shell-brand">
+            <span className="shell-mark">OM</span>
+            <span className="shell-title">Orchestra Manager</span>
+            {position && <span className="shell-position">{position}</span>}
+            {seasonDots}
+          </div>
+          {nav && <nav className="shell-nav">{nav}</nav>}
         </div>
-        {timeline && <div className="shell-timeline">{timeline}</div>}
       </header>
-      <div className="shell-body">
-        <aside className="shell-left">{left}</aside>
-        <main className="shell-main">{children}</main>
-      </div>
+      {vitals}
+      <main className="shell-main">{children}</main>
     </div>
   )
 }

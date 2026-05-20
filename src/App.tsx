@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { works } from './data/works'
 import { principals } from './data/principals'
 import { audienceSegments } from './data/audienceSegments'
@@ -14,20 +14,19 @@ import {
   TOTAL_REHEARSAL_HOURS,
 } from './types/core'
 import AppShell from './components/AppShell'
-import InstitutionMeters from './components/InstitutionMeters'
+import VitalsStrip from './components/VitalsStrip'
 import ProgramBuilder from './components/ProgramBuilder'
 import ConcertForecastView from './components/ConcertForecast'
 import ConcertReportView from './components/ConcertReport'
 import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
+import RepertoireDrawer from './components/RepertoireDrawer'
 
 type Phase = 'planning' | 'report'
-type MainView = 'season' | 'roster'
+type MainView = 'program' | 'roster'
 
-const evenAllocation = (): SlotTuple<number> => {
-  return [7, 7, TOTAL_REHEARSAL_HOURS - 14]
-}
+const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
 const emptyProgram = (): ConcertProgram => ({
   workCount: 3,
@@ -40,14 +39,21 @@ const emptyProgram = (): ConcertProgram => ({
   studentTicketPrice: 25,
 })
 
+const ROMAN_OPUS = ['I', 'II', 'III', 'IV']
+
 export default function App() {
   const [season, setSeason] = useState<SeasonState>(() =>
     createInitialSeason(startingInstitution, principals),
   )
   const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
   const [phase, setPhase] = useState<Phase>('planning')
-  const [mainView, setMainView] = useState<MainView>('season')
+  const [mainView, setMainView] = useState<MainView>('program')
   const [report, setReport] = useState<ConcertReport | null>(null)
+  const [repertoireOpen, setRepertoireOpen] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
+  const repertoireAutoOpenedRef = useRef(false)
+
+  const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
 
   const institution = season.institution
   const livePrincipals = season.roster.principals
@@ -65,6 +71,20 @@ export default function App() {
     [institution, livePrincipals, program],
   )
 
+  // Auto-open repertoire on first paint when program is empty and we're planning.
+  useEffect(() => {
+    if (
+      mainView === 'program' &&
+      phase === 'planning' &&
+      !seasonComplete &&
+      !repertoireAutoOpenedRef.current &&
+      program.workIds.every(id => id === null)
+    ) {
+      repertoireAutoOpenedRef.current = true
+      setRepertoireOpen(true)
+    }
+  }, [mainView, phase, seasonComplete, program.workIds])
+
   function handleRunConcert() {
     if (!forecast.isComplete) return
     const result = resolveConcert({
@@ -77,6 +97,7 @@ export default function App() {
     })
     setReport(result)
     setPhase('report')
+    setRepertoireOpen(false)
   }
 
   function handleDone() {
@@ -85,7 +106,8 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    setMainView('season')
+    setMainView('program')
+    repertoireAutoOpenedRef.current = false
   }
 
   function handleNewSeason() {
@@ -93,7 +115,8 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    setMainView('season')
+    setMainView('program')
+    repertoireAutoOpenedRef.current = false
   }
 
   const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
@@ -105,35 +128,87 @@ export default function App() {
     .slice(0, program.workCount)
     .filter((w): w is NonNullable<typeof w> => w !== undefined)
 
-  const currentSlotName = !seasonComplete
-    ? season.slots[season.currentSlotIndex].name
-    : null
+  const currentSlotName = !seasonComplete ? season.slots[season.currentSlotIndex].name : null
+  const opusLabel = !seasonComplete
+    ? `Opus I · Movement ${ROMAN_OPUS[season.currentSlotIndex]} / IV`
+    : 'Opus I · Complete'
+
+  const usedIds = new Set(program.workIds.filter((id): id is string => id !== null))
+
+  function pointInRect(point: { x: number; y: number }, el: HTMLElement | null): boolean {
+    if (!el) return false
+    const r = el.getBoundingClientRect()
+    return point.x >= r.left && point.x <= r.right && point.y >= r.top && point.y <= r.bottom
+  }
+
+  function findSlotTarget(point: { x: number; y: number }): number | null {
+    for (let i = 0; i < program.workCount; i++) {
+      if (pointInRect(point, slotRefs.current[i])) return i
+    }
+    return null
+  }
+
+  function handleRepertoireDrop(id: string, point: { x: number; y: number }) {
+    setIsDragging(false)
+    const target = findSlotTarget(point)
+    if (target === null) return
+    const next = [...program.workIds] as SlotTuple<string | null>
+    const existing = next.indexOf(id)
+    if (existing !== -1 && existing !== target) {
+      next[existing] = next[target]
+      next[target] = id
+    } else {
+      next[target] = id
+    }
+    setProgram({ ...program, workIds: next })
+  }
+
+  function handleSlotDrop(sourceIdx: number, point: { x: number; y: number }) {
+    setIsDragging(false)
+    const target = findSlotTarget(point)
+    const next = [...program.workIds] as SlotTuple<string | null>
+    if (target === null) {
+      next[sourceIdx] = null
+      setProgram({ ...program, workIds: next })
+      return
+    }
+    if (target === sourceIdx) return
+    const a = next[sourceIdx]
+    next[sourceIdx] = next[target]
+    next[target] = a
+    setProgram({ ...program, workIds: next })
+  }
+
+  const nav = (
+    <>
+      <button
+        type="button"
+        className={mainView === 'program' && !seasonComplete ? 'shell-nav-button active' : 'shell-nav-button'}
+        onClick={() => setMainView('program')}
+      >
+        Program
+      </button>
+      <button
+        type="button"
+        className={mainView === 'roster' ? 'shell-nav-button active' : 'shell-nav-button'}
+        onClick={() => setMainView('roster')}
+      >
+        Roster
+      </button>
+    </>
+  )
 
   return (
     <AppShell
-      left={
-        <InstitutionMeters
+      vitals={
+        <VitalsStrip
           institution={institution}
           deltas={phase === 'report' && report ? report.institutionalDeltas : undefined}
         />
       }
-      timeline={<SeasonTimeline season={season} />}
-      nav={
-        <div className="view-toggle" aria-label="Main views">
-          <button
-            className={mainView === 'season' ? 'view-toggle-button active' : 'view-toggle-button'}
-            onClick={() => setMainView('season')}
-          >
-            Season
-          </button>
-          <button
-            className={mainView === 'roster' ? 'view-toggle-button active' : 'view-toggle-button'}
-            onClick={() => setMainView('roster')}
-          >
-            Roster
-          </button>
-        </div>
-      }
+      position={opusLabel}
+      seasonDots={<SeasonTimeline season={season} />}
+      nav={nav}
     >
       {mainView === 'roster' ? (
         <RosterOverview
@@ -146,40 +221,47 @@ export default function App() {
           summary={summarizeSeason(season)!}
           onNewSeason={handleNewSeason}
         />
-      ) : (
+      ) : phase === 'planning' ? (
         <>
-          {currentSlotName && phase === 'planning' && (
-            <p className="concert-slot-label">{currentSlotName}</p>
-          )}
-          {phase === 'planning' && (
-            <div className="builder-layout">
-              <ProgramBuilder
+          <ProgramBuilder
+            works={works}
+            program={program}
+            forecast={forecast}
+            slotName={currentSlotName ?? ''}
+            registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
+            isDragging={isDragging}
+            repertoireShelf={
+              <RepertoireDrawer
+                open={repertoireOpen}
+                onClose={() => setRepertoireOpen(false)}
                 works={works}
-                program={program}
-                forecast={forecast}
-                rightPanel={
-                  <ConcertForecastView
-                    forecast={forecast}
-                    slotWorks={slotWorks}
-                    workCount={program.workCount}
-                  />
-                }
-                onProgramChange={setProgram}
-                onRunConcert={handleRunConcert}
+                usedIds={usedIds}
+                onDragStart={() => setIsDragging(true)}
+                onDragEnd={handleRepertoireDrop}
               />
-            </div>
-          )}
-          {phase === 'report' && report && (
-            <ConcertReportView
-              report={report}
-              selectedWorks={filledSlotWorks}
-              onDone={handleDone}
-              concertNumber={season.currentSlotIndex + 1}
-              totalConcerts={4}
-            />
-          )}
+            }
+            onToggleRepertoire={() => setRepertoireOpen(open => !open)}
+            onSlotDragEnd={handleSlotDrop}
+            onProgramChange={setProgram}
+            onRunConcert={handleRunConcert}
+            rightRail={
+              <ConcertForecastView
+                forecast={forecast}
+                slotWorks={slotWorks}
+                workCount={program.workCount}
+              />
+            }
+          />
         </>
-      )}
+      ) : report ? (
+        <ConcertReportView
+          report={report}
+          selectedWorks={filledSlotWorks}
+          onDone={handleDone}
+          concertNumber={season.currentSlotIndex + 1}
+          totalConcerts={4}
+        />
+      ) : null}
     </AppShell>
   )
 }

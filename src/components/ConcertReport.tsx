@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { type AudienceBreakdown, type ConcertReport, type Work } from '../types/core'
 
 interface ConcertReportProps {
@@ -9,7 +8,7 @@ interface ConcertReportProps {
   totalConcerts?: number
 }
 
-function fmt(n: number): string {
+function fmt$(n: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -18,9 +17,9 @@ function fmt(n: number): string {
 }
 
 function qualityClass(value: number): string {
-  if (value >= 70) return 'risk-low'
-  if (value >= 40) return 'risk-med'
-  return 'risk-high'
+  if (value >= 70) return 'aurora'
+  if (value >= 40) return ''
+  return 'berry'
 }
 
 function qualityLabel(value: number): string {
@@ -32,17 +31,36 @@ function qualityLabel(value: number): string {
   return 'Poor'
 }
 
+function ledeFor(report: ConcertReport, works: Work[]): React.ReactNode {
+  const q = report.performanceQuality
+  const critic = report.criticResponse
+  const verdict =
+    q >= 80 ? 'triumphant' :
+    q >= 65 ? 'a strong outing' :
+    q >= 50 ? 'a working performance' :
+    q >= 35 ? 'uneven' :
+    'a disappointment'
+  const subject = works[0]?.title ?? 'the concert'
+  return (
+    <>
+      <em>{subject}</em>: <strong>{verdict}</strong>
+      {critic >= 70 ? ', and the critics agree.' : critic <= 40 ? ', though the critics were sharp.' : '.'}
+    </>
+  )
+}
+
 function deltaStr(d: number): string {
   return d >= 0 ? `+${d}` : `${d}`
 }
 
-function ReportRow({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="forecast-item">
-      <span className="forecast-key">{label}</span>
-      <span className="forecast-val">{value}</span>
-    </div>
-  )
+function deltaCls(d: number): string {
+  return d > 0 ? 'pos' : d < 0 ? 'neg' : ''
+}
+
+function outcomeClass(quality: number): string {
+  if (quality >= 70) return 'outcome-pass'
+  if (quality >= 40) return 'outcome-ok'
+  return 'outcome-fail'
 }
 
 function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
@@ -52,103 +70,83 @@ function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
         <div key={row.segmentId} className="audience-mix-row audience-mix-row-report">
           <span className="audience-segment-name">{row.segmentName}</span>
           <span className="audience-segment-count">{row.attendance.toLocaleString()}</span>
-          <span className="audience-segment-share">
-            {Math.round(row.shareOfHouse * 100)}%
-          </span>
-          <span className="audience-segment-revenue">{fmt(row.ticketRevenue)}</span>
+          <span className="audience-segment-share">{Math.round(row.shareOfHouse * 100)}%</span>
+          <span className="audience-segment-revenue">{fmt$(row.ticketRevenue)}</span>
         </div>
       ))}
     </div>
   )
 }
 
-function outcomeClass(quality: number): string {
-  if (quality >= 70) return 'outcome-pass'
-  if (quality >= 40) return 'outcome-ok'
-  return 'outcome-fail'
-}
-
-export default function ConcertReport({ report, selectedWorks, onDone, concertNumber, totalConcerts }: ConcertReportProps) {
-  const netClass = report.net >= 0 ? 'risk-low' : 'risk-high'
+export default function ConcertReportView({ report, selectedWorks, onDone, concertNumber, totalConcerts }: ConcertReportProps) {
   const d = report.institutionalDeltas
 
   return (
-    <div>
-      <div style={{ marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0, marginBottom: '0.25rem' }}>Concert Report</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-          {selectedWorks.map(w => w.title).join(' · ')}
-        </p>
+    <div className="report-page">
+      <span className="eyebrow report-eyebrow">Concert {concertNumber ?? ''} Report</span>
+      <h1 className="report-lede">{ledeFor(report, selectedWorks)}</h1>
+      <p className="report-byline">{selectedWorks.map(w => w.title).join(' · ')}</p>
+
+      <div className="report-stat-row">
+        <div className="report-stat">
+          <span className="report-stat-label">Attendance</span>
+          <span className="report-stat-num">{report.attendance.toLocaleString()}</span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Revenue</span>
+          <span className="report-stat-num">{fmt$(report.revenue)}</span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Expenses</span>
+          <span className="report-stat-num">{fmt$(report.expenses)}</span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Net</span>
+          <span className={`report-stat-num ${report.net >= 0 ? 'aurora' : 'berry'}`}>
+            {fmt$(report.net)}
+          </span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Quality</span>
+          <span className={`report-stat-num ${qualityClass(report.performanceQuality)}`}>
+            {report.performanceQuality}
+          </span>
+          <span className="text-muted text-mono" style={{ fontSize: '0.55rem', letterSpacing: '0.1em', marginTop: '0.1rem' }}>
+            {qualityLabel(report.performanceQuality)}
+          </span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Critics</span>
+          <span className={`report-stat-num ${qualityClass(report.criticResponse)}`}>
+            {report.criticResponse}
+          </span>
+          <span className="text-muted text-mono" style={{ fontSize: '0.55rem', letterSpacing: '0.1em', marginTop: '0.1rem' }}>
+            {qualityLabel(report.criticResponse)}
+          </span>
+        </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Audience Mix</h3>
+      <div className="report-block">
+        <span className="eyebrow report-block-title">Audience Mix</span>
         <AudienceMix rows={report.audienceBreakdown} />
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Results</h3>
-        <div className="forecast-grid">
-          <ReportRow label="Attendance" value={report.attendance.toLocaleString()} />
-          <ReportRow label="Revenue" value={fmt(report.revenue)} />
-          <ReportRow label="Expenses" value={fmt(report.expenses)} />
-          <ReportRow
-            label="Net"
-            value={<span className={netClass}>{fmt(report.net)}</span>}
-          />
-        </div>
-      </div>
-
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Performance</h3>
-        <div className="forecast-grid">
-          <ReportRow
-            label="Overall Quality"
-            value={
-              <span className={qualityClass(report.performanceQuality)}>
-                {report.performanceQuality} — {qualityLabel(report.performanceQuality)}
-              </span>
-            }
-          />
-          <ReportRow
-            label="Audience Response"
-            value={
-              <span className={qualityClass(report.audienceResponse)}>
-                {report.audienceResponse} — {qualityLabel(report.audienceResponse)}
-              </span>
-            }
-          />
-          <ReportRow
-            label="Critic Response"
-            value={
-              <span className={qualityClass(report.criticResponse)}>
-                {report.criticResponse} — {qualityLabel(report.criticResponse)}
-              </span>
-            }
-          />
-        </div>
-      </div>
-
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.6rem' }}>Section Outcomes</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div className="report-block">
+        <span className="eyebrow report-block-title">Section Outcomes</span>
+        <div className="report-section-list">
           {report.sectionOutcomes.map(outcome => (
-            <div key={outcome.section} className="section-outcome">
-              <span style={{ fontWeight: 'bold', width: '7rem', flexShrink: 0 }}>
-                {outcome.label}
-              </span>
-              <span className={`${outcomeClass(outcome.quality)}`} style={{ width: '4rem', flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
-                {outcome.quality}
-              </span>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{outcome.note}</span>
+            <div key={outcome.section} className="report-section-line">
+              <span className="report-section-line-label">{outcome.label}</span>
+              <span className={`report-section-line-score ${outcomeClass(outcome.quality)}`}>{outcome.quality}</span>
+              <span className="report-section-line-note">{outcome.note}</span>
             </div>
           ))}
         </div>
       </div>
 
       {report.notableMoments.length > 0 && (
-        <div className="panel" style={{ marginBottom: '0.75rem' }}>
-          <h3 style={{ marginBottom: '0.6rem' }}>Notable Moments</h3>
+        <div className="report-block">
+          <span className="eyebrow report-block-title">Notable Moments</span>
           <ul className="notes-list">
             {report.notableMoments.map((moment, i) => (
               <li key={i}>{moment}</li>
@@ -157,81 +155,101 @@ export default function ConcertReport({ report, selectedWorks, onDone, concertNu
         </div>
       )}
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.6rem' }}>Roster Aftermath</h3>
-        <div className="roster-change-list">
+      <div className="report-block">
+        <span className="eyebrow report-block-title">Roster Aftermath</span>
+        <div className="report-roster-list">
           {report.rosterChanges
-            .filter(change => change.formDelta !== 0 || change.moraleDelta !== 0)
+            .filter(c => c.formDelta !== 0 || c.moraleDelta !== 0)
             .sort((a, b) => Math.abs(b.formDelta) + Math.abs(b.moraleDelta) - Math.abs(a.formDelta) - Math.abs(a.moraleDelta))
-            .slice(0, 6)
+            .slice(0, 8)
             .map(change => (
-              <div key={change.principalId} className="roster-change-row">
-                <span className="roster-change-name">
+              <div key={change.principalId} className="report-roster-row">
+                <span className="report-roster-name">
                   {change.principalName}
                   <small>{change.position}</small>
                 </span>
-                <span className={change.formDelta >= 0 ? 'delta-positive' : 'delta-negative'}>
+                <span className={`report-roster-delta ${deltaCls(change.formDelta)}`}>
                   Form {deltaStr(change.formDelta)}
                 </span>
-                <span className={change.moraleDelta >= 0 ? 'delta-positive' : 'delta-negative'}>
+                <span className={`report-roster-delta ${deltaCls(change.moraleDelta)}`}>
                   Morale {deltaStr(change.moraleDelta)}
                 </span>
-                <span className="roster-change-note">{change.note}</span>
+                <span className="report-roster-note">{change.note}</span>
               </div>
             ))}
-          {report.rosterChanges.every(change => change.formDelta === 0 && change.moraleDelta === 0) && (
-            <p className="text-muted">The principals held steady; no form or morale movement this concert.</p>
+          {report.rosterChanges.every(c => c.formDelta === 0 && c.moraleDelta === 0) && (
+            <p className="text-muted">The principals held steady; no form or morale movement.</p>
           )}
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Institutional Impact</h3>
-        <div className="forecast-grid">
-          <ReportRow
-            label="Cash"
-            value={<span className={d.cash >= 0 ? 'delta-positive' : 'delta-negative'}>{d.cash >= 0 ? '+' : ''}{fmt(d.cash)}</span>}
-          />
-          <ReportRow
-            label="Reputation"
-            value={<span className={d.artisticReputation >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.artisticReputation)}</span>}
-          />
-          <ReportRow
-            label="Audience Trust"
-            value={<span className={d.audienceTrust >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.audienceTrust)}</span>}
-          />
-          <ReportRow
-            label="Donor Confidence"
-            value={<span className={d.donorConfidence >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.donorConfidence)}</span>}
-          />
-          <ReportRow
-            label="Morale"
-            value={<span className={d.musicianMorale >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.musicianMorale)}</span>}
-          />
-          <ReportRow
-            label="Tech Quality"
-            value={<span className={d.technicalQuality >= 0 ? 'delta-positive' : 'delta-negative'}>{deltaStr(d.technicalQuality)}</span>}
-          />
+      <div className="report-block">
+        <span className="eyebrow report-block-title">Institutional Impact</span>
+        <div className="report-delta-grid">
+          <div className="report-delta">
+            <span className="report-delta-label">Cash</span>
+            <span className={`report-delta-value ${deltaCls(d.cash)}`}>
+              {d.cash >= 0 ? '+' : ''}{fmt$(d.cash)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Reputation</span>
+            <span className={`report-delta-value ${deltaCls(d.artisticReputation)}`}>
+              {deltaStr(d.artisticReputation)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Trust</span>
+            <span className={`report-delta-value ${deltaCls(d.audienceTrust)}`}>
+              {deltaStr(d.audienceTrust)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Donors</span>
+            <span className={`report-delta-value ${deltaCls(d.donorConfidence)}`}>
+              {deltaStr(d.donorConfidence)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Morale</span>
+            <span className={`report-delta-value ${deltaCls(d.musicianMorale)}`}>
+              {deltaStr(d.musicianMorale)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Tech</span>
+            <span className={`report-delta-value ${deltaCls(d.technicalQuality)}`}>
+              {deltaStr(d.technicalQuality)}
+            </span>
+          </div>
           {(d.identity.adventurous ?? 0) !== 0 && (
-            <ReportRow
-              label="Identity: Adventurous"
-              value={<span className="delta-positive">+{d.identity.adventurous}</span>}
-            />
+            <div className="report-delta">
+              <span className="report-delta-label">Adventurous</span>
+              <span className="report-delta-value pos">+{d.identity.adventurous}</span>
+            </div>
           )}
           {(d.identity.scholarly ?? 0) !== 0 && (
-            <ReportRow
-              label="Identity: Scholarly"
-              value={<span className="delta-positive">+{d.identity.scholarly}</span>}
-            />
+            <div className="report-delta">
+              <span className="report-delta-label">Scholarly</span>
+              <span className="report-delta-value pos">+{d.identity.scholarly}</span>
+            </div>
+          )}
+          {(d.identity.communityFocused ?? 0) !== 0 && (
+            <div className="report-delta">
+              <span className="report-delta-label">Community</span>
+              <span className="report-delta-value pos">+{d.identity.communityFocused}</span>
+            </div>
           )}
         </div>
       </div>
 
-      <button onClick={onDone} style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-        {concertNumber != null && totalConcerts != null && concertNumber < totalConcerts
-          ? `Apply & Plan Concert ${concertNumber + 1} →`
-          : 'Apply & View Season Summary →'}
-      </button>
+      <div className="report-foot">
+        <button type="button" className="cta-aurora" onClick={onDone}>
+          {concertNumber != null && totalConcerts != null && concertNumber < totalConcerts
+            ? `Continue to Concert ${concertNumber + 1}`
+            : 'View Season Summary'}
+        </button>
+      </div>
     </div>
   )
 }
