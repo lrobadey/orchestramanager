@@ -6,6 +6,7 @@ import {
   ConcertProgram,
   ConcertForecast,
   AudienceBreakdown,
+  ExpenseBreakdown,
   SlotTuple,
   TOTAL_REHEARSAL_HOURS,
   ProgramArcSalienceResult,
@@ -23,8 +24,8 @@ import {
   pricePenalty,
   rehearsalHoursNeeded,
   pressureFromHoursGap,
-  REHEARSAL_COST_PER_HOUR,
-  BASE_CONCERT_COST,
+  computeExpenseBreakdown,
+  computeDonorUplift,
 } from './scoring'
 import { computeProgramArcSalience } from './programArcSalience'
 
@@ -196,6 +197,10 @@ function buildForecastNotes(
   return notes.slice(0, 4)
 }
 
+const EMPTY_EXPENSE_BREAKDOWN: ExpenseBreakdown = {
+  baseConcert: 0, rehearsal: 0, marketing: 0, production: 0, total: 0,
+}
+
 function emptyForecast(
   message: string,
   perWorkRehearsalDivisor: SlotTuple<number | null> = [null, null, null],
@@ -205,8 +210,10 @@ function emptyForecast(
   return {
     projectedAttendance: 0,
     projectedRevenue: 0,
+    projectedDonorUplift: 0,
     projectedAudienceBreakdown: [],
     projectedExpenses: 0,
+    projectedExpenseBreakdown: EMPTY_EXPENSE_BREAKDOWN,
     projectedNet: 0,
     performanceRisk: 0,
     rehearsalPressure: 0,
@@ -363,9 +370,10 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     0,
   )
   const totalRehearsalHours = program.rehearsalAllocation.reduce((s, h) => s + h, 0)
-  const projectedExpenses =
-    BASE_CONCERT_COST + totalRehearsalHours * REHEARSAL_COST_PER_HOUR + program.marketingSpend
-  const projectedNet = projectedRevenue - projectedExpenses
+  const projectedExpenseBreakdown = computeExpenseBreakdown(works, totalRehearsalHours, program.marketingSpend)
+  const projectedExpenses = projectedExpenseBreakdown.total
+  const projectedDonorUplift = computeDonorUplift(institution.donorConfidence)
+  const projectedNet = projectedRevenue + projectedDonorUplift - projectedExpenses
 
   const donorResponse = clamp(programDonorComfort - programNovelty * 0.3, 0, 100)
 
@@ -383,8 +391,10 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   return {
     projectedAttendance,
     projectedRevenue,
+    projectedDonorUplift,
     projectedAudienceBreakdown,
     projectedExpenses,
+    projectedExpenseBreakdown,
     projectedNet,
     performanceRisk: clamp(performanceRisk + arcPerceivedDamage * 0.12, 0, 100),
     rehearsalPressure,

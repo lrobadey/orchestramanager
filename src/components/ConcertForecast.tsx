@@ -130,8 +130,37 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
           <div className="forecast-block">
             <div className="forecast-block-head"><span className="eyebrow">Financials</span></div>
             <div className="forecast-rows">
-              <ForecastLine label="Revenue" value={fmt$(forecast.projectedRevenue)} animKey={forecast.projectedRevenue} />
+              <ForecastLine label="Ticket revenue" value={fmt$(forecast.projectedRevenue)} animKey={forecast.projectedRevenue} />
+              {forecast.projectedDonorUplift > 0 && (
+                <ForecastLine
+                  label="Donor support"
+                  value={<span className="aurora">{fmt$(forecast.projectedDonorUplift)}</span>}
+                  animKey={`donor-${forecast.projectedDonorUplift}`}
+                />
+              )}
               <ForecastLine label="Expenses" value={fmt$(forecast.projectedExpenses)} animKey={forecast.projectedExpenses} />
+              <ForecastLine
+                label="  Base"
+                value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.baseConcert)}</span>}
+                animKey={`base-${forecast.projectedExpenseBreakdown.baseConcert}`}
+              />
+              <ForecastLine
+                label="  Rehearsal"
+                value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.rehearsal)}</span>}
+                animKey={`reh-${forecast.projectedExpenseBreakdown.rehearsal}`}
+              />
+              <ForecastLine
+                label="  Marketing"
+                value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.marketing)}</span>}
+                animKey={`mkt-${forecast.projectedExpenseBreakdown.marketing}`}
+              />
+              {forecast.projectedExpenseBreakdown.production > 0 && (
+                <ForecastLine
+                  label="  Production"
+                  value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.production)}</span>}
+                  animKey={`prod-${forecast.projectedExpenseBreakdown.production}`}
+                />
+              )}
             </div>
           </div>
 

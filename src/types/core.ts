@@ -141,8 +141,10 @@ export interface ProgramArcSalienceResult {
 export interface ConcertForecast {
   projectedAttendance: number
   projectedRevenue: number
+  projectedDonorUplift: number
   projectedAudienceBreakdown: AudienceBreakdown[]
   projectedExpenses: number
+  projectedExpenseBreakdown: ExpenseBreakdown
   projectedNet: number
   performanceRisk: number
   rehearsalPressure: number
@@ -208,12 +210,23 @@ export interface AudienceBreakdown {
   priceAccessibilityScore: number
 }
 
+export interface ExpenseBreakdown {
+  baseConcert: number
+  rehearsal: number
+  marketing: number
+  production: number
+  total: number
+}
+
 export interface ConcertReport {
   attendance: number
   revenue: number
+  donorUplift: number
   audienceBreakdown: AudienceBreakdown[]
   expenses: number
+  expenseBreakdown: ExpenseBreakdown
   net: number
+  financialNotes: string[]
   performanceQuality: number
   audienceResponse: number
   criticResponse: number
@@ -250,4 +263,8 @@ export interface SeasonSummary {
   averagePerformanceQuality: number
   averageAudienceResponse: number
   identityNarrative: string[]
+  averageCapacityPercent: number
+  bestSegment: string
+  worstSegment: string
+  financialRiskFlags: string[]
 }
