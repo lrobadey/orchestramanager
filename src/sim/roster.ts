@@ -174,9 +174,7 @@ export function calculateRosterChangesAfterConcert(
   performanceQuality: number,
 ): PrincipalRosterChange[] {
   return principals.map(principal => {
-    const outcome = sectionOutcomes.find(
-      row => row.section.toLowerCase() === sectionLabel(principal.section).toLowerCase(),
-    )
+    const outcome = sectionOutcomes.find(row => row.section === principal.section)
     const sectionQuality = outcome?.quality ?? performanceQuality
     const formDelta = Math.round(clamp((sectionQuality - 55) / 18, -3, 3))
     const moraleDelta = Math.round(

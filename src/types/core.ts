@@ -172,7 +172,8 @@ export interface ConcertForecast {
 }
 
 export interface SectionOutcome {
-  section: string
+  section: SectionKey
+  label: string
   quality: number
   note: string
 }

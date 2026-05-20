@@ -55,7 +55,7 @@ function resolveSectionOutcomes(
       note = `${sectionLabel(section)} collapsed under pressure — a public failure the audience noticed.`
     }
 
-    return { section: sectionLabel(section), quality: Math.round(quality), note }
+    return { section, label: sectionLabel(section), quality: Math.round(quality), note }
   })
 }
 
@@ -76,9 +76,9 @@ function buildNotableMoments(
   const anchorTitle = memoryAnchorWork?.title ?? works[works.length - 1]?.title ?? 'the final work'
 
   if (weakest.quality < 35)
-    moments.push(`${weakest.section} faltered in the exposed passages of ${anchorTitle}.`)
+    moments.push(`${weakest.label} faltered in the exposed passages of ${anchorTitle}.`)
   if (strongest.quality > 82)
-    moments.push(`${strongest.section} delivered the strongest playing of the evening.`)
+    moments.push(`${strongest.label} delivered the strongest playing of the evening.`)
 
   if (rehearsalPressure > 30) {
     let worstIdx = 0
