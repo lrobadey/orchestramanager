@@ -135,7 +135,7 @@ export default function ConcertReport({ report, selectedWorks, onDone, concertNu
           {report.sectionOutcomes.map(outcome => (
             <div key={outcome.section} className="section-outcome">
               <span style={{ fontWeight: 'bold', width: '7rem', flexShrink: 0 }}>
-                {outcome.section}
+                {outcome.label}
               </span>
               <span className={`${outcomeClass(outcome.quality)}`} style={{ width: '4rem', flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: '0.82rem' }}>
                 {outcome.quality}
@@ -162,6 +162,7 @@ export default function ConcertReport({ report, selectedWorks, onDone, concertNu
         <div className="roster-change-list">
           {report.rosterChanges
             .filter(change => change.formDelta !== 0 || change.moraleDelta !== 0)
+            .sort((a, b) => Math.abs(b.formDelta) + Math.abs(b.moraleDelta) - Math.abs(a.formDelta) - Math.abs(a.moraleDelta))
             .slice(0, 6)
             .map(change => (
               <div key={change.principalId} className="roster-change-row">

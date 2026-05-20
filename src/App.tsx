@@ -93,6 +93,7 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
+    setMainView('season')
   }
 
   const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
