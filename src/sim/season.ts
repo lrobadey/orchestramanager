@@ -5,8 +5,10 @@ import {
   SeasonConcertSlot,
   SeasonState,
   SeasonSummary,
+  Principal,
 } from '../types/core'
 import { applyConcertReport } from './applyConcertReport'
+import { createInitialRoster, updateRosterAfterConcert } from './roster'
 import { average } from './scoring'
 
 const SLOT_NAMES = [
@@ -27,11 +29,15 @@ function makeSlot(index: number): SeasonConcertSlot {
   }
 }
 
-export function createInitialSeason(institution: InstitutionState): SeasonState {
+export function createInitialSeason(
+  institution: InstitutionState,
+  initialPrincipals: Principal[],
+): SeasonState {
   return {
     slots: [makeSlot(0), makeSlot(1), makeSlot(2), makeSlot(3)],
     currentSlotIndex: 0,
     institution,
+    roster: createInitialRoster(initialPrincipals),
   }
 }
 
@@ -55,11 +61,13 @@ export function resolveSeasonConcert(
   newSlots[idx] = updatedSlot
 
   const nextInstitution = applyConcertReport(season.institution, report)
+  const nextRoster = updateRosterAfterConcert(season.roster, report.rosterChanges)
 
   return {
     slots: newSlots,
     currentSlotIndex: idx + 1,
     institution: nextInstitution,
+    roster: nextRoster,
   }
 }
 

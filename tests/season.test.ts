@@ -5,7 +5,7 @@ import { works } from '../src/data/works'
 import { principals } from '../src/data/principals'
 import { audienceSegments } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
-import { ConcertProgram, SeasonState } from '../src/types/core'
+import { ConcertProgram, Principal, SeasonState } from '../src/types/core'
 
 const safeProgram: ConcertProgram = {
   workCount: 3,
@@ -29,14 +29,25 @@ const adventurousProgram: ConcertProgram = {
   studentTicketPrice: 25,
 }
 
-function makeReport(program: ConcertProgram, institution = startingInstitution) {
-  return resolveConcert({ works, institution, principals, audienceSegments, program, roll: 50 })
+function makeReport(
+  program: ConcertProgram,
+  institution = startingInstitution,
+  livePrincipals: Principal[] = principals,
+) {
+  return resolveConcert({
+    works,
+    institution,
+    principals: livePrincipals,
+    audienceSegments,
+    program,
+    roll: 50,
+  })
 }
 
 function resolveAll(programs: ConcertProgram[]): SeasonState {
-  let season = createInitialSeason(startingInstitution)
+  let season = createInitialSeason(startingInstitution, principals)
   for (const program of programs) {
-    const report = makeReport(program, season.institution)
+    const report = makeReport(program, season.institution, season.roster.principals)
     season = resolveSeasonConcert(season, program, report)
   }
   return season
@@ -44,7 +55,7 @@ function resolveAll(programs: ConcertProgram[]): SeasonState {
 
 describe('createInitialSeason', () => {
   it('initializes with four unresolved slots', () => {
-    const season = createInitialSeason(startingInstitution)
+    const season = createInitialSeason(startingInstitution, principals)
     expect(season.slots).toHaveLength(4)
     for (const slot of season.slots) {
       expect(slot.status).toBe('pending')
@@ -52,10 +63,11 @@ describe('createInitialSeason', () => {
       expect(slot.report).toBeNull()
     }
     expect(season.currentSlotIndex).toBe(0)
+    expect(season.roster.principals).toHaveLength(principals.length)
   })
 
   it('slots have the correct names in order', () => {
-    const season = createInitialSeason(startingInstitution)
+    const season = createInitialSeason(startingInstitution, principals)
     expect(season.slots[0].name).toBe('Opening Night')
     expect(season.slots[1].name).toBe('Winter Program')
     expect(season.slots[2].name).toBe('Spring Identity Concert')
@@ -65,7 +77,7 @@ describe('createInitialSeason', () => {
 
 describe('resolveSeasonConcert', () => {
   it('resolving a concert updates only that slot', () => {
-    const season = createInitialSeason(startingInstitution)
+    const season = createInitialSeason(startingInstitution, principals)
     const report = makeReport(safeProgram)
     const next = resolveSeasonConcert(season, safeProgram, report)
 
@@ -79,7 +91,7 @@ describe('resolveSeasonConcert', () => {
   })
 
   it('advances currentSlotIndex after each resolve', () => {
-    let season = createInitialSeason(startingInstitution)
+    let season = createInitialSeason(startingInstitution, principals)
     expect(season.currentSlotIndex).toBe(0)
 
     season = resolveSeasonConcert(season, safeProgram, makeReport(safeProgram))
@@ -90,7 +102,7 @@ describe('resolveSeasonConcert', () => {
   })
 
   it('institution state persists and changes between concerts', () => {
-    const season0 = createInitialSeason(startingInstitution)
+    const season0 = createInitialSeason(startingInstitution, principals)
     const report0 = makeReport(safeProgram, season0.institution)
     const season1 = resolveSeasonConcert(season0, safeProgram, report0)
 
@@ -99,15 +111,35 @@ describe('resolveSeasonConcert', () => {
     expect(season1.institution).not.toEqual(startingInstitution)
 
     // slot[1] will receive the updated institution as institutionBefore when resolved
-    const report1 = makeReport(safeProgram, season1.institution)
+    const report1 = makeReport(safeProgram, season1.institution, season1.roster.principals)
     const season2 = resolveSeasonConcert(season1, safeProgram, report1)
     expect(season2.slots[1].institutionBefore).toEqual(season1.institution)
+  })
+
+  it('roster form and morale persist into the next concert', () => {
+    const season0 = createInitialSeason(startingInstitution, principals)
+    const before = season0.roster.principals.find(p => p.id === 'concertmaster')!
+    const report0 = makeReport(safeProgram, season0.institution, season0.roster.principals)
+    const season1 = resolveSeasonConcert(season0, safeProgram, report0)
+    const after = season1.roster.principals.find(p => p.id === 'concertmaster')!
+
+    expect(after.form).toBe(
+      before.form +
+        report0.rosterChanges.find(change => change.principalId === 'concertmaster')!.formDelta,
+    )
+    expect(after.morale).toBe(
+      before.morale +
+        report0.rosterChanges.find(change => change.principalId === 'concertmaster')!.moraleDelta,
+    )
+
+    const report1 = makeReport(safeProgram, season1.institution, season1.roster.principals)
+    expect(report1.rosterChanges).toHaveLength(principals.length)
   })
 })
 
 describe('summarizeSeason', () => {
   it('returns null until all four concerts are resolved', () => {
-    let season = createInitialSeason(startingInstitution)
+    let season = createInitialSeason(startingInstitution, principals)
     expect(summarizeSeason(season)).toBeNull()
 
     season = resolveSeasonConcert(season, safeProgram, makeReport(safeProgram))

@@ -259,6 +259,45 @@ describe('forecastProgram', () => {
     }
   })
 
+  it('repertoire fit changes when principal data changes', () => {
+    const weakPrincipals = principals.map(principal =>
+      principal.section === 'brass'
+        ? {
+            ...principal,
+            overall: 25,
+            form: 25,
+            morale: 25,
+            stressResistance: 25,
+            soloReliability: 25,
+          }
+        : principal,
+    )
+    const strongPrincipals = principals.map(principal =>
+      principal.section === 'brass'
+        ? {
+            ...principal,
+            overall: 90,
+            form: 90,
+            morale: 90,
+            stressResistance: 90,
+            soloReliability: 90,
+          }
+        : principal,
+    )
+    const brassProgram: ConcertProgram = {
+      ...safeProgram,
+      workIds: ['tchaikovsky-5', 'tchaikovsky-6', 'sibelius-7'],
+    }
+
+    const weak = forecastProgram({ ...makeInput(brassProgram), principals: weakPrincipals })
+    const strong = forecastProgram({ ...makeInput(brassProgram), principals: strongPrincipals })
+
+    expect(strong.repertoireFit.find(row => row.section === 'brass')!.stress).toBeLessThan(
+      weak.repertoireFit.find(row => row.section === 'brass')!.stress,
+    )
+    expect(strong.performanceRisk).toBeLessThan(weak.performanceRisk)
+  })
+
   it('supports a complete two-work program', () => {
     const twoWorkProgram: ConcertProgram = {
       workCount: 2,

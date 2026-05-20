@@ -6,6 +6,7 @@ import {
   Work,
 } from '../types/core'
 import { ForecastInput, forecastProgram } from './forecastProgram'
+import { calculateRosterChangesAfterConcert } from './roster'
 import { clamp, average } from './scoring'
 
 // roll: 0-100, where 50 = neutral, <50 = worse than expected, >50 = better
@@ -215,6 +216,11 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   )
 
   const sectionOutcomes = resolveSectionOutcomes(forecast.sectionStress, performanceQuality)
+  const rosterChanges = calculateRosterChangesAfterConcert(
+    input.principals,
+    sectionOutcomes,
+    performanceQuality,
+  )
   const notableMoments = buildNotableMoments(
     sectionOutcomes,
     performanceQuality,
@@ -267,6 +273,7 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     criticResponse,
     memoryAnchorWorkId: forecast.memoryAnchorWorkId,
     sectionOutcomes,
+    rosterChanges,
     notableMoments,
     institutionalDeltas,
   }
