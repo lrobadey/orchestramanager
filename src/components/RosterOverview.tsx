@@ -181,7 +181,11 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
                 <p>{fitRow?.note ?? row.note}</p>
                 <button
                   className="section-inspect-button"
-                  onClick={() => setActiveSection(row.section)}
+                  onClick={() =>
+                    setActiveSection(current =>
+                      current === row.section ? null : row.section,
+                    )
+                  }
                 >
                   Inspect {row.label}
                 </button>
