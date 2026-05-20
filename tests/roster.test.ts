@@ -87,7 +87,7 @@ describe('roster calculations', () => {
   it('concert outcomes update player form and morale within bounds', () => {
     const principal = makePrincipal({ form: 99, morale: 1 })
     const outcomes: SectionOutcome[] = [
-      { section: 'Strings', quality: 95, note: 'Clean.' },
+      { section: 'strings', label: 'Strings', quality: 95, note: 'Clean.' },
     ]
     const changes = calculateRosterChangesAfterConcert([principal], outcomes, 90)
     const updated = updateRosterAfterConcert({ principals: [principal] }, changes)
@@ -101,7 +101,7 @@ describe('roster calculations', () => {
   it('poor concert outcomes reduce player form and morale without going below zero', () => {
     const principal = makePrincipal({ form: 1, morale: 1 })
     const outcomes: SectionOutcome[] = [
-      { section: 'Strings', quality: 5, note: 'Collapsed.' },
+      { section: 'strings', label: 'Strings', quality: 5, note: 'Collapsed.' },
     ]
     const changes = calculateRosterChangesAfterConcert([principal], outcomes, 10)
     const updated = updateRosterAfterConcert({ principals: [principal] }, changes)
