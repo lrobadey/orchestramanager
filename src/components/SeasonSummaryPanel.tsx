@@ -75,9 +75,19 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
           <span className="report-stat-num">{summary.totalAttendance.toLocaleString()}</span>
         </div>
         <div className="report-stat">
-          <span className="report-stat-label">Total revenue</span>
+          <span className="report-stat-label">Avg capacity</span>
+          <span className="report-stat-num">{summary.averageCapacityPercent}%</span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Ticket revenue</span>
           <span className="report-stat-num">{fmt$(summary.totalRevenue)}</span>
         </div>
+        {summary.totalDonorSupport > 0 && (
+          <div className="report-stat">
+            <span className="report-stat-label">Donor support</span>
+            <span className="report-stat-num aurora">{fmt$(summary.totalDonorSupport)}</span>
+          </div>
+        )}
         <div className="report-stat">
           <span className="report-stat-label">Total expenses</span>
           <span className="report-stat-num">{fmt$(summary.totalExpenses)}</span>
@@ -106,6 +116,20 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
             <span className="text-muted text-mono" style={{ fontSize: '0.65rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
               {qualityLabel(summary.averageAudienceResponse)}
             </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="summary-block">
+        <span className="eyebrow summary-block-title">Audience Segments</span>
+        <div className="report-delta-grid">
+          <div className="report-delta">
+            <span className="report-delta-label">Best segment</span>
+            <span className="report-delta-value pos">{summary.bestSegment}</span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Weakest segment</span>
+            <span className="report-delta-value neg">{summary.worstSegment}</span>
           </div>
         </div>
       </div>
@@ -151,6 +175,17 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
           </div>
         </div>
       </div>
+
+      {summary.financialRiskFlags.length > 0 && (
+        <div className="summary-block">
+          <span className="eyebrow summary-block-title">Financial Risk</span>
+          <ul className="notes-list">
+            {summary.financialRiskFlags.map((flag, i) => (
+              <li key={i} className="berry">{flag}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="summary-block summary-narrative">
         <span className="eyebrow summary-block-title">Identity That Emerged</span>

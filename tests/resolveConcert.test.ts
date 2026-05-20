@@ -418,7 +418,7 @@ describe('resolveConcert', () => {
 
     expect(report.attendance).toBe(reportAttendance)
     expect(report.revenue).toBe(reportRevenue)
-    expect(report.net).toBe(reportRevenue - report.expenses)
+    expect(report.net).toBe(report.revenue + report.donorUplift - report.expenses)
     expect(studentReport.attendance).toBeGreaterThan(studentForecast.attendance)
     expect(studentReport.ticketRevenue).toBe(
       studentReport.attendance * studentReport.effectiveTicketPrice,

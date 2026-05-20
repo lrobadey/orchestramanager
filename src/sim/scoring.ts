@@ -1,4 +1,4 @@
-import { Work, Principal } from '../types/core'
+import { Work, Principal, ExpenseBreakdown } from '../types/core'
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -31,6 +31,12 @@ export const REHEARSAL_COST_PER_HOUR = 120
 
 // Base concert costs: hall rental, staff, programs, production
 export const BASE_CONCERT_COST = 45_000
+
+// Hall capacity — used for attendance rate calculations
+export const HALL_CAPACITY = 1_200
+
+// Donor confidence threshold below which uplift is $0
+export const DONOR_UPLIFT_THRESHOLD = 30
 
 // Returns the effective rehearsal divisor for a piece, weighted by section
 // demands and driven by each section's average principal leadership, then
@@ -68,4 +74,24 @@ export function rehearsalHoursNeeded(rehearsalLoad: number, divisor: number): nu
 // so downstream scoring keeps working at the same magnitudes as before.
 export function pressureFromHoursGap(hoursNeeded: number, hoursAllocated: number): number {
   return clamp((hoursNeeded - hoursAllocated) * 5, -40, 100)
+}
+
+// Structured breakdown of all concert expenses.
+// Production cost is 0 for standard canon; scales with contemporary and high-load works.
+export function computeExpenseBreakdown(
+  works: Work[],
+  totalRehearsalHours: number,
+  marketingSpend: number,
+): ExpenseBreakdown {
+  const rehearsal = totalRehearsalHours * REHEARSAL_COST_PER_HOUR
+  const contemporaryCount = works.filter(w => w.isContemporary).length
+  const highLoadCount = works.filter(w => w.rehearsalLoad >= 60).length
+  const production = contemporaryCount * 3_000 + Math.min(highLoadCount * 2_500, 8_000)
+  const total = BASE_CONCERT_COST + rehearsal + marketingSpend + production
+  return { baseConcert: BASE_CONCERT_COST, rehearsal, marketing: marketingSpend, production, total }
+}
+
+// Cash contribution from donors per concert, based on pre-concert donorConfidence.
+export function computeDonorUplift(donorConfidence: number): number {
+  return Math.max(0, (donorConfidence - DONOR_UPLIFT_THRESHOLD) * 200)
 }

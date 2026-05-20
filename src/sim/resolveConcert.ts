@@ -3,11 +3,12 @@ import {
   SectionOutcome,
   InstitutionalDeltas,
   AudienceBreakdown,
+  ExpenseBreakdown,
   Work,
 } from '../types/core'
 import { ForecastInput, forecastProgram } from './forecastProgram'
 import { calculateRosterChangesAfterConcert } from './roster'
-import { clamp, average } from './scoring'
+import { clamp, average, HALL_CAPACITY, computeDonorUplift } from './scoring'
 
 // roll: 0-100, where 50 = neutral, <50 = worse than expected, >50 = better
 // Pass roll = 50 in tests for deterministic output.
@@ -150,6 +151,58 @@ function prestigeWeightedArcDamage(works: Work[], perWorkArcDamage: (number | nu
   return average(weighted)
 }
 
+function fmt$(n: number): string {
+  return `$${Math.round(Math.abs(n)).toLocaleString()}`
+}
+
+function buildFinancialNotes(
+  revenue: number,
+  donorUplift: number,
+  expenses: number,
+  net: number,
+  attendance: number,
+  audienceBreakdown: AudienceBreakdown[],
+  expenseBreakdown: ExpenseBreakdown,
+): string[] {
+  const notes: string[] = []
+  const totalIncome = revenue + donorUplift
+  const coveragePercent = expenses > 0 ? Math.round((totalIncome / expenses) * 100) : 100
+
+  if (net < 0) {
+    if (totalIncome < expenseBreakdown.baseConcert) {
+      notes.push(
+        `Ticket sales and donor support (${fmt$(totalIncome)}) did not cover the base hall cost of ${fmt$(expenseBreakdown.baseConcert)} — growing the audience is the primary lever.`,
+      )
+    } else {
+      const { rehearsal, marketing, production } = expenseBreakdown
+      const drivers: [string, number][] = [
+        ['high rehearsal overhead', rehearsal],
+        ['marketing spend', marketing],
+        ['production costs', production],
+      ].filter(([, v]) => (v as number) > 0) as [string, number][]
+      const [driverName] = drivers.sort((a, b) => b[1] - a[1])[0]
+      notes.push(
+        `Income of ${fmt$(totalIncome)} covered ${coveragePercent}% of costs — the shortfall came primarily from ${driverName}.`,
+      )
+    }
+  } else if (net > 5_000) {
+    const attendanceRate = attendance / HALL_CAPACITY
+    const driver =
+      attendanceRate > 0.75 ? 'strong attendance' :
+      expenseBreakdown.marketing < 10_000 ? 'efficient production' :
+      'premium pricing'
+    notes.push(`The concert returned a surplus of ${fmt$(net)} — ${driver} drove the result.`)
+  }
+
+  const seasonedRow = audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
+  if (seasonedRow && seasonedRow.shareOfHouse > 0.45 && net >= 0) {
+    const pct = Math.round(seasonedRow.shareOfHouse * 100)
+    notes.push(`Seasoned Supporters made up ${pct}% of the house — their loyalty carried the evening financially.`)
+  }
+
+  return notes.slice(0, 2)
+}
+
 export function resolveConcert(input: ResolveInput): ConcertReport {
   const roll = input.roll ?? 50
   // Variance factor: -1 to +1 centered on 0 at roll=50
@@ -189,8 +242,10 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   )
   const attendance = audienceBreakdown.reduce((sum, row) => sum + row.attendance, 0)
   const revenue = audienceBreakdown.reduce((sum, row) => sum + row.ticketRevenue, 0)
+  const donorUplift = computeDonorUplift(input.institution.donorConfidence)
   const expenses = forecast.projectedExpenses
-  const net = revenue - expenses
+  const expenseBreakdown = forecast.projectedExpenseBreakdown
+  const net = revenue + donorUplift - expenses
 
   // Audience response: draw and quality still matter, but arc damage captures
   // where the failure occurred in the evening.
@@ -236,8 +291,18 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const reputationDelta = Math.round(
     clamp((performanceQuality - 50) * 0.3 + (criticResponse - 50) * 0.2, -15, 15),
   )
-  const trustDelta = Math.round(clamp((audienceResponse - 50) * 0.25, -10, 10))
-  const donorDelta = Math.round(clamp((forecast.donorResponse - 50) * 0.2 + (net > 0 ? 3 : -3), -12, 12))
+  const seasonedRow = audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
+  const seasonedShare = seasonedRow?.shareOfHouse ?? 0.2
+  const trustDelta = Math.round(clamp((audienceResponse - 50) * 0.2 + (seasonedShare - 0.25) * 10, -10, 10))
+  const attendanceRate = attendance / HALL_CAPACITY
+  const donorDelta = Math.round(clamp(
+    (forecast.donorResponse - 50) * 0.25
+    + (programPrestige - 50) * 0.1
+    + (attendanceRate - 0.5) * 8
+    + (net > 0 ? Math.min(net / 5_000, 4) : Math.max(net / 5_000, -6))
+    - programNovelty * 0.05,
+    -15, 15,
+  ))
   const moraleDelta = Math.round(clamp((performanceQuality - 50) * 0.2, -8, 8))
   const qualityDelta = performanceQuality > 70 ? 2 : performanceQuality < 40 ? -1 : 0
 
@@ -262,12 +327,19 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     identity: identityDelta,
   }
 
+  const financialNotes = buildFinancialNotes(
+    revenue, donorUplift, expenses, net, attendance, audienceBreakdown, expenseBreakdown,
+  )
+
   return {
     attendance,
     revenue,
+    donorUplift,
     audienceBreakdown,
     expenses,
+    expenseBreakdown,
     net,
+    financialNotes,
     performanceQuality,
     audienceResponse,
     criticResponse,

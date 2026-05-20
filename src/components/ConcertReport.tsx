@@ -93,9 +93,15 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
           <span className="report-stat-num">{report.attendance.toLocaleString()}</span>
         </div>
         <div className="report-stat">
-          <span className="report-stat-label">Revenue</span>
+          <span className="report-stat-label">Ticket rev.</span>
           <span className="report-stat-num">{fmt$(report.revenue)}</span>
         </div>
+        {report.donorUplift > 0 && (
+          <div className="report-stat">
+            <span className="report-stat-label">Donor support</span>
+            <span className="report-stat-num aurora">{fmt$(report.donorUplift)}</span>
+          </div>
+        )}
         <div className="report-stat">
           <span className="report-stat-label">Expenses</span>
           <span className="report-stat-num">{fmt$(report.expenses)}</span>
@@ -127,9 +133,37 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
       </div>
 
       <div className="report-block">
+        <span className="eyebrow report-block-title">Expense Breakdown</span>
+        <div className="report-section-list">
+          {([
+            ['Base', report.expenseBreakdown.baseConcert],
+            ['Rehearsal', report.expenseBreakdown.rehearsal],
+            ['Marketing', report.expenseBreakdown.marketing],
+            ...(report.expenseBreakdown.production > 0 ? [['Production', report.expenseBreakdown.production] as [string, number]] : []),
+          ] as [string, number][]).map(([label, amount]) => (
+            <div key={label} className="report-section-line">
+              <span className="report-section-line-label">{label}</span>
+              <span className="report-section-line-score">{fmt$(amount)}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="report-block">
         <span className="eyebrow report-block-title">Audience Mix</span>
         <AudienceMix rows={report.audienceBreakdown} />
       </div>
+
+      {report.financialNotes.length > 0 && (
+        <div className="report-block">
+          <span className="eyebrow report-block-title">Financial Notes</span>
+          <ul className="notes-list">
+            {report.financialNotes.map((note, i) => (
+              <li key={i}>{note}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="report-block">
         <span className="eyebrow report-block-title">Section Outcomes</span>
