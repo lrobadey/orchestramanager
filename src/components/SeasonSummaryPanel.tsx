@@ -1,4 +1,3 @@
-import type { ReactNode } from 'react'
 import { SeasonSummary } from '../types/core'
 
 interface SeasonSummaryPanelProps {
@@ -6,7 +5,7 @@ interface SeasonSummaryPanelProps {
   onNewSeason: () => void
 }
 
-function fmt(n: number): string {
+function fmt$(n: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -18,8 +17,8 @@ function deltaStr(d: number): string {
   return d >= 0 ? `+${d}` : `${d}`
 }
 
-function deltaClass(d: number): string {
-  return d >= 0 ? 'delta-positive' : 'delta-negative'
+function deltaCls(d: number): string {
+  return d > 0 ? 'pos' : d < 0 ? 'neg' : ''
 }
 
 function qualityLabel(value: number): string {
@@ -31,19 +30,32 @@ function qualityLabel(value: number): string {
   return 'Poor'
 }
 
-function SummaryRow({ label, value }: { label: string; value: ReactNode }) {
+function ledeFor(summary: SeasonSummary): React.ReactNode {
+  const q = summary.averagePerformanceQuality
+  const id = summary.finalInstitution.identity
+  const arc = id.adventurous - summary.startingInstitution.identity.adventurous
+  const scholar = id.scholarly - summary.startingInstitution.identity.scholarly
+  const community = id.communityFocused - summary.startingInstitution.identity.communityFocused
+  const character =
+    arc >= 12 ? 'an adventurous voice' :
+    scholar >= 12 ? 'a scholarly institution' :
+    community >= 12 ? 'a community anchor' :
+    'a working orchestra'
+  const adjective =
+    q >= 75 ? 'commanding' :
+    q >= 60 ? 'capable' :
+    q >= 45 ? 'serviceable' :
+    'unsteady'
   return (
-    <div className="forecast-item">
-      <span className="forecast-key">{label}</span>
-      <span className="forecast-val">{value}</span>
-    </div>
+    <>
+      Four concerts in, you've built <strong>{adjective}</strong> — and {character}.
+    </>
   )
 }
 
 export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSummaryPanelProps) {
-  const s = summary
-  const fi = s.finalInstitution
-  const si = s.startingInstitution
+  const fi = summary.finalInstitution
+  const si = summary.startingInstitution
 
   const repDelta = fi.artisticReputation - si.artisticReputation
   const trustDelta = fi.audienceTrust - si.audienceTrust
@@ -53,87 +65,107 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
   const cashDelta = fi.cash - si.cash
 
   return (
-    <div>
-      <div style={{ marginBottom: '1rem' }}>
-        <h2 style={{ margin: 0, marginBottom: '0.25rem' }}>Season Summary</h2>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-          Four-concert debut season complete
-        </p>
-      </div>
+    <div className="summary-page">
+      <p className="summary-byline">Season I · Debut · Four concerts complete</p>
+      <h1 className="summary-lede">{ledeFor(summary)}</h1>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Season Financials</h3>
-        <div className="forecast-grid">
-          <SummaryRow label="Total Attendance" value={s.totalAttendance.toLocaleString()} />
-          <SummaryRow label="Total Revenue" value={fmt(s.totalRevenue)} />
-          <SummaryRow label="Total Expenses" value={fmt(s.totalExpenses)} />
-          <SummaryRow
-            label="Total Net"
-            value={
-              <span className={s.totalNet >= 0 ? 'risk-low' : 'risk-high'}>
-                {fmt(s.totalNet)}
-              </span>
-            }
-          />
+      <div className="summary-stats">
+        <div className="report-stat">
+          <span className="report-stat-label">Total attendance</span>
+          <span className="report-stat-num">{summary.totalAttendance.toLocaleString()}</span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Total revenue</span>
+          <span className="report-stat-num">{fmt$(summary.totalRevenue)}</span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Total expenses</span>
+          <span className="report-stat-num">{fmt$(summary.totalExpenses)}</span>
+        </div>
+        <div className="report-stat">
+          <span className="report-stat-label">Net</span>
+          <span className={`report-stat-num ${summary.totalNet >= 0 ? 'aurora' : 'berry'}`}>
+            {fmt$(summary.totalNet)}
+          </span>
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Artistic Performance</h3>
-        <div className="forecast-grid">
-          <SummaryRow
-            label="Avg Performance Quality"
-            value={`${s.averagePerformanceQuality} — ${qualityLabel(s.averagePerformanceQuality)}`}
-          />
-          <SummaryRow
-            label="Avg Audience Response"
-            value={`${s.averageAudienceResponse} — ${qualityLabel(s.averageAudienceResponse)}`}
-          />
+      <div className="summary-block">
+        <span className="eyebrow summary-block-title">Artistic Average</span>
+        <div className="report-stat-row" style={{ borderTop: 'none', borderBottom: 'none', padding: 0, gridTemplateColumns: 'repeat(2, 1fr)' }}>
+          <div className="report-stat">
+            <span className="report-stat-label">Performance</span>
+            <span className="report-stat-num">{summary.averagePerformanceQuality}</span>
+            <span className="text-muted text-mono" style={{ fontSize: '0.65rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
+              {qualityLabel(summary.averagePerformanceQuality)}
+            </span>
+          </div>
+          <div className="report-stat">
+            <span className="report-stat-label">Audience</span>
+            <span className="report-stat-num">{summary.averageAudienceResponse}</span>
+            <span className="text-muted text-mono" style={{ fontSize: '0.65rem', letterSpacing: '0.1em', marginTop: '0.25rem' }}>
+              {qualityLabel(summary.averageAudienceResponse)}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '0.75rem' }}>
-        <h3 style={{ marginBottom: '0.75rem' }}>Institutional Arc</h3>
-        <div className="forecast-grid">
-          <SummaryRow
-            label="Cash"
-            value={<span className={deltaClass(cashDelta)}>{cashDelta >= 0 ? '+' : ''}{fmt(cashDelta)}</span>}
-          />
-          <SummaryRow
-            label="Artistic Reputation"
-            value={<span className={deltaClass(repDelta)}>{deltaStr(repDelta)}</span>}
-          />
-          <SummaryRow
-            label="Audience Trust"
-            value={<span className={deltaClass(trustDelta)}>{deltaStr(trustDelta)}</span>}
-          />
-          <SummaryRow
-            label="Donor Confidence"
-            value={<span className={deltaClass(donorDelta)}>{deltaStr(donorDelta)}</span>}
-          />
-          <SummaryRow
-            label="Musician Morale"
-            value={<span className={deltaClass(moraleDelta)}>{deltaStr(moraleDelta)}</span>}
-          />
-          <SummaryRow
-            label="Technical Quality"
-            value={<span className={deltaClass(qualityDelta)}>{deltaStr(qualityDelta)}</span>}
-          />
+      <div className="summary-block">
+        <span className="eyebrow summary-block-title">Institutional Arc</span>
+        <div className="report-delta-grid">
+          <div className="report-delta">
+            <span className="report-delta-label">Cash</span>
+            <span className={`report-delta-value ${deltaCls(cashDelta)}`}>
+              {cashDelta >= 0 ? '+' : ''}{fmt$(cashDelta)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Reputation</span>
+            <span className={`report-delta-value ${deltaCls(repDelta)}`}>
+              {deltaStr(repDelta)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Audience Trust</span>
+            <span className={`report-delta-value ${deltaCls(trustDelta)}`}>
+              {deltaStr(trustDelta)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Donors</span>
+            <span className={`report-delta-value ${deltaCls(donorDelta)}`}>
+              {deltaStr(donorDelta)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Morale</span>
+            <span className={`report-delta-value ${deltaCls(moraleDelta)}`}>
+              {deltaStr(moraleDelta)}
+            </span>
+          </div>
+          <div className="report-delta">
+            <span className="report-delta-label">Tech Quality</span>
+            <span className={`report-delta-value ${deltaCls(qualityDelta)}`}>
+              {deltaStr(qualityDelta)}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ marginBottom: '0.6rem' }}>Identity That Emerged</h3>
-        <ul className="notes-list">
-          {s.identityNarrative.map((note, i) => (
+      <div className="summary-block summary-narrative">
+        <span className="eyebrow summary-block-title">Identity That Emerged</span>
+        <ul>
+          {summary.identityNarrative.map((note, i) => (
             <li key={i}>{note}</li>
           ))}
         </ul>
       </div>
 
-      <button onClick={onNewSeason} style={{ fontSize: '1rem', padding: '0.65rem 2rem' }}>
-        New Season →
-      </button>
+      <div className="summary-foot">
+        <button type="button" className="cta-aurora" onClick={onNewSeason}>
+          Begin Next Season
+        </button>
+      </div>
     </div>
   )
 }

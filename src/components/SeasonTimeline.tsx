@@ -8,24 +8,12 @@ export default function SeasonTimeline({ season }: SeasonTimelineProps) {
   const complete = season.currentSlotIndex >= 4
 
   return (
-    <div className="season-timeline">
+    <div className="season-dots" aria-label="Season progress">
       {season.slots.map((slot, i) => {
         const isActive = !complete && i === season.currentSlotIndex
         const isResolved = slot.status === 'resolved'
-        const cls = isResolved
-          ? 'slot-chip slot-resolved'
-          : isActive
-            ? 'slot-chip slot-active'
-            : 'slot-chip slot-pending'
-
-        return (
-          <div key={slot.index} className={cls}>
-            <span className="slot-marker">
-              {isResolved ? '✓' : isActive ? '→' : '○'}
-            </span>
-            <span className="slot-name">{slot.name}</span>
-          </div>
-        )
+        const cls = isResolved ? 'season-dot done' : isActive ? 'season-dot active' : 'season-dot'
+        return <span key={slot.index} className={cls} title={slot.name} />
       })}
     </div>
   )

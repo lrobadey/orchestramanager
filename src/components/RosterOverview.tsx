@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 import { type ConcertForecast, type Principal, type RosterState, type SectionKey } from '../types/core'
 import { calculateSectionStrengths } from '../sim/roster'
 
@@ -8,197 +8,116 @@ interface RosterOverviewProps {
   currentSlotName: string | null
 }
 
-const sectionLabels: Record<SectionKey, string> = {
+const SECTION_LABELS: Record<SectionKey, string> = {
   strings: 'Strings',
   winds: 'Winds',
   brass: 'Brass',
   percussion: 'Percussion',
 }
 
-function ratingClass(value: number): string {
-  if (value >= 70) return 'risk-low'
-  if (value >= 50) return 'risk-med'
-  return 'risk-high'
+function strengthTone(value: number): 'aurora' | 'amber' | 'berry' {
+  if (value >= 65) return 'aurora'
+  if (value >= 45) return 'amber'
+  return 'berry'
 }
 
-function strengthTone(value: number): string {
-  if (value >= 70) return 'strong'
-  if (value >= 50) return 'steady'
-  return 'fragile'
-}
-
-function summarizePrincipal(principal: Principal): string {
-  const attributes = [
-    ['leadership', principal.leadership],
-    ['stress resistance', principal.stressResistance],
-    ['endurance', principal.endurance],
-    ['blend', principal.blend],
-    ['solo reliability', principal.soloReliability],
-    ['new music', principal.newMusicFluency],
-    ['classical', principal.classicalFluency],
-    ['romantic', principal.romanticFluency],
-  ] as const
-  const strongest = [...attributes].sort((a, b) => b[1] - a[1])[0]
-  const weakest = [...attributes].sort((a, b) => a[1] - b[1])[0]
-  return `Best: ${strongest[0]}. Watch: ${weakest[0]}.`
-}
-
-function sortedPrincipals(principals: Principal[], section: SectionKey): Principal[] {
-  return principals.filter(principal => principal.section === section)
+function strengthLabel(value: number): string {
+  if (value >= 80) return 'a commanding orchestra'
+  if (value >= 65) return 'a strong, capable orchestra'
+  if (value >= 50) return 'a steady, working orchestra'
+  if (value >= 35) return 'a fragile, uneven orchestra'
+  return 'an orchestra in crisis'
 }
 
 function PrincipalRow({ principal }: { principal: Principal }) {
+  const overallTone = strengthTone(principal.overall)
   return (
-    <div className="principal-ledger-row">
-      <div className="principal-ledger-identity">
-        <span>{principal.position}</span>
-        <strong>{principal.name}</strong>
+    <div className="roster-principal">
+      <div className="roster-principal-name-block">
+        <span className="roster-principal-name">{principal.name}</span>
+        <span className="roster-principal-position">{principal.position}</span>
       </div>
-      <div className="principal-ledger-score">
-        <span>Overall</span>
-        <strong className={ratingClass(principal.overall)}>{principal.overall}</strong>
+      <div className="roster-principal-stat">
+        <span className="roster-principal-stat-label">Overall</span>
+        <span className={`roster-principal-stat-value ${overallTone}`}>{principal.overall}</span>
       </div>
-      <div className="principal-ledger-meter">
-        <span>Form {principal.form}</span>
-        <div className="principal-mini-track">
+      <div className="roster-principal-stat">
+        <span className="roster-principal-stat-label">Form</span>
+        <span className="roster-principal-stat-value">{principal.form}</span>
+        <div className="roster-principal-mini-bar">
           <i style={{ width: `${principal.form}%` }} />
         </div>
       </div>
-      <div className="principal-ledger-meter">
-        <span>Morale {principal.morale}</span>
-        <div className="principal-mini-track">
+      <div className="roster-principal-stat">
+        <span className="roster-principal-stat-label">Morale</span>
+        <span className="roster-principal-stat-value">{principal.morale}</span>
+        <div className="roster-principal-mini-bar">
           <i style={{ width: `${principal.morale}%` }} />
         </div>
       </div>
-      <p>{summarizePrincipal(principal)}</p>
     </div>
   )
 }
 
 export default function RosterOverview({ roster, forecast, currentSlotName }: RosterOverviewProps) {
-  const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
-  const strengths = forecast.sectionStrengths.length > 0
-    ? forecast.sectionStrengths
-    : calculateSectionStrengths(roster.principals)
+  const strengths =
+    forecast.sectionStrengths.length > 0 ? forecast.sectionStrengths : calculateSectionStrengths(roster.principals)
   const fit = forecast.repertoireFit
   const orchestraStrength = Math.round(
     strengths.reduce((sum, row) => sum + row.strength, 0) / strengths.length,
   )
-  const activeStrength = activeSection
-    ? strengths.find(row => row.section === activeSection)
-    : null
-  const activeFit = activeSection
-    ? fit.find(row => row.section === activeSection)
-    : null
-  const activePrincipals = activeSection
-    ? sortedPrincipals(roster.principals, activeSection)
-    : []
+  const overallTone = strengthTone(orchestraStrength)
 
   return (
-    <div className="roster-view">
-      <div className="roster-heading">
-        <div>
-          <p className="concert-slot-label">{currentSlotName ?? 'Season complete'}</p>
-          <h2>Roster Room</h2>
+    <div className="roster-page">
+      <section className="roster-hero">
+        <span className="eyebrow">{currentSlotName ?? 'Season complete'} · Orchestra Strength</span>
+        <div className={`roster-hero-num ${overallTone}`}>{orchestraStrength}</div>
+        <p className="roster-hero-sub">
+          A score of <strong style={{ color: 'var(--birch)' }}>{orchestraStrength}</strong> reads as {strengthLabel(orchestraStrength)}.
+        </p>
+        <div
+          className="roster-spectrum"
+          style={{ ['--strength' as string]: `${orchestraStrength}%` } as CSSProperties}
+          aria-label={`Overall orchestra strength ${orchestraStrength} out of 100`}
+        >
+          <i />
+          <span className="roster-spectrum-marker" />
         </div>
-      </div>
-
-      <section className="orchestra-strength-hero" aria-label="Orchestra strength">
-        <div className="orchestra-strength-core">
-          <span className="orchestra-strength-kicker">Orchestra Strength</span>
-          <strong
-            className={`orchestra-strength-number strength-tone-${strengthTone(orchestraStrength)}`}
-          >
-            {orchestraStrength}
-          </strong>
-          <div
-            className="strength-spectrum strength-spectrum-large"
-            style={{ '--strength': `${orchestraStrength}%` } as CSSProperties}
-            aria-label={`Overall orchestra strength ${orchestraStrength} out of 100`}
-          >
-            <span className="strength-spectrum-fill" />
-            <span className="strength-spectrum-marker" />
-          </div>
-          <div className="strength-scale">
-            <span>fragile</span>
-            <span>stable</span>
-            <span>commanding</span>
-          </div>
+        <div className="roster-spectrum-scale">
+          <span>fragile</span>
+          <span>stable</span>
+          <span>commanding</span>
         </div>
+      </section>
 
-        <div className="section-strength-routes">
-          {strengths.map(row => {
-            const fitRow = fit.find(candidate => candidate.section === row.section)
-            return (
-              <div
-                key={row.section}
-                className={
-                  activeSection === row.section
-                    ? 'section-strength-rail section-strength-rail-active'
-                    : 'section-strength-rail'
-                }
-                style={{ '--strength': `${row.strength}%` } as CSSProperties}
-              >
-                <div className="section-strength-readout">
-                  <span>{row.label}</span>
-                  <strong className={`strength-tone-${strengthTone(row.strength)}`}>
-                    {row.strength}
-                  </strong>
-                </div>
-                <div
-                  className="strength-spectrum"
-                  aria-label={`${row.label} strength ${row.strength} out of 100`}
-                >
-                  <span className="strength-spectrum-fill" />
-                  <span className="strength-spectrum-marker" />
-                </div>
+      <div>
+        {strengths.map(row => {
+          const fitRow = fit.find(c => c.section === row.section)
+          const tone = strengthTone(row.strength)
+          const principalsInSection = roster.principals.filter(p => p.section === row.section)
+          return (
+            <section key={row.section} className="roster-section">
+              <div className="roster-section-head">
+                <h2 className="roster-section-name">{SECTION_LABELS[row.section]}</h2>
+                <div className={`roster-section-score ${tone}`}>{row.strength}</div>
+                <p className="roster-section-note">{fitRow?.note ?? row.note}</p>
                 {fitRow && (
-                  <div className="section-pressure-line">
+                  <div className="roster-section-pressure">
                     <span>Demand {fitRow.demand}</span>
                     <span>Stress {fitRow.stress}</span>
                   </div>
                 )}
-                <p>{fitRow?.note ?? row.note}</p>
-                <button
-                  className="section-inspect-button"
-                  onClick={() =>
-                    setActiveSection(current =>
-                      current === row.section ? null : row.section,
-                    )
-                  }
-                >
-                  Inspect {row.label}
-                </button>
               </div>
-            )
-          })}
-        </div>
-      </section>
-
-      <section className="roster-section-detail">
-        {activeSection === null ? (
-          <div className="roster-section-empty">
-            <span>Choose a section above to inspect the principal desks.</span>
-          </div>
-        ) : (
-          <>
-            <div className="roster-section-detail-header">
-              <div>
-                <span>{sectionLabels[activeSection]}</span>
-                <strong className={`strength-tone-${strengthTone(activeStrength?.strength ?? 0)}`}>
-                  {activeStrength?.strength ?? 0}
-                </strong>
+              <div className="roster-principals">
+                {principalsInSection.map(p => (
+                  <PrincipalRow key={p.id} principal={p} />
+                ))}
               </div>
-              <p>{activeFit?.note ?? activeStrength?.note}</p>
-            </div>
-            <div className="principal-ledger">
-              {activePrincipals.map(principal => (
-                <PrincipalRow key={principal.id} principal={principal} />
-              ))}
-            </div>
-          </>
-        )}
-      </section>
+            </section>
+          )
+        })}
+      </div>
     </div>
   )
 }
