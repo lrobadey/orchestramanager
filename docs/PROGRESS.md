@@ -6,15 +6,82 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Current Status
 
-**Last updated:** 2026-05-19
-**Current milestone:** Milestone 1 — Four-Concert Season Loop, with a tight Milestone 3 audience/finance slice
-**Current playable state:** Full four-concert season loop is playable. Player can choose 2- or 3-work programs from a nested Era -> Composer -> Works repertoire library, allocate rehearsal hours, set marketing spend and standard price, enable optional student tickets, view projected audience mix and segment-aware revenue, run each concert, read actual audience mix in reports, and receive a season summary after all four concerts.
-**Latest PR:** Audience ticket pricing and student tickets slice
+**Last updated:** 2026-05-20
+**Current milestone:** Milestone 2 — Roster and Section Leader System
+**Current playable state:** Full four-concert season loop is playable with a stateful principal roster layered into the loop. Player can switch between Season and Roster views, inspect all 15 named principals by section, see section strengths and repertoire-fit stress, program concerts from the nested repertoire library, view roster-informed forecasts, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert.
+**Latest PR:** Stateful roster vertical slice
 **Known blockers:** None currently recorded.
-**Current risks:** Audience segmentation is still deterministic and intentionally narrow; no student ticket cap, audience trust delta, targeted marketing, subscription model, or full audience tab exists yet.
-**Next recommended action:** Play through a complete season and review whether the new audience mix makes pricing decisions legible without overcrowding the single-screen loop.
+**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system.
+**Next recommended action:** Browser-check the new Roster view, forecast Roster Fit panel, concert report Roster Aftermath block, and verify that applying one concert changes principal form/morale for the next planning screen.
 
 ## Log Entries
+
+### 2026-05-20 — Stateful roster vertical slice
+
+**Primary milestone:** Milestone 2 — Roster and Section Leader System
+
+**Summary**
+
+Added a stateful principal-roster layer to the existing four-concert season loop. `SeasonState` now owns a live `RosterState`, forecasts and concert resolution use the live principals, and concert reports emit form/morale changes that carry into the next concert.
+
+**Rationale**
+
+Milestone 2 should make the orchestra itself feel like a nested system, not a hidden technical-quality number. This slice keeps the scope tight: all 15 named principals matter through section strength, repertoire fit, stress, and post-concert form/morale movement, but no hiring, contracts, injuries, auditions, substitutes, seating, or union systems were added.
+
+**Files changed**
+
+- `src/types/core.ts`
+- `src/data/principals.ts`
+- `src/sim/roster.ts`
+- `src/sim/forecastProgram.ts`
+- `src/sim/resolveConcert.ts`
+- `src/sim/season.ts`
+- `src/App.tsx`
+- `src/components/AppShell.tsx`
+- `src/components/RosterOverview.tsx`
+- `src/components/ConcertForecast.tsx`
+- `src/components/ConcertReport.tsx`
+- `src/styles/app.css`
+- `tests/roster.test.ts`
+- `tests/resolveConcert.test.ts`
+- `tests/scoring.test.ts`
+- `tests/season.test.ts`
+- `docs/PROGRESS.md`
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  5 passed (5)
+Tests       58 passed (58)
+```
+
+```
+npm run build
+
+✓ built in 498ms
+```
+
+Browser verification:
+- Not run by agent at user request.
+- User will perform the browser check for planning, roster view, concert report, and one apply-to-next-concert roster update.
+
+**Known issues / risks**
+
+- Principal movement is deliberately limited to form and morale.
+- Roster aftermath currently shows the most visible changed principals, not a full personnel-history ledger.
+- The separate Roster view supports the season loop directly; it is not a placeholder for future roster tabs.
+
+**Handoff note**
+
+The live roster source of truth is `season.roster.principals`. The app passes those principals into forecast and resolve calls. `src/sim/roster.ts` owns section strength, repertoire fit, section stress, and post-concert roster updates. React components display those outputs but do not own the formulas.
+
+**Next recommended action**
+
+Browser-check the roster loop, then tune whether form/morale deltas are strong enough to make programming pressure legible across all four concerts.
+
+---
 
 ### 2026-05-19 — Audience ticket pricing and student tickets
 

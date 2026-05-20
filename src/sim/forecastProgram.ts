@@ -10,6 +10,11 @@ import {
   TOTAL_REHEARSAL_HOURS,
 } from '../types/core'
 import {
+  calculateRepertoireFit,
+  calculateSectionStrengths,
+  calculateSectionStress,
+} from './roster'
+import {
   clamp,
   average,
   computeRehearsalDivisor,
@@ -42,25 +47,6 @@ function activeSlotWorks(slotWorks: SlotTuple<Work | null>, program: ConcertProg
   return slotWorks
     .slice(0, program.workCount)
     .filter((w): w is Work => w !== null)
-}
-
-function computeSectionStress(
-  works: Work[],
-  principals: Principal[],
-): ConcertForecast['sectionStress'] {
-  const sections = ['strings', 'winds', 'brass', 'percussion'] as const
-
-  const result = {} as ConcertForecast['sectionStress']
-  for (const section of sections) {
-    const maxDemand = works.length > 0 ? Math.max(...works.map(w => w.demands[section])) : 0
-    const sectionPrincipals = principals.filter(p => p.section === section)
-    const principalStrength =
-      sectionPrincipals.length > 0
-        ? average(sectionPrincipals.map(p => (p.overall + p.stressResistance) / 2))
-        : 50
-    result[section] = clamp(maxDemand - principalStrength + 5, 0, 100)
-  }
-  return result
 }
 
 function computeAttendance(
@@ -214,6 +200,8 @@ function emptyForecast(
     donorResponse: 0,
     identityImpact: 0,
     sectionStress: { strings: 0, winds: 0, brass: 0, percussion: 0 },
+    sectionStrengths: [],
+    repertoireFit: [],
     perWorkRehearsalDivisor,
     perWorkRehearsalPressure: [null, null, null],
     perWorkRehearsalHoursNeeded,
@@ -293,7 +281,9 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const validPressures = perWorkRehearsalPressure.filter((p): p is number => p !== null)
   const rehearsalPressure = validPressures.length > 0 ? Math.max(...validPressures) : 0
 
-  const sectionStress = computeSectionStress(works, principals)
+  const sectionStrengths = calculateSectionStrengths(principals, works)
+  const repertoireFit = calculateRepertoireFit(works, principals)
+  const sectionStress = calculateSectionStress(works, principals)
   const avgSectionStress = average(Object.values(sectionStress))
 
   const performanceRisk = clamp(
@@ -361,6 +351,8 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     donorResponse,
     identityImpact: programIdentityValue,
     sectionStress,
+    sectionStrengths,
+    repertoireFit,
     perWorkRehearsalDivisor,
     perWorkRehearsalPressure,
     perWorkRehearsalHoursNeeded,

@@ -42,6 +42,33 @@ export interface Principal {
   soloReliability: number
   leadership: number
   stressResistance: number
+  newMusicFluency: number
+  classicalFluency: number
+  romanticFluency: number
+}
+
+export type SectionKey = Principal['section']
+
+export interface RosterState {
+  principals: Principal[]
+}
+
+export interface SectionStrength {
+  section: SectionKey
+  label: string
+  strength: number
+  bottleneck: string
+  note: string
+}
+
+export interface RepertoireFit {
+  section: SectionKey
+  label: string
+  demand: number
+  strength: number
+  stress: number
+  exposurePenalty: number
+  note: string
 }
 
 export interface AudienceSegment {
@@ -105,6 +132,8 @@ export interface ConcertForecast {
     brass: number
     percussion: number
   }
+  sectionStrengths: SectionStrength[]
+  repertoireFit: RepertoireFit[]
   perWorkRehearsalDivisor: SlotTuple<number | null>
   perWorkRehearsalPressure: SlotTuple<number | null>
   perWorkRehearsalHoursNeeded: SlotTuple<number | null>
@@ -117,6 +146,16 @@ export interface ConcertForecast {
 export interface SectionOutcome {
   section: string
   quality: number
+  note: string
+}
+
+export interface PrincipalRosterChange {
+  principalId: string
+  principalName: string
+  position: string
+  section: SectionKey
+  formDelta: number
+  moraleDelta: number
   note: string
 }
 
@@ -150,6 +189,7 @@ export interface ConcertReport {
   audienceResponse: number
   criticResponse: number
   sectionOutcomes: SectionOutcome[]
+  rosterChanges: PrincipalRosterChange[]
   notableMoments: string[]
   institutionalDeltas: InstitutionalDeltas
 }
@@ -167,6 +207,7 @@ export interface SeasonState {
   slots: [SeasonConcertSlot, SeasonConcertSlot, SeasonConcertSlot, SeasonConcertSlot]
   currentSlotIndex: number
   institution: InstitutionState
+  roster: RosterState
 }
 
 export interface SeasonSummary {

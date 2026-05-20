@@ -20,8 +20,10 @@ import ConcertForecastView from './components/ConcertForecast'
 import ConcertReportView from './components/ConcertReport'
 import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
+import RosterOverview from './components/RosterOverview'
 
 type Phase = 'planning' | 'report'
+type MainView = 'season' | 'roster'
 
 const evenAllocation = (): SlotTuple<number> => {
   return [7, 7, TOTAL_REHEARSAL_HOURS - 14]
@@ -40,13 +42,15 @@ const emptyProgram = (): ConcertProgram => ({
 
 export default function App() {
   const [season, setSeason] = useState<SeasonState>(() =>
-    createInitialSeason(startingInstitution),
+    createInitialSeason(startingInstitution, principals),
   )
   const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
   const [phase, setPhase] = useState<Phase>('planning')
+  const [mainView, setMainView] = useState<MainView>('season')
   const [report, setReport] = useState<ConcertReport | null>(null)
 
   const institution = season.institution
+  const livePrincipals = season.roster.principals
   const seasonComplete = season.currentSlotIndex >= 4
 
   const forecast = useMemo(
@@ -54,11 +58,11 @@ export default function App() {
       forecastProgram({
         works,
         institution,
-        principals,
+        principals: livePrincipals,
         audienceSegments,
         program,
       }),
-    [institution, program],
+    [institution, livePrincipals, program],
   )
 
   function handleRunConcert() {
@@ -66,7 +70,7 @@ export default function App() {
     const result = resolveConcert({
       works,
       institution,
-      principals,
+      principals: livePrincipals,
       audienceSegments,
       program,
       roll: Math.random() * 100,
@@ -81,10 +85,11 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
+    setMainView('season')
   }
 
   function handleNewSeason() {
-    setSeason(createInitialSeason(startingInstitution))
+    setSeason(createInitialSeason(startingInstitution, principals))
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
@@ -112,8 +117,30 @@ export default function App() {
         />
       }
       timeline={<SeasonTimeline season={season} />}
+      nav={
+        <div className="view-toggle" aria-label="Main views">
+          <button
+            className={mainView === 'season' ? 'view-toggle-button active' : 'view-toggle-button'}
+            onClick={() => setMainView('season')}
+          >
+            Season
+          </button>
+          <button
+            className={mainView === 'roster' ? 'view-toggle-button active' : 'view-toggle-button'}
+            onClick={() => setMainView('roster')}
+          >
+            Roster
+          </button>
+        </div>
+      }
     >
-      {seasonComplete ? (
+      {mainView === 'roster' ? (
+        <RosterOverview
+          roster={season.roster}
+          forecast={forecast}
+          currentSlotName={currentSlotName}
+        />
+      ) : seasonComplete ? (
         <SeasonSummaryPanel
           summary={summarizeSeason(season)!}
           onNewSeason={handleNewSeason}

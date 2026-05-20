@@ -184,6 +184,19 @@ export default function ConcertForecast({ forecast, slotWorks, workCount }: Conc
       </section>
 
       <section className="forecast-section">
+        <h3 className="forecast-section-title">Roster Fit</h3>
+        <div className="forecast-fit-list">
+          {forecast.repertoireFit.map(row => (
+            <div key={row.section} className="forecast-fit-row">
+              <span className="forecast-fit-section">{row.label}</span>
+              <span className={riskClass(row.stress)}>Stress {row.stress}</span>
+              <span className="forecast-fit-note">{row.note}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="forecast-section">
         <h3 className="forecast-section-title">Per-Piece Risk</h3>
         <div className="forecast-perpiece-list">
           {slotWorks.slice(0, workCount).map((work, i) => {

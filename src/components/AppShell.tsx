@@ -4,15 +4,17 @@ interface AppShellProps {
   left: React.ReactNode
   children: React.ReactNode
   timeline?: React.ReactNode
+  nav?: React.ReactNode
 }
 
-export default function AppShell({ left, children, timeline }: AppShellProps) {
+export default function AppShell({ left, children, timeline, nav }: AppShellProps) {
   return (
     <div className="shell-root">
       <header className="shell-header">
         <div className="shell-header-inner">
           <span className="shell-title">Orchestra Manager</span>
           <span className="shell-subtitle">Seattle · Debut Season</span>
+          {nav && <div className="shell-nav">{nav}</div>}
         </div>
         {timeline && <div className="shell-timeline">{timeline}</div>}
       </header>

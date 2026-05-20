@@ -157,6 +157,33 @@ export default function ConcertReport({ report, selectedWorks, onDone, concertNu
         </div>
       )}
 
+      <div className="panel" style={{ marginBottom: '0.75rem' }}>
+        <h3 style={{ marginBottom: '0.6rem' }}>Roster Aftermath</h3>
+        <div className="roster-change-list">
+          {report.rosterChanges
+            .filter(change => change.formDelta !== 0 || change.moraleDelta !== 0)
+            .slice(0, 6)
+            .map(change => (
+              <div key={change.principalId} className="roster-change-row">
+                <span className="roster-change-name">
+                  {change.principalName}
+                  <small>{change.position}</small>
+                </span>
+                <span className={change.formDelta >= 0 ? 'delta-positive' : 'delta-negative'}>
+                  Form {deltaStr(change.formDelta)}
+                </span>
+                <span className={change.moraleDelta >= 0 ? 'delta-positive' : 'delta-negative'}>
+                  Morale {deltaStr(change.moraleDelta)}
+                </span>
+                <span className="roster-change-note">{change.note}</span>
+              </div>
+            ))}
+          {report.rosterChanges.every(change => change.formDelta === 0 && change.moraleDelta === 0) && (
+            <p className="text-muted">The principals held steady; no form or morale movement this concert.</p>
+          )}
+        </div>
+      </div>
+
       <div className="panel" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ marginBottom: '0.75rem' }}>Institutional Impact</h3>
         <div className="forecast-grid">

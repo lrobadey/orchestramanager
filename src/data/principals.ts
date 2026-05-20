@@ -17,6 +17,9 @@ export const principals: Principal[] = [
     soloReliability: 66,
     leadership: 72,
     stressResistance: 60,
+    newMusicFluency: 54,
+    classicalFluency: 76,
+    romanticFluency: 72,
   },
   {
     id: 'principal-flute',
@@ -34,6 +37,9 @@ export const principals: Principal[] = [
     soloReliability: 59,
     leadership: 50,
     stressResistance: 52,
+    newMusicFluency: 62,
+    classicalFluency: 66,
+    romanticFluency: 68,
   },
   {
     id: 'principal-oboe',
@@ -51,6 +57,9 @@ export const principals: Principal[] = [
     soloReliability: 57,
     leadership: 46,
     stressResistance: 42,
+    newMusicFluency: 58,
+    classicalFluency: 71,
+    romanticFluency: 64,
   },
   {
     id: 'principal-horn',
@@ -68,6 +77,9 @@ export const principals: Principal[] = [
     soloReliability: 65,
     leadership: 56,
     stressResistance: 63,
+    newMusicFluency: 46,
+    classicalFluency: 62,
+    romanticFluency: 70,
   },
   {
     id: 'principal-trumpet',
@@ -85,6 +97,9 @@ export const principals: Principal[] = [
     soloReliability: 52,
     leadership: 48,
     stressResistance: 66,
+    newMusicFluency: 64,
+    classicalFluency: 66,
+    romanticFluency: 58,
   },
   {
     id: 'principal-timpani',
@@ -102,6 +117,9 @@ export const principals: Principal[] = [
     soloReliability: 57,
     leadership: 52,
     stressResistance: 71,
+    newMusicFluency: 70,
+    classicalFluency: 58,
+    romanticFluency: 61,
   },
   {
     id: 'principal-cello',
@@ -119,6 +137,9 @@ export const principals: Principal[] = [
     soloReliability: 61,
     leadership: 62,
     stressResistance: 55,
+    newMusicFluency: 50,
+    classicalFluency: 70,
+    romanticFluency: 76,
   },
   {
     id: 'principal-violin-2',
@@ -136,6 +157,9 @@ export const principals: Principal[] = [
     soloReliability: 52,
     leadership: 58,
     stressResistance: 55,
+    newMusicFluency: 56,
+    classicalFluency: 72,
+    romanticFluency: 68,
   },
   {
     id: 'principal-viola',
@@ -153,6 +177,9 @@ export const principals: Principal[] = [
     soloReliability: 56,
     leadership: 55,
     stressResistance: 58,
+    newMusicFluency: 60,
+    classicalFluency: 66,
+    romanticFluency: 72,
   },
   {
     id: 'principal-bass',
@@ -170,6 +197,9 @@ export const principals: Principal[] = [
     soloReliability: 48,
     leadership: 52,
     stressResistance: 66,
+    newMusicFluency: 52,
+    classicalFluency: 65,
+    romanticFluency: 70,
   },
   {
     id: 'principal-clarinet',
@@ -187,6 +217,9 @@ export const principals: Principal[] = [
     soloReliability: 62,
     leadership: 48,
     stressResistance: 50,
+    newMusicFluency: 66,
+    classicalFluency: 70,
+    romanticFluency: 64,
   },
   {
     id: 'principal-bassoon',
@@ -204,6 +237,9 @@ export const principals: Principal[] = [
     soloReliability: 55,
     leadership: 45,
     stressResistance: 56,
+    newMusicFluency: 62,
+    classicalFluency: 66,
+    romanticFluency: 67,
   },
   {
     id: 'principal-trombone',
@@ -221,6 +257,9 @@ export const principals: Principal[] = [
     soloReliability: 55,
     leadership: 50,
     stressResistance: 64,
+    newMusicFluency: 48,
+    classicalFluency: 58,
+    romanticFluency: 66,
   },
   {
     id: 'principal-percussion',
@@ -238,6 +277,9 @@ export const principals: Principal[] = [
     soloReliability: 58,
     leadership: 56,
     stressResistance: 68,
+    newMusicFluency: 76,
+    classicalFluency: 58,
+    romanticFluency: 62,
   },
   {
     id: 'principal-tuba',
@@ -255,5 +297,8 @@ export const principals: Principal[] = [
     soloReliability: 45,
     leadership: 44,
     stressResistance: 70,
+    newMusicFluency: 50,
+    classicalFluency: 56,
+    romanticFluency: 64,
   },
 ]

@@ -19,6 +19,9 @@ function makePrincipal(section: Principal['section'], leadership: number): Princ
     soloReliability: 60,
     leadership,
     stressResistance: 60,
+    newMusicFluency: 60,
+    classicalFluency: 60,
+    romanticFluency: 60,
   }
 }
 
