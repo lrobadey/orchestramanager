@@ -22,9 +22,10 @@ import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
 import RepertoireDrawer from './components/RepertoireDrawer'
+import HomeConsole, { type HomeNavKey } from './components/HomeConsole'
 
 type Phase = 'planning' | 'report'
-type MainView = 'program' | 'roster'
+type MainView = 'home' | 'programme' | 'roster'
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -47,7 +48,7 @@ export default function App() {
   )
   const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
   const [phase, setPhase] = useState<Phase>('planning')
-  const [mainView, setMainView] = useState<MainView>('program')
+  const [mainView, setMainView] = useState<MainView>('home')
   const [report, setReport] = useState<ConcertReport | null>(null)
   const [repertoireOpen, setRepertoireOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -71,10 +72,10 @@ export default function App() {
     [institution, livePrincipals, program],
   )
 
-  // Auto-open repertoire on first paint when program is empty and we're planning.
+  // Auto-open repertoire when the player enters Programme with an empty program.
   useEffect(() => {
     if (
-      mainView === 'program' &&
+      mainView === 'programme' &&
       phase === 'planning' &&
       !seasonComplete &&
       !repertoireAutoOpenedRef.current &&
@@ -106,7 +107,7 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    setMainView('program')
+    setMainView('home')
     repertoireAutoOpenedRef.current = false
   }
 
@@ -115,8 +116,15 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    setMainView('program')
+    setMainView('home')
     repertoireAutoOpenedRef.current = false
+  }
+
+  function handleHomeNavigate(key: HomeNavKey) {
+    if (key === 'home' || key === 'roster' || key === 'programme') {
+      setMainView(key)
+    }
+    // Library and Ledger are not yet wired (see homeStubs.ts).
   }
 
   const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
@@ -183,10 +191,10 @@ export default function App() {
     <>
       <button
         type="button"
-        className={mainView === 'program' && !seasonComplete ? 'shell-nav-button active' : 'shell-nav-button'}
-        onClick={() => setMainView('program')}
+        className={mainView === 'home' ? 'shell-nav-button active' : 'shell-nav-button'}
+        onClick={() => setMainView('home')}
       >
-        Program
+        Home
       </button>
       <button
         type="button"
@@ -195,8 +203,31 @@ export default function App() {
       >
         Roster
       </button>
+      <button
+        type="button"
+        className={
+          mainView === 'programme' && !seasonComplete ? 'shell-nav-button active' : 'shell-nav-button'
+        }
+        onClick={() => setMainView('programme')}
+      >
+        Programme
+      </button>
     </>
   )
+
+  if (mainView === 'home') {
+    return (
+      <AppShell chromeless>
+        <HomeConsole
+          season={season}
+          program={program}
+          works={works}
+          onNavigate={handleHomeNavigate}
+          onOpenProgramme={() => setMainView('programme')}
+        />
+      </AppShell>
+    )
+  }
 
   return (
     <AppShell
