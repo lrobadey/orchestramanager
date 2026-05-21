@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { works } from './data/works'
 import { principals } from './data/principals'
 import { audienceSegments } from './data/audienceSegments'
@@ -21,7 +21,6 @@ import ConcertReportView from './components/ConcertReport'
 import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
-import RepertoireDrawer from './components/RepertoireDrawer'
 import HomeConsole, { type HomeNavKey } from './components/HomeConsole'
 import { CONCERT_ROMAN } from './data/numerals'
 
@@ -49,9 +48,7 @@ export default function App() {
   const [phase, setPhase] = useState<Phase>('planning')
   const [mainView, setMainView] = useState<MainView>('home')
   const [report, setReport] = useState<ConcertReport | null>(null)
-  const [repertoireOpen, setRepertoireOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
-  const repertoireAutoOpenedRef = useRef(false)
 
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
 
@@ -71,20 +68,6 @@ export default function App() {
     [institution, livePrincipals, program],
   )
 
-  // Auto-open repertoire when the player enters Programme with an empty program.
-  useEffect(() => {
-    if (
-      mainView === 'programme' &&
-      phase === 'planning' &&
-      !seasonComplete &&
-      !repertoireAutoOpenedRef.current &&
-      program.workIds.every(id => id === null)
-    ) {
-      repertoireAutoOpenedRef.current = true
-      setRepertoireOpen(true)
-    }
-  }, [mainView, phase, seasonComplete, program.workIds])
-
   function handleRunConcert() {
     if (!forecast.isComplete) return
     const result = resolveConcert({
@@ -97,7 +80,6 @@ export default function App() {
     })
     setReport(result)
     setPhase('report')
-    setRepertoireOpen(false)
   }
 
   function applyPendingReport() {
@@ -106,7 +88,6 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    repertoireAutoOpenedRef.current = false
   }
 
   function handleDone() {
@@ -125,7 +106,6 @@ export default function App() {
     setReport(null)
     setPhase('planning')
     setMainView('home')
-    repertoireAutoOpenedRef.current = false
   }
 
   function handleHomeNavigate(key: HomeNavKey) {
@@ -148,8 +128,6 @@ export default function App() {
   const opusLabel = !seasonComplete
     ? `Opus I · Movement ${CONCERT_ROMAN[season.currentSlotIndex]} / IV`
     : 'Opus I · Complete'
-
-  const usedIds = new Set(program.workIds.filter((id): id is string => id !== null))
 
   function pointInRect(point: { x: number; y: number }, el: HTMLElement | null): boolean {
     if (!el) return false
@@ -261,35 +239,26 @@ export default function App() {
           onNewSeason={handleNewSeason}
         />
       ) : phase === 'planning' ? (
-        <>
-          <ProgramBuilder
-            works={works}
-            program={program}
-            forecast={forecast}
-            slotName={currentSlotName ?? ''}
-            registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
-            isDragging={isDragging}
-            onToggleRepertoire={() => setRepertoireOpen(open => !open)}
-            onSlotDragEnd={handleSlotDrop}
-            onProgramChange={setProgram}
-            onRunConcert={handleRunConcert}
-            rightRail={
-              <ConcertForecastView
-                forecast={forecast}
-                slotWorks={slotWorks}
-                workCount={program.workCount}
-              />
-            }
-          />
-          <RepertoireDrawer
-            open={repertoireOpen}
-            onClose={() => setRepertoireOpen(false)}
-            works={works}
-            usedIds={usedIds}
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={handleRepertoireDrop}
-          />
-        </>
+        <ProgramBuilder
+          works={works}
+          program={program}
+          forecast={forecast}
+          slotName={currentSlotName ?? ''}
+          registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
+          isDragging={isDragging}
+          onRepertoireDragStart={() => setIsDragging(true)}
+          onRepertoireDragEnd={handleRepertoireDrop}
+          onSlotDragEnd={handleSlotDrop}
+          onProgramChange={setProgram}
+          onRunConcert={handleRunConcert}
+          rightRail={
+            <ConcertForecastView
+              forecast={forecast}
+              slotWorks={slotWorks}
+              workCount={program.workCount}
+            />
+          }
+        />
       ) : report ? (
         <ConcertReportView
           report={report}
