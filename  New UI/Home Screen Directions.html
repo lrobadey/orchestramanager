@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Orchestra Manager — Home Screen Directions</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    /* forest at dusk */
+    --ink-0:#06100c;        /* deepest, behind everything */
+    --ink-1:#0a1612;        /* canvas */
+    --ink-2:#0f1d18;        /* raised */
+    --ink-3:#15281f;        /* a touch lighter */
+    --ink-well:#040b08;     /* inset wells */
+    --moss:#1d3328;
+    --hairline:#22382e;
+    --hairline-soft:#192b22;
+    --birch:#d7d2c2;        /* warm off-white text */
+    --birch-dim:#a8a395;
+    --silver:#b8c0bc;       /* cold silver accent */
+    --silver-dim:#7d8a85;
+    --bark:#8a6b4f;         /* warm brown accent */
+    --bark-dim:#5d4836;
+    --ember:#c97a4a;        /* warning (warm) */
+    --rust:#a3492f;         /* risk */
+    --pine:#5c8a6f;         /* small "good" accent */
+
+    --serif:'EB Garamond', 'Newsreader', Georgia, serif;
+    --display:'Newsreader', 'EB Garamond', Georgia, serif;
+    --sans:'DM Sans', system-ui, -apple-system, sans-serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+  }
+  html,body{margin:0;background:#030806;color:var(--birch);font-family:var(--sans);}
+  *{box-sizing:border-box;}
+
+  /* canvas backdrop chrome */
+  body{ font-feature-settings:"ss01","ss02","cv11"; }
+
+  /* shared utility classes used across the three directions */
+  .eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--silver-dim);}
+  .label{font-family:var(--mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--birch-dim);}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .serif{font-family:var(--serif);}
+  .display{font-family:var(--display);}
+
+  /* shared artboard background — slight grain + vignette so it reads as a surface, not a card */
+  .artboard-surface{
+    width:100%;height:100%;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(60,90,75,0.10), transparent 55%),
+      radial-gradient(120% 100% at 50% 110%, rgba(0,0,0,0.55), transparent 60%),
+      var(--ink-1);
+    color:var(--birch);
+    position:relative;
+    overflow:hidden;
+  }
+  .artboard-surface::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size:3px 3px;
+    mix-blend-mode:overlay;
+  }
+
+  /* Direction A — Cockpit / Notched Bezel ------------------------ */
+  .cpa{ padding:24px 28px; display:grid; grid-template-rows:auto auto 1fr auto; gap:14px; height:100%; }
+
+  .cpa-frame{
+    position:relative;
+    border:1px solid var(--hairline);
+    background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(0,0,0,0.18)) , var(--ink-2);
+    border-radius:2px;
+  }
+  /* notched corners — 4 small cut squares */
+  .cpa-frame::before,.cpa-frame::after{
+    content:"";position:absolute;width:10px;height:10px;border:1px solid var(--hairline);background:var(--ink-1);
+  }
+  .cpa-frame::before{top:-1px;left:-1px;border-right:none;border-bottom:none;}
+  .cpa-frame::after{top:-1px;right:-1px;border-left:none;border-bottom:none;}
+  .cpa-frame > .corner-bl{position:absolute;left:-1px;bottom:-1px;width:10px;height:10px;border:1px solid var(--hairline);border-right:none;border-top:none;background:var(--ink-1);}
+  .cpa-frame > .corner-br{position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border:1px solid var(--hairline);border-left:none;border-top:none;background:var(--ink-1);}
+
+  .cpa-bay-title{
+    position:absolute; top:-7px; left:18px; padding:0 8px; background:var(--ink-1);
+    font-family:var(--mono); font-size:9px; letter-spacing:0.24em; text-transform:uppercase;
+    color:var(--silver-dim);
+  }
+  .cpa-bay-id{
+    position:absolute; top:-7px; right:18px; padding:0 8px; background:var(--ink-1);
+    font-family:var(--mono); font-size:9px; letter-spacing:0.22em; color:var(--bark);
+  }
+
+  /* inset "well" for big numbers */
+  .well{
+    background:var(--ink-well);
+    border:1px solid var(--hairline-soft);
+    box-shadow: inset 0 1px 0 rgba(0,0,0,0.6), inset 0 0 24px rgba(0,0,0,0.6);
+    border-radius:1px;
+  }
+
+  /* Direction B — Cartographic ---------------------------------- */
+  .cart-paper{
+    background:
+      radial-gradient(60% 50% at 50% 40%, rgba(40,60,50,0.35), transparent 70%),
+      var(--ink-0);
+    position:relative;
+  }
+  /* topographic contour lines via repeating radial gradient */
+  .cart-contours{
+    position:absolute;inset:0;pointer-events:none;
+    background:
+      repeating-radial-gradient( ellipse 60% 38% at 30% 55%, transparent 0 22px, rgba(138,107,79,0.10) 22px 23px ),
+      repeating-radial-gradient( ellipse 45% 30% at 72% 38%, transparent 0 18px, rgba(138,107,79,0.08) 18px 19px ),
+      repeating-radial-gradient( ellipse 30% 22% at 55% 75%, transparent 0 14px, rgba(138,107,79,0.06) 14px 15px );
+    mix-blend-mode:screen;
+    opacity:0.9;
+  }
+  .cart-graticule{
+    position:absolute;inset:0;pointer-events:none;opacity:0.10;
+    background-image:
+      linear-gradient(to right, var(--bark) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--bark) 1px, transparent 1px);
+    background-size:80px 80px;
+  }
+  .cart-leader{stroke:var(--silver-dim);stroke-width:1;fill:none;}
+  .cart-leader-dot{fill:var(--silver);}
+  .cart-inset{
+    background:var(--ink-2);
+    border:1px solid var(--silver-dim);
+    box-shadow:0 8px 30px rgba(0,0,0,0.55), inset 0 0 0 3px var(--ink-2), inset 0 0 0 4px var(--hairline);
+    padding:14px 16px;
+    position:relative;
+  }
+  .cart-inset .corner{position:absolute;width:6px;height:6px;border:1px solid var(--silver);background:var(--ink-2);}
+  .cart-inset .corner.tl{top:-4px;left:-4px;}
+  .cart-inset .corner.tr{top:-4px;right:-4px;}
+  .cart-inset .corner.bl{bottom:-4px;left:-4px;}
+  .cart-inset .corner.br{bottom:-4px;right:-4px;}
+
+  /* Direction C — Stratum / Editorial --------------------------- */
+  .strata{
+    height:100%;
+    display:grid;
+    grid-template-rows: auto auto 1fr auto;
+  }
+  .stratum{
+    position:relative;
+    padding:22px 40px;
+    border-bottom:1px solid var(--hairline);
+  }
+  .stratum.canopy{ background: linear-gradient(180deg, #0c1814 0%, #0a1612 100%); }
+  .stratum.understory{ background: linear-gradient(180deg, #0a1612 0%, #08130f 100%); }
+  .stratum.floor{ background: linear-gradient(180deg, #08130f 0%, #050d0a 100%); }
+  .stratum.duff{ background:#040a07; }
+
+  .rule-brown{height:1px;background:linear-gradient(to right, transparent, var(--bark-dim) 12%, var(--bark-dim) 88%, transparent);}
+  .rule-silver{height:1px;background:linear-gradient(to right, transparent, var(--silver-dim) 12%, var(--silver-dim) 88%, transparent);}
+
+  /* shared bits */
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--hairline);border-radius:999px;font-family:var(--mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--birch-dim);}
+  .pill.bark{color:var(--bark);border-color:rgba(138,107,79,0.5);}
+  .pill.silver{color:var(--silver);border-color:rgba(184,192,188,0.4);}
+  .pill.ember{color:var(--ember);border-color:rgba(201,122,74,0.4);}
+  .pill.pine{color:var(--pine);border-color:rgba(92,138,111,0.45);}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;}
+  .dot.silver{background:var(--silver);}
+  .dot.bark{background:var(--bark);}
+  .dot.ember{background:var(--ember);}
+  .dot.pine{background:var(--pine);box-shadow:0 0 8px var(--pine);}
+
+  .bar{height:3px;background:var(--ink-well);border:1px solid var(--hairline-soft);position:relative;}
+  .bar > i{position:absolute;left:0;top:0;bottom:0;background:var(--silver);}
+  .bar > i.bark{background:var(--bark);}
+  .bar > i.ember{background:var(--ember);}
+  .bar > i.rust{background:var(--rust);}
+  .bar > i.pine{background:var(--pine);}
+
+  /* canvas chrome above */
+  .dc-host{ background:#03080a; }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="mock-data.jsx"></script>
+<script type="text/babel" src="home-a.jsx"></script>
+<script type="text/babel" src="home-b.jsx"></script>
+<script type="text/babel" src="home-c.jsx"></script>
+<script type="text/babel" src="home-c-v2.jsx"></script>
+<script type="text/babel" src="roster.jsx"></script>
+<script type="text/babel" src="programme.jsx"></script>
+<script type="text/babel" src="library.jsx"></script>
+<script type="text/babel" src="ledger.jsx"></script>
+<script type="text/babel" src="report.jsx"></script>
+<script type="text/babel" src="summary.jsx"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const root = ReactDOM.createRoot(document.getElementById('root'));
+function App(){
+  return (
+    <DesignCanvas backdrop="#03080a" initialZoom={0.6}>
+      <DCSection id="intro" title="Orchestra Manager · Home Screen" subtitle="Three directions — forest at dusk, layered, no cards. Drill into Program Builder from here.">
+        <DCArtboard id="notes" label="Reasoning" width={520} height={920}>
+          <div style={{padding:'40px 36px', fontFamily:'var(--serif)', color:'var(--birch)', height:'100%', background:'var(--ink-1)', borderLeft:'1px solid var(--hairline)'}}>
+            <div className="eyebrow" style={{marginBottom:16}}>Working notes</div>
+            <h1 className="display" style={{fontSize:36, lineHeight:1.1, margin:'0 0 18px', fontWeight:500, letterSpacing:'-0.01em'}}>Home as a console, not a dashboard.</h1>
+            <p style={{fontSize:15, lineHeight:1.55, color:'var(--birch-dim)', margin:'0 0 14px'}}>F1‑manager pattern: everything legible at a glance, the live state of the institution, the next decision <em>one click away</em>. Program Builder isn’t the home — it’s a room you enter when you’re ready.</p>
+            <p style={{fontSize:15, lineHeight:1.55, color:'var(--birch-dim)', margin:'0 0 22px'}}>Three directions share the same forest‑at‑dusk palette and information set, but argue different things about <em>how</em> nested modules feel.</p>
+
+            <div className="rule-brown" style={{margin:'8px 0 18px'}}></div>
+
+            <div style={{display:'grid', gap:18}}>
+              <div>
+                <div className="eyebrow" style={{color:'var(--silver)'}}>A · Cockpit / Notched Bezel</div>
+                <p style={{fontSize:14, lineHeight:1.5, color:'var(--birch-dim)', margin:'6px 0 0'}}>One frame, many <strong style={{color:'var(--birch)'}}>bays</strong>. Hairline silver cutouts, monospaced bay codes (<span className="num" style={{color:'var(--bark)'}}>ROS·02</span>). Densest. Reads like a marine or aviation instrument panel re‑skinned for a music institution.</p>
+              </div>
+              <div>
+                <div className="eyebrow" style={{color:'var(--silver)'}}>B · Cartographic / Map Insets</div>
+                <p style={{fontSize:14, lineHeight:1.5, color:'var(--birch-dim)', margin:'6px 0 0'}}>The season is a <strong style={{color:'var(--birch)'}}>terrain</strong>. Concert slots sit on contour lines; modules are framed insets connected by leader lines to map regions. Engraved, slower, geographic.</p>
+              </div>
+              <div>
+                <div className="eyebrow" style={{color:'var(--silver)'}}>C · Stratum / Editorial Depth</div>
+                <p style={{fontSize:14, lineHeight:1.5, color:'var(--birch-dim)', margin:'6px 0 0'}}>Horizontal <strong style={{color:'var(--birch)'}}>strata</strong>: canopy, understory, floor, duff. Display serif headlines, dense sub‑grid below. Less terminal, more concert program. The eye walks down the depth.</p>
+              </div>
+            </div>
+
+            <div className="rule-brown" style={{margin:'22px 0 16px'}}></div>
+            <div className="eyebrow" style={{marginBottom:8}}>Palette</div>
+            <div style={{display:'flex',gap:8, marginBottom:14}}>
+              {['#06100c','#0a1612','#0f1d18','#15281f','#d7d2c2','#b8c0bc','#8a6b4f','#c97a4a'].map(c=>(
+                <div key={c} style={{flex:1}}>
+                  <div style={{height:36, background:c, border:'1px solid var(--hairline)'}}></div>
+                  <div className="num" style={{fontSize:9, color:'var(--silver-dim)', marginTop:4}}>{c}</div>
+                </div>
+              ))}
+            </div>
+            <div className="eyebrow" style={{marginBottom:8}}>Type</div>
+            <div style={{display:'grid', gap:6}}>
+              <div className="display" style={{fontSize:22, color:'var(--birch)'}}>Newsreader — display headlines</div>
+              <div className="serif" style={{fontSize:15, color:'var(--birch-dim)'}}>EB Garamond — long form, eyebrows in italic when needed</div>
+              <div style={{fontSize:13, color:'var(--birch-dim)'}}>DM Sans — interface body & buttons</div>
+              <div className="num" style={{fontSize:12, color:'var(--silver)'}}>JetBrains Mono · NUM · 47%· $128,400 · ROS·02·B</div>
+            </div>
+          </div>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="homes" title="Home Screen · Three Directions" subtitle="Same data, same vibe, three different organizing metaphors. Click an artboard to focus.">
+        <DCArtboard id="a" label="A · Cockpit / Notched Bezel" width={1440} height={920}>
+          <HomeA />
+        </DCArtboard>
+        <DCArtboard id="b" label="B · Cartographic / Map Insets" width={1440} height={920}>
+          <HomeB />
+        </DCArtboard>
+        <DCArtboard id="c" label="C · Stratum / Editorial Depth" width={1440} height={920}>
+          <HomeC />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="c-v2" title="C · v2 — Stratum + Season Trail" subtitle="Same canopy/understory/floor as C. The bottom stratum becomes the terrain trail from B — curving path, four landmark diamonds, floating annotations connected by leader lines.">
+        <DCArtboard id="cv2" label="C v2 · Stratum w/ Trail" width={1440} height={920}>
+          <HomeCv2 />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="roster" title="Roster" subtitle="Orchestra at a glance — stage schematic + big-number section monoliths. Click a section to drill into its principal ledger.">
+        <DCArtboard id="roster-v1" label="Roster · Stage Schematic" width={1440} height={920}>
+          <Roster />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="programme" title="Programme" subtitle="Drag works from the library wall into the three big slots. Intermission toggles between slots. Rehearsal hours allocator + production controls + live forecast on the right.">
+        <DCArtboard id="programme-v1" label="Programme · Drag & Drop" width={1440} height={920}>
+          <Programme />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="library" title="Library" subtitle="The repertoire atlas — era shelves of works on the left, a featured score with a section-demand radar on the right.">
+        <DCArtboard id="library-v1" label="Library · Atlas + Radar" width={1440} height={920}>
+          <Library />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="ledger" title="Ledger" subtitle="The books — cash line over the season, income/expense breakdowns, per-concert P&L, donor relationships, upcoming bills, and recent transactions.">
+        <DCArtboard id="ledger-v1" label="Ledger · The Books" width={1440} height={920}>
+          <Ledger />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="prototype" title="Integrated Prototype · Wired-Up" subtitle="All five tabs woven into a single interactive prototype. Click the nav, or press 1–5 on your keyboard. Opens in a separate file; this is just a thumbnail.">
+        <DCArtboard id="prototype-iframe" label="Orchestra Manager · live prototype" width={1440} height={920}>
+          <iframe src="Orchestra Manager.html" style={{width:'100%', height:'100%', border:'none', background:'#020604'}} title="Orchestra Manager prototype"/>
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="report" title="Post-Concert Report" subtitle="Fires after Run Concert. The editorial verdict, hero numbers, per-section outcomes, audience mix, critic quotes, roster aftermath, and institutional deltas.">
+        <DCArtboard id="report-v1" label="Report · Concert I Resolved" width={1440} height={920}>
+          <Report />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="summary" title="Season Summary" subtitle="Fires after the last concert of the season. The trail walked in full, big retrospective stats, institutional arc (start → end), identity drift, and the bridge to next season.">
+        <DCArtboard id="summary-v1" label="Summary · Season I in review" width={1440} height={920}>
+          <Summary />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+root.render(<App />);
+</script>
+</body>
+</html>
