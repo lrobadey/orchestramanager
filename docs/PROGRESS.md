@@ -7,14 +7,63 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 ## Current Status
 
 **Last updated:** 2026-05-21
-**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 1 of N)
-**Current playable state:** The app now opens on a new **Home Console** — a 4-strata editorial layout (canopy / understory / floor / season-trail) modeled on `/ New UI/home-c-v2.jsx`. Home displays live institutional vitals + identity, live roster section strengths and watch principals, the current concert's slot composition with suggested works from the library, and a season-trail SVG with active/resolved/upcoming landmark diamonds. Top nav is now Home | Roster | Programme. Programme/Roster/Report/Summary screens are unchanged underneath. The full four-concert season loop still runs, returning to Home after each concert. Library and Ledger appear as disabled nav entries inside Home — placeholders for later migration steps.
-**Latest PR:** UI transformation step 1 — Home Console + nav reshape
-**Known blockers:** None currently recorded.
-**Current risks:** This is presentation + entry-point work, not new simulation. Several Home panels are clearly-labeled stubs (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) backed by static data in `src/data/homeStubs.ts` — every export is comment-tagged so follow-up sim work is easy to grep for. Home's new typography (Newsreader / EB Garamond / DM Sans) is scoped to `.home-console` only; the rest of the app keeps Inter / JetBrains Mono. New color tokens are additive — no existing variables were renamed. Mobile/responsive treatment of the 4-strata layout has a coarse breakpoint at 1100px but has not been browser-checked on small screens. Programme drag/drop ergonomics depend on the existing repertoire auto-open effect, which now triggers on first entry into Programme rather than on first paint.
-**Next recommended action:** Browser-check the Home Console end-to-end at 1440×900, and at narrower widths; walk a full season from Home → Programme → Report → back to Home for each of the four slots; then begin step 2 (re-skin the Programme screen to match the strata aesthetic, OR port the Library tab as a standalone screen).
+**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 2 of N)
+**Current playable state:** The app opens on the Home Console. From Home, navigating to Programme shows the new 3-column editorial layout — slots column (big slot cards with era-color left borders, horizontal section-demand bars, rehearsal/risk numbers) | library wall (always-visible, era-grouped, search + era-filter chips, drag or click to place) | live forecast column. The bottom-sheet repertoire drawer is gone; the library is permanently in view. A click on any library tile places it in the first empty slot; drag-and-drop to a specific slot still works. Slots now show clear (×) buttons. The full four-concert season loop runs as before: programme → run concert → report → home.
+**Latest PR:** UI transformation step 2 — Programme re-skin (3-column cockpit)
+**Known blockers:** None.
+**Current risks:** Same Home stubs as step 1 (inbox, finance, trail annotations, dates). Programme screen is designed for 1440px; narrow viewports collapse the 3-column layout without a dedicated breakpoint (responsive handling is the same coarse 1024px break inherited from the old cockpit-grid). The `RepertoireDrawer.tsx` file remains in the repo but is no longer imported — it is dead code and can be deleted in a future cleanup PR.
+**Next recommended action:** Browser-check the Programme screen at 1440×900 — confirm 3-column layout, drag a work from the library wall to a slot, run a concert, verify return to Home. Then choose step 3: port the Library screen (enable the disabled nav button) or re-skin the Roster/Report/Summary screens.
 
 ## Log Entries
+
+### 2026-05-21 — UI transformation step 2: Programme re-skin (3-column cockpit)
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (UI polish)
+
+**Summary**
+
+Replaced the Programme screen's 2-column + bottom-sheet-drawer layout with a permanent 3-column cockpit layout modeled on `/ New UI/programme.jsx`. Left column: big slot cards + rehearsal allocator + production controls + CTA. Center column: always-visible repertoire wall (era-grouped, search + era-filter chips). Right column: live forecast (unchanged component, repositioned). The bottom-sheet `RepertoireDrawer` modal is gone; the library is always in view. Clicking a library tile places it in the first empty slot; drag-and-drop still works for targeted placement.
+
+**Files changed**
+
+- `src/components/ProgramBuilder.tsx` — replaced 2-col `cockpit-grid` layout with 3-col `programme-cockpit`; updated `SlotRow` to large cards with era-color left borders, horizontal section-demand bars, and rehearsal/risk numerals; added `clearSlot` and `placeInFirstEmpty` helpers; renders `<RepertoireWall>` as center column; removed `onToggleRepertoire` prop; added `onRepertoireDragStart` and `onRepertoireDragEnd` props.
+- `src/components/RepertoireWall.tsx` — new component replacing the modal drawer; static era-grouped list with search + era-filter chips; framer-motion drag + click-to-place support.
+- `src/App.tsx` — removed `repertoireOpen` state, `setRepertoireOpen`, auto-open effect, `RepertoireDrawer` import/render; updated ProgramBuilder props to use `onRepertoireDragStart`/`onRepertoireDragEnd`.
+- `src/styles/app.css` — added `--ink-3` and era color tokens (`--era-classical/romantic/late-romantic/contemporary`) to `:root`; added `.programme-cockpit`, `.programme-floor`, `.slot-column`, `.forecast-column`, `.slot-row-large` and slot sub-classes, `.repertoire-wall` and wall sub-classes.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  7 passed (7)
+Tests       79 passed (79)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 1.56s
+```
+
+Browser verification: Not run by agent. User should walk through the verification checklist below.
+
+**Known issues / risks**
+
+- `RepertoireDrawer.tsx` remains in the repo as dead code. It is safe to delete; no file imports it.
+- The 3-column layout is designed for ≥1100px; narrow viewports collapse under the existing 1024px media query (no new breakpoint added for the 3-col layout specifically).
+- No simulation logic changed; forecast, scoring, and roster sim are untouched.
+
+**Handoff note**
+
+`ProgramBuilder` now computes `usedIds` internally from its `program` prop. `App.tsx` no longer computes or passes `usedIds`. The drag-drop hit-detection path (`handleRepertoireDrop` → `findSlotTarget` → `pointInRect` → `slotRefs`) is unchanged. The `RepertoireWall` uses the same framer-motion drag props as the old `RepertoireDrawer`; the `onDragEnd` callback still fires with `(id, info.point)` and propagates to App.tsx via props.
+
+**Next recommended action**
+
+Browser-check the Programme screen at 1440×900 — confirm 3-column layout, drag a work from the library wall to a slot, confirm forecast updates, run a concert, verify return to Home with next slot active. Then choose step 3: port Library as a standalone screen or re-skin Roster/Report/Summary.
+
+---
 
 ### 2026-05-21 — UI transformation step 1: Home Console + nav reshape
 
