@@ -1,6 +1,9 @@
 import { InstitutionState } from '../types/core'
 
 export const startingInstitution: InstitutionState = {
+  name: 'Puget Sound Philharmonic',
+  city: 'Seattle',
+  seasonLabel: 'Season I · Debut',
   cash: 180000,
   artisticReputation: 30,
   audienceTrust: 25,

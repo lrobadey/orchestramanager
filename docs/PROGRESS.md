@@ -6,15 +6,85 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Current Status
 
-**Last updated:** 2026-05-20
-**Current milestone:** Milestone 2 — Roster and Section Leader System
-**Current playable state:** Full four-concert season loop is playable with program-arc salience and a stateful principal roster layered into the loop. Player can choose 2- or 3-work programs from a bottom repertoire shelf with era/composer filters and text search inside a fixed single-viewport planning workspace, allocate rehearsal hours, set ticket policy, see audience mix, program-arc salience, memory-anchor readouts, roster-informed section stress, and repertoire fit in the forecast, switch to the Roster view, inspect all 15 named principals by section, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert. The Finnish visual direction and pop-out repertoire shelf are preserved while roster, report, and season-summary screens use contained inner scrolling.
-**Latest PR:** Finnish UI / viewport merge synthesis
+**Last updated:** 2026-05-21
+**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 1 of N)
+**Current playable state:** The app now opens on a new **Home Console** — a 4-strata editorial layout (canopy / understory / floor / season-trail) modeled on `/ New UI/home-c-v2.jsx`. Home displays live institutional vitals + identity, live roster section strengths and watch principals, the current concert's slot composition with suggested works from the library, and a season-trail SVG with active/resolved/upcoming landmark diamonds. Top nav is now Home | Roster | Programme. Programme/Roster/Report/Summary screens are unchanged underneath. The full four-concert season loop still runs, returning to Home after each concert. Library and Ledger appear as disabled nav entries inside Home — placeholders for later migration steps.
+**Latest PR:** UI transformation step 1 — Home Console + nav reshape
 **Known blockers:** None currently recorded.
-**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. Arc-salience coefficients are still first-pass tuning values. The repertoire shelf is a presentation change only; it still depends on drag/drop into program slots and may need density tuning after browser review. The merged viewport contract has test/build coverage but still needs manual browser inspection across common desktop and mobile viewport sizes. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system.
-**Next recommended action:** Browser-check the merged viewport contract across planning, repertoire shelf open/close and drag/drop, roster, concert report, and season summary.
+**Current risks:** This is presentation + entry-point work, not new simulation. Several Home panels are clearly-labeled stubs (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) backed by static data in `src/data/homeStubs.ts` — every export is comment-tagged so follow-up sim work is easy to grep for. Home's new typography (Newsreader / EB Garamond / DM Sans) is scoped to `.home-console` only; the rest of the app keeps Inter / JetBrains Mono. New color tokens are additive — no existing variables were renamed. Mobile/responsive treatment of the 4-strata layout has a coarse breakpoint at 1100px but has not been browser-checked on small screens. Programme drag/drop ergonomics depend on the existing repertoire auto-open effect, which now triggers on first entry into Programme rather than on first paint.
+**Next recommended action:** Browser-check the Home Console end-to-end at 1440×900, and at narrower widths; walk a full season from Home → Programme → Report → back to Home for each of the four slots; then begin step 2 (re-skin the Programme screen to match the strata aesthetic, OR port the Library tab as a standalone screen).
 
 ## Log Entries
+
+### 2026-05-21 — UI transformation step 1: Home Console + nav reshape
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (UI polish / release packaging)
+**Secondary milestone:** None — this is a UI architecture step that prepares the ground for re-skinning every screen in subsequent steps.
+
+**Summary**
+
+Introduced a new **Home Console** as the default landing screen, modeled on the reference at `/ New UI/home-c-v2.jsx`. Home renders four stacked strata — canopy (editorial header), understory (vitals + identity), floor (three columns: roster summary, next concert, inbox + finance), and a season-trail terrain band with diamond landmarks. The top nav restructures to **Home | Roster | Programme**. Library and Ledger appear inside Home's nav row as visually-complete disabled entries but do not yet have their own screens. Existing Programme / Roster / Report / Summary screens are unchanged.
+
+**Rationale**
+
+The new UI concept's central thesis is "Home as a console, not a dashboard. Program Builder isn't the home — it's a room you enter when you're ready." This step makes that real: the player lands on a situational read of the institution and chooses where to act. Subsequent migration steps will re-skin Programme to match the strata aesthetic, port Library and Ledger as standalone screens, and align Report / Summary visually. This step deliberately preserves the existing playable loop so the transformation can ship incrementally rather than as a single risky cutover.
+
+**Files changed**
+
+- `src/types/core.ts` — added `name`, `city`, `seasonLabel` to `InstitutionState`.
+- `src/data/institution.ts` — seeded the three new fields (Puget Sound Philharmonic / Seattle / Season I · Debut).
+- `src/sim/applyConcertReport.ts` — preserved the new institutional identity fields across the report-application transform.
+- `src/components/AppShell.tsx` — added a `chromeless` prop that skips the header + vitals strip and renders an edge-to-edge main; Home uses it.
+- `src/components/HomeConsole.tsx` — new top-level Home screen composing the four strata.
+- `src/components/home/CanopyHeader.tsx` — editorial header, brand, nav row (with Library/Ledger marked disabled), days-to-curtain numeral.
+- `src/components/home/UnderstoryVitals.tsx` — 6-vital grid + identity bars wired to live `institution` state.
+- `src/components/home/FloorColumns.tsx` — three-column floor: roster sections (via `calculateSectionStrengths`) + watch principals, current concert slots + suggested works from the library + CTA to open Programme, inbox + stub finance sparkline.
+- `src/components/home/SeasonTrail.tsx` — SVG terrain band with 4 diamond landmarks driven by `season.slots[i].status` and `currentSlotIndex`, leader-line annotations, and a resolved-leg overlay.
+- `src/data/homeStubs.ts` — new module containing all stub data (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) each marked `// STUB`.
+- `src/styles/home.css` — new stylesheet scoped to `.home-console`, holding home-only font variables and all strata + trail styling.
+- `src/styles/app.css` — added new color tokens (`--ink-0`, `--ink-2`, `--ink-well`, `--moss`, `--hairline-soft`, `--birch-dim`, `--silver`, `--silver-dim`, `--bark-dim`, `--ember`, `--rust`, `--pine`) additively under `:root`; added a `.shell-main-bleed` modifier for chromeless mode.
+- `index.html` — added Newsreader / EB Garamond / DM Sans to the Google Fonts URL alongside the existing Inter / JetBrains Mono.
+- `src/App.tsx` — widened `MainView` to `'home' | 'programme' | 'roster'`, defaulted to `'home'`, renamed the `'program'` literal to `'programme'`, rebuilt the top nav with Home / Roster / Programme, rendered `<HomeConsole>` under a chromeless AppShell, and updated `handleDone` / `handleNewSeason` to return to Home after each concert and after season reset.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  7 passed (7)
+Tests       79 passed (79)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 1.6s
+```
+
+Browser verification:
+
+- Not run by agent — the remote execution environment in this session has no browser-driver tool. The dev server starts and serves the index at `200 OK`, but no visual screenshot was captured.
+- User should walk through the verification checklist below.
+
+**Known issues / risks**
+
+- Home contains stub panels labeled in code as `// STUB` (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name). They look real visually; reviewers should treat them as scaffolding, not behavior.
+- Home's typography is scoped to `.home-console` only. The rest of the app keeps its Inter / JetBrains Mono stack until a later step migrates global typography.
+- New color tokens are additive — no existing variables were renamed or removed. Legacy and new tokens coexist for now.
+- The 4-strata layout has a coarse breakpoint at 1100px but the dense floor + trail were drawn for a 1440-wide canvas; narrow viewports have not been validated.
+- Library and Ledger nav entries are visually present but disabled; clicking them is a no-op.
+- The institution now carries `name`, `city`, `seasonLabel` strings; existing tests construct institutions through the seeded `startingInstitution`, so no test fixtures needed updating, but any future code constructing `InstitutionState` literals must include the new fields.
+
+**Handoff note**
+
+The Home Console reads directly from `season`, `program`, and `works` — no derived global state was introduced. All fabricated data is isolated in `src/data/homeStubs.ts`; replacing it with sim-derived equivalents (inbox events, ledger time series, calendar/date model) is the natural next sim work. `AppShell.chromeless` is the integration seam: Home is the only current chromeless consumer, but a future Library or Ledger screen with its own header can use the same flag. The Programme drag/drop auto-open effect now gates on `mainView === 'programme'` rather than `'program'`; behavior is unchanged but the literal moved.
+
+**Next recommended action**
+
+Browser-check Home end-to-end: load `/`, observe the four strata, confirm the active diamond matches `currentSlotIndex`, click **Programme** to enter the existing program builder (repertoire shelf should auto-open on first entry), drag works in and run a concert through to the report and **Done**, confirm the app lands back on Home with the next slot active. Then choose step 2: re-skin Programme to the strata aesthetic, or port Library as a standalone screen.
+
+---
 
 ### 2026-05-20 — Finnish UI / viewport merge synthesis
 

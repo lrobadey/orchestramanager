@@ -37,6 +37,20 @@
 
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'Menlo', monospace;
+
+  /* ── Home Console palette (additive, used inside .home-console) ── */
+  --ink-0:        #06100c;
+  --ink-2:        #0f1d18;
+  --ink-well:     #040b08;
+  --moss:         #1d3328;
+  --hairline-soft:#192b22;
+  --birch-dim:    #a8a395;
+  --silver:       #b8c0bc;
+  --silver-dim:   #7d8a85;
+  --bark-dim:     #5d4836;
+  --ember:        #c97a4a;
+  --rust:         #a3492f;
+  --pine:         #5c8a6f;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -326,6 +340,11 @@ button { font-family: inherit; }
   padding: 1rem 1.5rem 1.25rem;
   display: flex;
   flex-direction: column;
+}
+
+.shell-main-bleed {
+  max-width: none;
+  padding: 0;
 }
 
 .screen {

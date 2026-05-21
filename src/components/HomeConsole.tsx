@@ -1,0 +1,46 @@
+import '../styles/home.css'
+import type { ConcertProgram, SeasonState, Work } from '../types/core'
+import CanopyHeader from './home/CanopyHeader'
+import UnderstoryVitals from './home/UnderstoryVitals'
+import FloorColumns from './home/FloorColumns'
+import SeasonTrail from './home/SeasonTrail'
+
+export type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger'
+
+interface HomeConsoleProps {
+  season: SeasonState
+  program: ConcertProgram
+  works: Work[]
+  onNavigate: (key: HomeNavKey) => void
+  onOpenProgramme: () => void
+}
+
+export default function HomeConsole({
+  season,
+  program,
+  works,
+  onNavigate,
+  onOpenProgramme,
+}: HomeConsoleProps) {
+  return (
+    <div className="home-console">
+      <div className="home-strata">
+        <CanopyHeader
+          institution={season.institution}
+          season={season}
+          activeNav="home"
+          onNavigate={onNavigate}
+        />
+        <UnderstoryVitals institution={season.institution} />
+        <FloorColumns
+          roster={season.roster}
+          season={season}
+          program={program}
+          works={works}
+          onOpenProgramme={onOpenProgramme}
+        />
+        <SeasonTrail season={season} />
+      </div>
+    </div>
+  )
+}

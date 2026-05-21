@@ -7,6 +7,9 @@ export function applyConcertReport(
 ): InstitutionState {
   const d = report.institutionalDeltas
   return {
+    name: state.name,
+    city: state.city,
+    seasonLabel: state.seasonLabel,
     cash: state.cash + d.cash,
     artisticReputation: clamp(state.artisticReputation + d.artisticReputation, 0, 100),
     audienceTrust: clamp(state.audienceTrust + d.audienceTrust, 0, 100),

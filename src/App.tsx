@@ -22,9 +22,11 @@ import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
 import RepertoireDrawer from './components/RepertoireDrawer'
+import HomeConsole, { type HomeNavKey } from './components/HomeConsole'
+import { CONCERT_ROMAN } from './data/numerals'
 
 type Phase = 'planning' | 'report'
-type MainView = 'program' | 'roster'
+type MainView = 'home' | 'programme' | 'roster'
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -39,15 +41,13 @@ const emptyProgram = (): ConcertProgram => ({
   studentTicketPrice: 25,
 })
 
-const ROMAN_OPUS = ['I', 'II', 'III', 'IV']
-
 export default function App() {
   const [season, setSeason] = useState<SeasonState>(() =>
     createInitialSeason(startingInstitution, principals),
   )
   const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
   const [phase, setPhase] = useState<Phase>('planning')
-  const [mainView, setMainView] = useState<MainView>('program')
+  const [mainView, setMainView] = useState<MainView>('home')
   const [report, setReport] = useState<ConcertReport | null>(null)
   const [repertoireOpen, setRepertoireOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -71,10 +71,10 @@ export default function App() {
     [institution, livePrincipals, program],
   )
 
-  // Auto-open repertoire on first paint when program is empty and we're planning.
+  // Auto-open repertoire when the player enters Programme with an empty program.
   useEffect(() => {
     if (
-      mainView === 'program' &&
+      mainView === 'programme' &&
       phase === 'planning' &&
       !seasonComplete &&
       !repertoireAutoOpenedRef.current &&
@@ -100,14 +100,23 @@ export default function App() {
     setRepertoireOpen(false)
   }
 
-  function handleDone() {
+  function applyPendingReport() {
     if (!report) return
     setSeason(prev => resolveSeasonConcert(prev, program, report))
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    setMainView('program')
     repertoireAutoOpenedRef.current = false
+  }
+
+  function handleDone() {
+    applyPendingReport()
+    setMainView('home')
+  }
+
+  function navigateTo(view: MainView) {
+    if (phase === 'report') applyPendingReport()
+    setMainView(view)
   }
 
   function handleNewSeason() {
@@ -115,8 +124,15 @@ export default function App() {
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    setMainView('program')
+    setMainView('home')
     repertoireAutoOpenedRef.current = false
+  }
+
+  function handleHomeNavigate(key: HomeNavKey) {
+    if (key === 'home' || key === 'roster' || key === 'programme') {
+      navigateTo(key)
+    }
+    // Library and Ledger are not yet wired (see homeStubs.ts).
   }
 
   const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
@@ -130,7 +146,7 @@ export default function App() {
 
   const currentSlotName = !seasonComplete ? season.slots[season.currentSlotIndex].name : null
   const opusLabel = !seasonComplete
-    ? `Opus I · Movement ${ROMAN_OPUS[season.currentSlotIndex]} / IV`
+    ? `Opus I · Movement ${CONCERT_ROMAN[season.currentSlotIndex]} / IV`
     : 'Opus I · Complete'
 
   const usedIds = new Set(program.workIds.filter((id): id is string => id !== null))
@@ -183,20 +199,41 @@ export default function App() {
     <>
       <button
         type="button"
-        className={mainView === 'program' && !seasonComplete ? 'shell-nav-button active' : 'shell-nav-button'}
-        onClick={() => setMainView('program')}
+        className={mainView === 'home' ? 'shell-nav-button active' : 'shell-nav-button'}
+        onClick={() => navigateTo('home')}
       >
-        Program
+        Home
       </button>
       <button
         type="button"
         className={mainView === 'roster' ? 'shell-nav-button active' : 'shell-nav-button'}
-        onClick={() => setMainView('roster')}
+        onClick={() => navigateTo('roster')}
       >
         Roster
       </button>
+      <button
+        type="button"
+        className={mainView === 'programme' ? 'shell-nav-button active' : 'shell-nav-button'}
+        onClick={() => navigateTo('programme')}
+      >
+        Programme
+      </button>
     </>
   )
+
+  if (mainView === 'home') {
+    return (
+      <AppShell chromeless>
+        <HomeConsole
+          season={season}
+          program={program}
+          works={works}
+          onNavigate={handleHomeNavigate}
+          onOpenProgramme={() => navigateTo('programme')}
+        />
+      </AppShell>
+    )
+  }
 
   return (
     <AppShell

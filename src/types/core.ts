@@ -91,6 +91,9 @@ export interface IdentityProfile {
 }
 
 export interface InstitutionState {
+  name: string
+  city: string
+  seasonLabel: string
   cash: number
   artisticReputation: number
   audienceTrust: number
