@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Orchestra Manager — Prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink-0:#06100c; --ink-1:#0a1612; --ink-2:#0f1d18; --ink-3:#15281f; --ink-well:#040b08;
+    --moss:#1d3328; --hairline:#22382e; --hairline-soft:#192b22;
+    --birch:#d7d2c2; --birch-dim:#a8a395; --silver:#b8c0bc; --silver-dim:#7d8a85;
+    --bark:#8a6b4f; --bark-dim:#5d4836; --ember:#c97a4a; --rust:#a3492f; --pine:#5c8a6f;
+
+    --serif:'EB Garamond', 'Newsreader', Georgia, serif;
+    --display:'Newsreader', 'EB Garamond', Georgia, serif;
+    --sans:'DM Sans', system-ui, -apple-system, sans-serif;
+    --mono:'JetBrains Mono', ui-monospace, monospace;
+  }
+  html,body{margin:0;background:#030806;color:var(--birch);font-family:var(--sans); overflow:hidden;}
+  *{box-sizing:border-box;}
+  body{ font-feature-settings:"ss01","ss02","cv11"; }
+
+  .eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:var(--silver-dim);}
+  .label{font-family:var(--mono);font-size:9.5px;letter-spacing:0.18em;text-transform:uppercase;color:var(--birch-dim);}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .serif{font-family:var(--serif);}
+  .display{font-family:var(--display);}
+
+  .artboard-surface{
+    width:100%;height:100%;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(60,90,75,0.10), transparent 55%),
+      radial-gradient(120% 100% at 50% 110%, rgba(0,0,0,0.55), transparent 60%),
+      var(--ink-1);
+    color:var(--birch);
+    position:relative;
+    overflow:hidden;
+  }
+  .artboard-surface::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size:3px 3px;
+    mix-blend-mode:overlay;
+  }
+
+  /* Cockpit (kept in case any leftover refs) */
+  .cpa{ padding:24px 28px; display:grid; grid-template-rows:auto auto 1fr auto; gap:14px; height:100%; }
+  .cpa-frame{ position:relative; border:1px solid var(--hairline); background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(0,0,0,0.18)), var(--ink-2); border-radius:2px; }
+  .cpa-frame::before,.cpa-frame::after{ content:""; position:absolute; width:10px; height:10px; border:1px solid var(--hairline); background:var(--ink-1); }
+  .cpa-frame::before{top:-1px;left:-1px;border-right:none;border-bottom:none;}
+  .cpa-frame::after{top:-1px;right:-1px;border-left:none;border-bottom:none;}
+  .cpa-bay-title{ position:absolute; top:-7px; left:18px; padding:0 8px; background:var(--ink-1); font-family:var(--mono); font-size:9px; letter-spacing:0.24em; text-transform:uppercase; color:var(--silver-dim); }
+  .cpa-bay-id{ position:absolute; top:-7px; right:18px; padding:0 8px; background:var(--ink-1); font-family:var(--mono); font-size:9px; letter-spacing:0.22em; color:var(--bark); }
+  .well{ background:var(--ink-well); border:1px solid var(--hairline-soft); box-shadow: inset 0 1px 0 rgba(0,0,0,0.6), inset 0 0 24px rgba(0,0,0,0.6); border-radius:1px; }
+
+  /* Cartographic (kept for home-c-v2 trail) */
+  .cart-paper{ background: radial-gradient(60% 50% at 50% 40%, rgba(40,60,50,0.35), transparent 70%), var(--ink-0); position:relative; }
+  .cart-contours{ position:absolute;inset:0;pointer-events:none; background: repeating-radial-gradient( ellipse 60% 38% at 30% 55%, transparent 0 22px, rgba(138,107,79,0.10) 22px 23px ), repeating-radial-gradient( ellipse 45% 30% at 72% 38%, transparent 0 18px, rgba(138,107,79,0.08) 18px 19px ), repeating-radial-gradient( ellipse 30% 22% at 55% 75%, transparent 0 14px, rgba(138,107,79,0.06) 14px 15px ); mix-blend-mode:screen; opacity:0.9; }
+  .cart-graticule{ position:absolute;inset:0;pointer-events:none;opacity:0.10; background-image: linear-gradient(to right, var(--bark) 1px, transparent 1px), linear-gradient(to bottom, var(--bark) 1px, transparent 1px); background-size:80px 80px; }
+  .cart-leader{stroke:var(--silver-dim);stroke-width:1;fill:none;}
+  .cart-leader-dot{fill:var(--silver);}
+  .cart-inset{ background:var(--ink-2); border:1px solid var(--silver-dim); box-shadow:0 8px 30px rgba(0,0,0,0.55), inset 0 0 0 3px var(--ink-2), inset 0 0 0 4px var(--hairline); padding:14px 16px; position:relative; }
+  .cart-inset .corner{position:absolute;width:6px;height:6px;border:1px solid var(--silver);background:var(--ink-2);}
+  .cart-inset .corner.tl{top:-4px;left:-4px;}
+  .cart-inset .corner.tr{top:-4px;right:-4px;}
+  .cart-inset .corner.bl{bottom:-4px;left:-4px;}
+  .cart-inset .corner.br{bottom:-4px;right:-4px;}
+
+  /* Strata */
+  .strata{ height:100%; display:grid; grid-template-rows: auto auto 1fr auto; }
+  .stratum{ position:relative; padding:22px 40px; border-bottom:1px solid var(--hairline); }
+  .stratum.canopy{ background: linear-gradient(180deg, #0c1814 0%, #0a1612 100%); }
+  .stratum.understory{ background: linear-gradient(180deg, #0a1612 0%, #08130f 100%); }
+  .stratum.floor{ background: linear-gradient(180deg, #08130f 0%, #050d0a 100%); }
+  .stratum.duff{ background:#040a07; }
+
+  .rule-brown{height:1px;background:linear-gradient(to right, transparent, var(--bark-dim) 12%, var(--bark-dim) 88%, transparent);}
+  .rule-silver{height:1px;background:linear-gradient(to right, transparent, var(--silver-dim) 12%, var(--silver-dim) 88%, transparent);}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border:1px solid var(--hairline);border-radius:999px;font-family:var(--mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--birch-dim);}
+  .pill.bark{color:var(--bark);border-color:rgba(138,107,79,0.5);}
+  .pill.silver{color:var(--silver);border-color:rgba(184,192,188,0.4);}
+  .pill.ember{color:var(--ember);border-color:rgba(201,122,74,0.4);}
+  .pill.pine{color:var(--pine);border-color:rgba(92,138,111,0.45);}
+  .dot{display:inline-block;width:6px;height:6px;border-radius:50%;}
+  .dot.silver{background:var(--silver);} .dot.bark{background:var(--bark);} .dot.ember{background:var(--ember);}
+  .dot.pine{background:var(--pine);box-shadow:0 0 8px var(--pine);}
+  .bar{height:3px;background:var(--ink-well);border:1px solid var(--hairline-soft);position:relative;}
+  .bar > i{position:absolute;left:0;top:0;bottom:0;background:var(--silver);}
+  .bar > i.bark{background:var(--bark);} .bar > i.ember{background:var(--ember);}
+  .bar > i.rust{background:var(--rust);} .bar > i.pine{background:var(--pine);}
+
+  /* ── Prototype stage ──────────────────────────── */
+  .stage{
+    position:fixed; inset:0;
+    display:grid; place-items:center;
+    background:#020604;
+  }
+  .stage-frame{
+    width:1440px; height:920px;
+    transform-origin:center center;
+    position:relative;
+    box-shadow:0 30px 80px rgba(0,0,0,0.6);
+    overflow:hidden;
+  }
+  .screen-wrap{
+    position:absolute; inset:0;
+    animation: screenFade 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes screenFade {
+    from { opacity:0; transform:translateY(8px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+</style>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="mock-data.jsx"></script>
+<script type="text/babel" src="home-c-v2.jsx"></script>
+<script type="text/babel" src="roster.jsx"></script>
+<script type="text/babel" src="programme.jsx"></script>
+<script type="text/babel" src="library.jsx"></script>
+<script type="text/babel" src="ledger.jsx"></script>
+<script type="text/babel" src="report.jsx"></script>
+<script type="text/babel" src="summary.jsx"></script>
+</head>
+<body>
+<div class="stage"><div class="stage-frame" id="stage-frame"><div id="root"></div></div></div>
+
+<script type="text/babel">
+const { useState: useSP, useEffect: useEP, useLayoutEffect: useLE } = React;
+
+const SCREENS = {
+  home:      { component: () => <HomeCv2 />,  label:'Home' },
+  roster:    { component: () => <Roster />,   label:'Roster' },
+  programme: { component: () => <Programme />,label:'Programme' },
+  library:   { component: () => <Library />,  label:'Library' },
+  ledger:    { component: () => <Ledger />,   label:'Ledger' },
+  report:    { component: () => <Report />,   label:'Report' },
+  summary:   { component: () => <Summary />,  label:'Summary' },
+};
+
+function persistTab(t){ try { localStorage.setItem('om-tab', t); } catch(_){} }
+function readTab(){ try { return localStorage.getItem('om-tab') || 'home'; } catch(_){ return 'home'; } }
+
+function Prototype(){
+  const [tab, setTab] = useSP(readTab());
+
+  useEP(()=>{
+    window.__navigate = (t) => {
+      if (SCREENS[t]) { setTab(t); persistTab(t); }
+    };
+    return () => { delete window.__navigate; };
+  }, []);
+
+  // Scale 1440x920 frame to fit viewport
+  useLE(()=>{
+    const frame = document.getElementById('stage-frame');
+    function fit(){
+      const w = window.innerWidth, h = window.innerHeight;
+      const s = Math.min(w/1440, h/920);
+      frame.style.transform = `scale(${s})`;
+    }
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, []);
+
+  // Keyboard nav (1-7 for tab quick-jump)
+  useEP(()=>{
+    function onKey(e){
+      const keys = ['home','roster','programme','library','ledger','report','summary'];
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= 7){ const t = keys[n-1]; setTab(t); persistTab(t); }
+    }
+    window.addEventListener('keydown', onKey);
+    return ()=>window.removeEventListener('keydown', onKey);
+  }, []);
+
+  const Screen = SCREENS[tab]?.component ?? SCREENS.home.component;
+  return (
+    <div className="screen-wrap" key={tab}>
+      <Screen />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<Prototype />);
+</script>
+</body>
+</html>

@@ -6,15 +6,66 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Current Status
 
-**Last updated:** 2026-05-20
+**Last updated:** 2026-05-21
 **Current milestone:** Milestone 2 — Roster and Section Leader System
-**Current playable state:** Full four-concert season loop is playable with program-arc salience and a stateful principal roster layered into the loop. Player can choose 2- or 3-work programs from a bottom repertoire shelf with era/composer filters and text search inside a fixed single-viewport planning workspace, allocate rehearsal hours, set ticket policy, see audience mix, program-arc salience, memory-anchor readouts, roster-informed section stress, and repertoire fit in the forecast, switch to the Roster view, inspect all 15 named principals by section, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert. The Finnish visual direction and pop-out repertoire shelf are preserved while roster, report, and season-summary screens use contained inner scrolling.
-**Latest PR:** Finnish UI / viewport merge synthesis
+**Current playable state:** Full four-concert season loop is playable with program-arc salience and a stateful principal roster layered into the loop. Player can choose 2- or 3-work programs from a bottom repertoire shelf with era/composer filters and text search inside a fixed single-viewport planning workspace, allocate rehearsal hours, set ticket policy, see audience mix, program-arc salience, memory-anchor readouts, roster-informed section stress, and repertoire fit in the forecast, switch to the Roster view, inspect all 15 named principals by section, run concerts, read section outcomes and roster aftermath, and carry principal form/morale changes into the next concert. The Finnish visual direction and pop-out repertoire shelf are preserved while roster, report, and season-summary screens use contained inner scrolling. A tracked Claude new-UI prototype reference and typed presentation adapter now exist as migration foundation, but no live screen has been replaced yet.
+**Latest PR:** New UI migration foundation
 **Known blockers:** None currently recorded.
-**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. Arc-salience coefficients are still first-pass tuning values. The repertoire shelf is a presentation change only; it still depends on drag/drop into program slots and may need density tuning after browser review. The merged viewport contract has test/build coverage but still needs manual browser inspection across common desktop and mobile viewport sizes. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system.
-**Next recommended action:** Browser-check the merged viewport contract across planning, repertoire shelf open/close and drag/drop, roster, concert report, and season summary.
+**Current risks:** Roster movement is intentionally narrow: only form and morale change after concerts. Arc-salience coefficients are still first-pass tuning values. The repertoire shelf is a presentation change only; it still depends on drag/drop into program slots and may need density tuning after browser review. The merged viewport contract has test/build coverage but still needs manual browser inspection across common desktop and mobile viewport sizes. There is still no hiring, contracts, injuries, substitute list, seating chart, personnel history, or full HR system. The tracked Claude prototype is reference material only and still uses mock data, browser globals, CDN React/Babel, and global CSS patterns that must be translated before runtime use.
+**Next recommended action:** Port one live screen through the new presentation seam, with the Programme surface still the strongest first candidate because it is the main decision cockpit.
 
 ## Log Entries
+
+### 2026-05-21 — New UI migration foundation
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release
+**Secondary milestone:** Milestone 2 — Roster and Section Leader System
+
+**Summary**
+
+Created the foundation for migrating the app toward the Claude-designed new UI without replacing any live screen yet. The prototype is now tracked under a clean docs path, and a typed presentation adapter maps live season, program, forecast, roster, and optional report data into UI-friendly shapes for future ports.
+
+**Rationale**
+
+The new UI folder was a standalone browser prototype using mock data, globals, CDN React/Babel, and global CSS. Tracking it as reference preserves the design source while keeping the current Vite/React app and simulation layer as the behavior authority. The adapter gives future screen ports a stable seam so they do not copy prototype formulas or depend on `window.MOCK`.
+
+**Files changed**
+
+- `docs/ui-prototype/README.md`
+- `docs/ui-prototype/claude-new-ui/*`
+- `src/view-models/concertPresentation.ts`
+- `docs/PROGRESS.md`
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       80 passed (80)
+```
+
+```
+npm run build
+
+✓ built in 514ms
+```
+
+**Known issues / risks**
+
+- No live UI screen was replaced in this pass.
+- The prototype reference still contains mock data, globals, browser JSX, and broad global CSS selectors.
+- Future ports must translate the visual design into scoped typed components that consume live view models.
+
+**Handoff note**
+
+Use `buildConcertPresentation()` as the first presentation seam for future Programme/report-style ports. The prototype files are reference only; the source of truth for behavior remains `src/App.tsx`, `src/types/`, and `src/sim/`.
+
+**Next recommended action**
+
+Plan and port the Programme surface first, using live `ConcertProgram` and `ConcertForecast` through the presentation adapter.
+
+---
 
 ### 2026-05-20 — Finnish UI / viewport merge synthesis
 
