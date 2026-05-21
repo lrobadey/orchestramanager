@@ -1,5 +1,6 @@
 import type { SeasonState } from '../../types/core'
 import { TRAIL_ANNOTATIONS, concertDate, slotHeadlineFallback } from '../../data/homeStubs'
+import { CONCERT_ROMAN } from '../../data/numerals'
 
 interface SeasonTrailProps {
   season: SeasonState
@@ -17,15 +18,15 @@ const LANDMARK_POS: { x: number; y: number }[] = [
   { x: 1200, y: 55 },
 ]
 
-// Annotation anchor positions in trail-space; each links to a landmark.
-const ANNOTATION_POS: { x: number; y: number }[] = [
-  { x: 120, y: 14 },
-  { x: 440, y: 10 },
-  { x: 780, y: 10 },
-  { x: 1150, y: 14 },
-]
-
-const ROMAN = ['I', 'II', 'III', 'IV']
+// Annotation anchor positions in trail-space, keyed by the landmark index
+// the annotation attaches to. Decoupled from TRAIL_ANNOTATIONS array order
+// so the source data can be reordered without misaligning leader lines.
+const ANNOTATION_POS: Record<0 | 1 | 2 | 3, { x: number; y: number }> = {
+  0: { x: 120, y: 14 },
+  1: { x: 440, y: 10 },
+  2: { x: 780, y: 10 },
+  3: { x: 1150, y: 14 },
+}
 
 export default function SeasonTrail({ season }: SeasonTrailProps) {
   const resolvedCount = season.slots.filter(s => s.status === 'resolved').length
@@ -71,7 +72,7 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
         {/* Leader lines from annotations to landmarks */}
         {TRAIL_ANNOTATIONS.map((a, i) => {
           const lm = LANDMARK_POS[a.lmIndex]
-          const an = ANNOTATION_POS[i] ?? { x: lm.x, y: 18 }
+          const an = ANNOTATION_POS[a.lmIndex] ?? { x: lm.x, y: 18 }
           return (
             <g key={i}>
               <path
@@ -103,7 +104,7 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
       </div>
       <div className="trail-corner br">
         <div className="label-line">
-          {seasonComplete ? 'SEASON CLOSED' : `${ROMAN[activeIdx] ?? 'IV'} IN PROGRAMMING`}
+          {seasonComplete ? 'SEASON CLOSED' : `${CONCERT_ROMAN[activeIdx]} IN PROGRAMMING`}
         </div>
       </div>
 
@@ -125,7 +126,7 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
             style={{ left: `${xPct}%`, top: `${yPct}%` }}
           >
             <div className="trail-diamond">
-              <span className="roman">{ROMAN[i]}</span>
+              <span className="roman">{CONCERT_ROMAN[i]}</span>
             </div>
             <div className="lm-date">{concertDate(i).toUpperCase()}</div>
             <div className="lm-name">{slot.name}</div>
@@ -149,7 +150,7 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
       })}
 
       {TRAIL_ANNOTATIONS.map((a, i) => {
-        const pos = ANNOTATION_POS[i] ?? { x: 0, y: 0 }
+        const pos = ANNOTATION_POS[a.lmIndex] ?? { x: 0, y: 0 }
         const xPct = (pos.x / TRAIL_W) * 100
         const yPct = (pos.y / TRAIL_H) * 100
         return (

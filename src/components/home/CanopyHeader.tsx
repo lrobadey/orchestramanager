@@ -1,5 +1,6 @@
 import type { InstitutionState, SeasonState } from '../../types/core'
 import { daysToCurtain, concertDate, seasonWeekLabel } from '../../data/homeStubs'
+import { CONCERT_ROMAN } from '../../data/numerals'
 
 type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger'
 
@@ -9,8 +10,6 @@ interface CanopyHeaderProps {
   activeNav: HomeNavKey
   onNavigate: (key: HomeNavKey) => void
 }
-
-const ROMAN = ['I', 'II', 'III', 'IV']
 
 const NAV_KEYS: HomeNavKey[] = ['home', 'roster', 'programme', 'library', 'ledger']
 
@@ -41,7 +40,7 @@ export default function CanopyHeader({
   const idx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
   const currentSlot = seasonComplete ? season.slots[3] : season.slots[idx]
-  const roman = ROMAN[idx]
+  const roman = CONCERT_ROMAN[idx]
   const days = daysToCurtain(idx)
   const date = concertDate(idx)
 
@@ -52,7 +51,9 @@ export default function CanopyHeader({
   const dominantIdentity = pickDominantIdentity(institution)
   const subline = seasonComplete
     ? 'The season is closed. Review the summary or open the next.'
-    : `${days} days to curtain. Identity drift leans ${dominantIdentity.toLowerCase()}; the next concert decides whether it sticks.`
+    : dominantIdentity === 'Undeclared'
+      ? `${days} days to curtain. An identity has not yet emerged — the next concert sets the tone.`
+      : `${days} days to curtain. Identity drift leans ${dominantIdentity.toLowerCase()}; the next concert decides whether it sticks.`
 
   return (
     <div className="home-stratum canopy">

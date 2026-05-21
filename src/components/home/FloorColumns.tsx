@@ -1,5 +1,6 @@
 import type {
   ConcertProgram,
+  InstitutionState,
   Principal,
   RosterState,
   SeasonState,
@@ -13,6 +14,7 @@ import {
   concertDate,
   daysToCurtain,
 } from '../../data/homeStubs'
+import { CONCERT_ROMAN, SLOT_ROMAN } from '../../data/numerals'
 
 interface FloorColumnsProps {
   roster: RosterState
@@ -21,8 +23,6 @@ interface FloorColumnsProps {
   works: Work[]
   onOpenProgramme: () => void
 }
-
-const ROMAN: ['I', 'II', 'III'] = ['I', 'II', 'III']
 
 const SLOT_HINTS = [
   'Open · curtain-raiser slot',
@@ -71,7 +71,7 @@ export default function FloorColumns({
           seasonComplete={seasonComplete}
           onOpenProgramme={onOpenProgramme}
         />
-        <InboxFinanceColumn />
+        <InboxFinanceColumn institution={season.institution} />
       </div>
     </div>
   )
@@ -155,7 +155,7 @@ function NextConcertColumn({
           The next concert
         </span>
         <span className="hc-eyebrow">
-          {seasonComplete ? 'Season closed' : idx < 3 ? `Concert ${ROMAN[idx + 1] ?? 'IV'} follows on ${followUpDate}` : 'Final concert of the season'}
+          {seasonComplete ? 'Season closed' : idx < 3 ? `Concert ${CONCERT_ROMAN[idx + 1]} follows on ${followUpDate}` : 'Final concert of the season'}
         </span>
       </div>
       <div className="hc-rule-brown" style={{ marginBottom: 12 }} />
@@ -169,7 +169,7 @@ function NextConcertColumn({
       <div className="next-slots">
         {selectedWorks.slice(0, workCount).map((w, i) => (
           <div key={i} className="next-slot-row">
-            <span className="next-slot-roman">{ROMAN[i] ?? `${i + 1}`}.</span>
+            <span className="next-slot-roman">{SLOT_ROMAN[i] ?? `${i + 1}`}.</span>
             <div>
               {w ? (
                 <>
@@ -215,7 +215,7 @@ function NextConcertColumn({
       <button type="button" className="next-cta" onClick={onOpenProgramme}>
         <span className="next-cta-arrow">▸</span>
         <span className="next-cta-label">
-          {seasonComplete ? 'Open Season Summary' : `Open Programme Builder for ${ROMAN[idx] ?? 'IV'}`}
+          {seasonComplete ? 'Open Season Summary' : `Open Programme Builder for ${CONCERT_ROMAN[idx]}`}
         </span>
         <span className="next-cta-trail">{seasonComplete ? 'IV / IV' : `T−${days}d`}</span>
       </button>
@@ -223,8 +223,24 @@ function NextConcertColumn({
   )
 }
 
-function InboxFinanceColumn() {
+function InboxFinanceColumn({ institution }: { institution: InstitutionState }) {
   const netK = FINANCE_SPARKLINE.reduce((a, b) => a + b, 0)
+  const donor = institution.donorConfidence
+  const financeNote =
+    donor < 35
+      ? {
+          tone: 'ember' as const,
+          text: 'Donor confidence is sliding — the next concert needs a steadying result.',
+        }
+      : donor < 55
+        ? {
+            tone: 'ember' as const,
+            text: 'Donor confidence is soft — keep an eye on the next report.',
+          }
+        : {
+            tone: 'pine' as const,
+            text: 'Donors are holding — the institution has room to take a risk.',
+          }
   return (
     <div>
       <div className="floor-col-head">
@@ -280,10 +296,8 @@ function InboxFinanceColumn() {
           ))}
         </svg>
         <div className="finance-note">
-          <span className="hc-dot ember" style={{ marginTop: 4 }} />
-          <span className="finance-note-text">
-            Donor confidence trending — first warning if it drops further.
-          </span>
+          <span className={`hc-dot ${financeNote.tone}`} style={{ marginTop: 4 }} />
+          <span className={`finance-note-text ${financeNote.tone}`}>{financeNote.text}</span>
         </div>
       </div>
     </div>

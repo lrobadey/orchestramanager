@@ -23,6 +23,7 @@ import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
 import RepertoireDrawer from './components/RepertoireDrawer'
 import HomeConsole, { type HomeNavKey } from './components/HomeConsole'
+import { CONCERT_ROMAN } from './data/numerals'
 
 type Phase = 'planning' | 'report'
 type MainView = 'home' | 'programme' | 'roster'
@@ -39,8 +40,6 @@ const emptyProgram = (): ConcertProgram => ({
   studentTicketsEnabled: false,
   studentTicketPrice: 25,
 })
-
-const ROMAN_OPUS = ['I', 'II', 'III', 'IV']
 
 export default function App() {
   const [season, setSeason] = useState<SeasonState>(() =>
@@ -101,14 +100,23 @@ export default function App() {
     setRepertoireOpen(false)
   }
 
-  function handleDone() {
+  function applyPendingReport() {
     if (!report) return
     setSeason(prev => resolveSeasonConcert(prev, program, report))
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
-    setMainView('home')
     repertoireAutoOpenedRef.current = false
+  }
+
+  function handleDone() {
+    applyPendingReport()
+    setMainView('home')
+  }
+
+  function navigateTo(view: MainView) {
+    if (phase === 'report') applyPendingReport()
+    setMainView(view)
   }
 
   function handleNewSeason() {
@@ -122,7 +130,7 @@ export default function App() {
 
   function handleHomeNavigate(key: HomeNavKey) {
     if (key === 'home' || key === 'roster' || key === 'programme') {
-      setMainView(key)
+      navigateTo(key)
     }
     // Library and Ledger are not yet wired (see homeStubs.ts).
   }
@@ -138,7 +146,7 @@ export default function App() {
 
   const currentSlotName = !seasonComplete ? season.slots[season.currentSlotIndex].name : null
   const opusLabel = !seasonComplete
-    ? `Opus I · Movement ${ROMAN_OPUS[season.currentSlotIndex]} / IV`
+    ? `Opus I · Movement ${CONCERT_ROMAN[season.currentSlotIndex]} / IV`
     : 'Opus I · Complete'
 
   const usedIds = new Set(program.workIds.filter((id): id is string => id !== null))
@@ -192,23 +200,21 @@ export default function App() {
       <button
         type="button"
         className={mainView === 'home' ? 'shell-nav-button active' : 'shell-nav-button'}
-        onClick={() => setMainView('home')}
+        onClick={() => navigateTo('home')}
       >
         Home
       </button>
       <button
         type="button"
         className={mainView === 'roster' ? 'shell-nav-button active' : 'shell-nav-button'}
-        onClick={() => setMainView('roster')}
+        onClick={() => navigateTo('roster')}
       >
         Roster
       </button>
       <button
         type="button"
-        className={
-          mainView === 'programme' && !seasonComplete ? 'shell-nav-button active' : 'shell-nav-button'
-        }
-        onClick={() => setMainView('programme')}
+        className={mainView === 'programme' ? 'shell-nav-button active' : 'shell-nav-button'}
+        onClick={() => navigateTo('programme')}
       >
         Programme
       </button>
@@ -223,7 +229,7 @@ export default function App() {
           program={program}
           works={works}
           onNavigate={handleHomeNavigate}
-          onOpenProgramme={() => setMainView('programme')}
+          onOpenProgramme={() => navigateTo('programme')}
         />
       </AppShell>
     )
