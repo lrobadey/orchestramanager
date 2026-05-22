@@ -149,6 +149,30 @@ export default function App() {
     setProgram({ ...program, workIds: next })
   }
 
+  if (seasonComplete) {
+    return (
+      <AppShell chromeless>
+        <div className="home-console">
+          <div className="home-strata release-result-strata">
+            <CanopyHeader
+              institution={institution}
+              season={season}
+              activeNav="home"
+              onNavigate={handleHomeNavigate}
+            />
+            <UnderstoryVitals institution={institution} />
+            <div className="home-stratum floor console-screen-floor release-screen-floor">
+              <SeasonSummaryPanel
+                summary={summarizeSeason(season)!}
+                onNewSeason={handleNewSeason}
+              />
+            </div>
+          </div>
+        </div>
+      </AppShell>
+    )
+  }
+
   if (mainView === 'home') {
     return (
       <AppShell chromeless>
@@ -258,12 +282,7 @@ export default function App() {
           />
           <UnderstoryVitals institution={institution} />
           <div className="home-stratum floor console-screen-floor release-screen-floor">
-            {seasonComplete ? (
-              <SeasonSummaryPanel
-                summary={summarizeSeason(season)!}
-                onNewSeason={handleNewSeason}
-              />
-            ) : report ? (
+            {report ? (
               <ConcertReportView
                 report={report}
                 selectedWorks={filledSlotWorks}
