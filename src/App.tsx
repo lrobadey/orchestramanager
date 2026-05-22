@@ -14,19 +14,18 @@ import {
   TOTAL_REHEARSAL_HOURS,
 } from './types/core'
 import AppShell from './components/AppShell'
-import VitalsStrip from './components/VitalsStrip'
 import ProgramBuilder from './components/ProgramBuilder'
 import ConcertReportView from './components/ConcertReport'
-import SeasonTimeline from './components/SeasonTimeline'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
 import HomeConsole, { type HomeNavKey } from './components/HomeConsole'
 import CanopyHeader from './components/home/CanopyHeader'
 import UnderstoryVitals from './components/home/UnderstoryVitals'
-import { CONCERT_ROMAN } from './data/numerals'
+import LibraryScreen from './components/LibraryScreen'
+import LedgerScreen from './components/LedgerScreen'
 
 type Phase = 'planning' | 'report'
-type MainView = 'home' | 'programme' | 'roster'
+type MainView = 'home' | 'programme' | 'roster' | 'library' | 'ledger'
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -109,10 +108,7 @@ export default function App() {
   }
 
   function handleHomeNavigate(key: HomeNavKey) {
-    if (key === 'home' || key === 'roster' || key === 'programme') {
-      navigateTo(key)
-    }
-    // Library and Ledger are not yet wired (see homeStubs.ts).
+    navigateTo(key)
   }
 
   const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
@@ -125,10 +121,6 @@ export default function App() {
     .filter((w): w is NonNullable<typeof w> => w !== undefined)
 
   const currentSlotName = !seasonComplete ? season.slots[season.currentSlotIndex].name : null
-  const opusLabel = !seasonComplete
-    ? `Opus I · Movement ${CONCERT_ROMAN[season.currentSlotIndex]} / IV`
-    : 'Opus I · Complete'
-
   function pointInRect(point: { x: number; y: number }, el: HTMLElement | null): boolean {
     if (!el) return false
     const r = el.getBoundingClientRect()
@@ -229,31 +221,60 @@ export default function App() {
     )
   }
 
-  return (
-    <AppShell
-      vitals={
-        <VitalsStrip
+  if (mainView === 'library' && phase === 'planning') {
+    return (
+      <AppShell chromeless>
+        <LibraryScreen
+          season={season}
+          works={works}
+          onNavigate={handleHomeNavigate}
+        />
+      </AppShell>
+    )
+  }
+
+  if (mainView === 'ledger' && phase === 'planning') {
+    return (
+      <AppShell chromeless>
+        <LedgerScreen
           institution={institution}
-          deltas={phase === 'report' && report ? report.institutionalDeltas : undefined}
+          season={season}
+          forecast={forecast}
+          onNavigate={handleHomeNavigate}
         />
-      }
-      position={opusLabel}
-      seasonDots={<SeasonTimeline season={season} />}
-    >
-      {seasonComplete ? (
-        <SeasonSummaryPanel
-          summary={summarizeSeason(season)!}
-          onNewSeason={handleNewSeason}
-        />
-      ) : report ? (
-        <ConcertReportView
-          report={report}
-          selectedWorks={filledSlotWorks}
-          onDone={handleDone}
-          concertNumber={season.currentSlotIndex + 1}
-          totalConcerts={4}
-        />
-      ) : null}
+      </AppShell>
+    )
+  }
+
+  return (
+    <AppShell chromeless>
+      <div className="home-console">
+        <div className="home-strata release-result-strata">
+          <CanopyHeader
+            institution={institution}
+            season={season}
+            activeNav="home"
+            onNavigate={handleHomeNavigate}
+          />
+          <UnderstoryVitals institution={institution} />
+          <div className="home-stratum floor console-screen-floor release-screen-floor">
+            {seasonComplete ? (
+              <SeasonSummaryPanel
+                summary={summarizeSeason(season)!}
+                onNewSeason={handleNewSeason}
+              />
+            ) : report ? (
+              <ConcertReportView
+                report={report}
+                selectedWorks={filledSlotWorks}
+                onDone={handleDone}
+                concertNumber={season.currentSlotIndex + 1}
+                totalConcerts={4}
+              />
+            ) : null}
+          </div>
+        </div>
+      </div>
     </AppShell>
   )
 }

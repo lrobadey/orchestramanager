@@ -7,14 +7,82 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 ## Current Status
 
 **Last updated:** 2026-05-22
-**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 2 of N)
-**Current playable state:** The app now uses the new **Home Console** chrome across Home, Roster, and Programme. Those three tabs share the same chromeless full-screen surface, integrated canopy/nav, Home-style institutional vitals band, disabled Library/Ledger nav entries, typography, background, and concept palette. Roster keeps the concept stage schematic, section monoliths, and principal ledger inside the Home strata surface. Programme keeps the concept three-column room: programme slots, library wall, and live forecast rail. Report and Summary remain on the older shell for now. The full four-concert season loop still runs, returning to Home after each concert.
-**Latest PR:** UI transformation step 2 — shared Home chrome for Roster + Programme
+**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 3 of N)
+**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. Library and Ledger are now real navigable production screens. Library renders from production repertoire data with filter/search/detail views and disabled acquisition placeholders. Ledger renders current cash, resolved concert P&L, and the live current-concert forecast where available, with donor/payable/transaction placeholders isolated in `src/data/consoleStubs.ts`. The four-concert loop still runs, returning to Home after each report and showing the season summary after the fourth concert.
+**Latest PR:** UI transformation step 3 — production Library/Ledger and full-loop console cutover
 **Known blockers:** None currently recorded.
-**Current risks:** This is presentation + entry-point work, not new simulation. Several Home panels are clearly-labeled stubs (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) backed by static data in `src/data/homeStubs.ts` — every export is comment-tagged so follow-up sim work is easy to grep for. Report and Summary still use the older shell. Roster and Programme now inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts. Library and Ledger remain disabled nav entries.
-**Next recommended action:** Browser-check Home → Roster → Programme at 1440×900 and narrower widths; confirm the shared top chrome is identical across the three tabs; then decide whether step 3 should port Report/Summary or build the Library room.
+**Current risks:** This is presentation + entry-point work, not new simulation. Several Home panels remain clearly-labeled stubs (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) backed by static data in `src/data/homeStubs.ts`. Library/Ledger placeholders are isolated in `src/data/consoleStubs.ts` and marked `STUB`. Roster, Programme, Library, Ledger, Report, and Summary now inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
+**Next recommended action:** Manually browser-check the full navigation path Home → Roster → Programme → Library → Ledger, then run one concert through Report → Home and complete four concerts to Summary. After this UI cutover, the highest-value next system slice is replacing Ledger donor/payable/transaction stubs with sim-backed finance history.
 
 ## Log Entries
+
+### 2026-05-22 — UI transformation step 3: production Library/Ledger and full-loop console cutover
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (UI polish / release packaging)
+**Secondary milestone:** None — this is a production UI cutover over existing simulation data.
+
+**Summary**
+
+Moved the remaining production loop onto the new Home Console visual system. Library and Ledger are now enabled top-nav screens. Library renders the production repertoire with era/composer/search filters, selected-work metrics, and a demand radar. Ledger renders current cash, resolved concert P&L, and the live current-concert forecast when available. Report and Season Summary now render inside the chromeless Home Console shell instead of the legacy shell.
+
+**Rationale**
+
+The game had already adopted the New UI language for Home, Roster, and Programme, but Library/Ledger were disabled and Report/Summary still broke out into the older shell. This pass makes the production build match the tracked New UI direction across the full playable Season One loop without adding new simulation systems.
+
+**Files changed**
+
+- `src/App.tsx` — expands main navigation to Library/Ledger, routes both screens, and renders Report/Summary inside the chromeless Home Console shell.
+- `src/components/LibraryScreen.tsx` — new production repertoire atlas using `Work` data.
+- `src/components/LedgerScreen.tsx` — new production ledger screen using `SeasonState`, current forecast, and institution cash.
+- `src/components/home/CanopyHeader.tsx` — enables Library and Ledger nav entries.
+- `src/data/consoleStubs.ts` — isolates placeholder acquisition, donor, payable, and transaction rows, all marked as `STUB`.
+- `src/styles/home.css` — adds Home Console styling for Library and Ledger screens.
+- `docs/PROGRESS.md` — records this Milestone 6 UI transformation step and test results.
+
+**Tests run and results**
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 567ms
+```
+
+```
+npm test
+
+Test Files  7 passed (7)
+Tests       79 passed (79)
+```
+
+```
+git diff --check
+
+No output; passed.
+```
+
+Browser verification:
+
+- Vite dev server started at `http://127.0.0.1:5173/`.
+- The URL was opened for manual browser review.
+- Automated Playwright load succeeded. The only console error observed was a missing `favicon.ico` 404.
+
+**Known issues / risks**
+
+- Library acquisition actions are disabled placeholders; there is no rental, ownership, purchase, study queue, or commission workflow yet.
+- Ledger donor, bill, and transaction rows are placeholders in `src/data/consoleStubs.ts`; only cash, resolved concert P&L, and current forecast values are sim-backed.
+- Existing Home placeholders remain in `src/data/homeStubs.ts`.
+- Dense Library/Ledger layouts should be manually checked at 1440×900 and narrower widths.
+
+**Handoff note**
+
+Real values come from `works`, `SeasonState`, `ConcertForecast`, and `InstitutionState`. Fabricated New UI support rows are isolated in `src/data/consoleStubs.ts` and can be replaced when finance history, payables, donor accounts, repertoire licensing, or acquisition systems become real simulation layers.
+
+**Next recommended action**
+
+Replace the Ledger placeholder rows with a small sim-backed finance history so cash movement, concert P&L, payables, and donor support all have one real source of truth.
+
+---
 
 ### 2026-05-22 — UI transformation step 2: shared Home chrome for Roster + Programme
 

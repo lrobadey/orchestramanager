@@ -21,14 +21,12 @@ const NAV_LABELS: Record<HomeNavKey, string> = {
   ledger: 'ledger',
 }
 
-// Library + Ledger are stubbed in the nav for visual completeness but not
-// wired to real screens in this migration step.
 const ENABLED: Record<HomeNavKey, boolean> = {
   home: true,
   roster: true,
   programme: true,
-  library: false,
-  ledger: false,
+  library: true,
+  ledger: true,
 }
 
 export default function CanopyHeader({
@@ -83,7 +81,7 @@ export default function CanopyHeader({
                 className={classes.join(' ')}
                 onClick={() => enabled && onNavigate(k)}
                 disabled={!enabled}
-                title={enabled ? undefined : 'Coming in a later migration step'}
+                title={enabled ? undefined : 'Coming in a later systems pass'}
               >
                 {NAV_LABELS[k]}
               </button>
