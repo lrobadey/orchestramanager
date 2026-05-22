@@ -6,15 +6,70 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 ## Current Status
 
-**Last updated:** 2026-05-21
-**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 1 of N)
-**Current playable state:** The app now opens on a new **Home Console** — a 4-strata editorial layout (canopy / understory / floor / season-trail) modeled on `/ New UI/home-c-v2.jsx`. Home displays live institutional vitals + identity, live roster section strengths and watch principals, the current concert's slot composition with suggested works from the library, and a season-trail SVG with active/resolved/upcoming landmark diamonds. Top nav is now Home | Roster | Programme. Programme/Roster/Report/Summary screens are unchanged underneath. The full four-concert season loop still runs, returning to Home after each concert. Library and Ledger appear as disabled nav entries inside Home — placeholders for later migration steps.
-**Latest PR:** UI transformation step 1 — Home Console + nav reshape
+**Last updated:** 2026-05-22
+**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 2 of N)
+**Current playable state:** The app now uses the new **Home Console** chrome across Home, Roster, and Programme. Those three tabs share the same chromeless full-screen surface, integrated canopy/nav, Home-style institutional vitals band, disabled Library/Ledger nav entries, typography, background, and concept palette. Roster keeps the concept stage schematic, section monoliths, and principal ledger inside the Home strata surface. Programme keeps the concept three-column room: programme slots, library wall, and live forecast rail. Report and Summary remain on the older shell for now. The full four-concert season loop still runs, returning to Home after each concert.
+**Latest PR:** UI transformation step 2 — shared Home chrome for Roster + Programme
 **Known blockers:** None currently recorded.
-**Current risks:** This is presentation + entry-point work, not new simulation. Several Home panels are clearly-labeled stubs (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) backed by static data in `src/data/homeStubs.ts` — every export is comment-tagged so follow-up sim work is easy to grep for. Home's new typography (Newsreader / EB Garamond / DM Sans) is scoped to `.home-console` only; the rest of the app keeps Inter / JetBrains Mono. New color tokens are additive — no existing variables were renamed. Mobile/responsive treatment of the 4-strata layout has a coarse breakpoint at 1100px but has not been browser-checked on small screens. Programme drag/drop ergonomics depend on the existing repertoire auto-open effect, which now triggers on first entry into Programme rather than on first paint.
-**Next recommended action:** Browser-check the Home Console end-to-end at 1440×900, and at narrower widths; walk a full season from Home → Programme → Report → back to Home for each of the four slots; then begin step 2 (re-skin the Programme screen to match the strata aesthetic, OR port the Library tab as a standalone screen).
+**Current risks:** This is presentation + entry-point work, not new simulation. Several Home panels are clearly-labeled stubs (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) backed by static data in `src/data/homeStubs.ts` — every export is comment-tagged so follow-up sim work is easy to grep for. Report and Summary still use the older shell. Roster and Programme now inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts. Library and Ledger remain disabled nav entries.
+**Next recommended action:** Browser-check Home → Roster → Programme at 1440×900 and narrower widths; confirm the shared top chrome is identical across the three tabs; then decide whether step 3 should port Report/Summary or build the Library room.
 
 ## Log Entries
+
+### 2026-05-22 — UI transformation step 2: shared Home chrome for Roster + Programme
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (UI polish / release packaging)
+**Secondary milestone:** None — this is a visual integration pass over existing playable screens.
+
+**Summary**
+
+Moved Roster and Programme onto the same chromeless Home Console surface as Home. Home, Roster, and Programme now share the integrated canopy/nav, Home-style institutional vitals band, disabled Library/Ledger entries, typography, background, and concept palette. Roster keeps the stage schematic / section monolith / principal ledger structure. Programme keeps the slot builder / library wall / live forecast rail structure.
+
+**Rationale**
+
+The previous port left Roster and Programme under the old global app shell, which made the top nav and vitals visibly mismatch the Home screen and the uploaded concept UI. This pass makes the main application tabs feel like one interface without adding new systems or changing simulation behavior.
+
+**Files changed**
+
+- `src/App.tsx` — renders Roster and Programme through `AppShell chromeless` with `CanopyHeader` and `UnderstoryVitals`; old shell nav/vitals are now limited to Report/Summary fallback surfaces.
+- `src/styles/home.css` — adds `.home-console`-scoped overrides for Roster and Programme so their inner content uses the Home/concept typography, palette, background, hairlines, and non-rounded surfaces.
+- `docs/PROGRESS.md` — records this Milestone 6 UI transformation step and test results.
+
+**Tests run and results**
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 581ms
+```
+
+```
+npm test
+
+Test Files  7 passed (7)
+Tests       79 passed (79)
+```
+
+Browser verification:
+
+- Not run by agent beyond leaving the app open in the in-app browser, per user request.
+
+**Known issues / risks**
+
+- Report and Season Summary still use the older shell and are intentionally out of scope for this pass.
+- Roster and Programme dense layouts should be visually checked at desktop and narrow widths.
+- Library and Ledger remain disabled nav entries.
+
+**Handoff note**
+
+`CanopyHeader` and `UnderstoryVitals` are now the shared top UI authority for Home, Roster, and Programme. The new CSS is scoped under `.home-console` so the older Report/Summary surfaces are not restyled accidentally.
+
+**Next recommended action**
+
+Browser-check the three main tabs for identical top chrome and then choose whether the next UI pass should port Report/Summary or build the Library room.
+
+---
 
 ### 2026-05-21 — UI transformation step 1: Home Console + nav reshape
 

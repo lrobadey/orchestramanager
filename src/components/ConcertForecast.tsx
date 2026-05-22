@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { type ReactNode } from 'react'
 import { type AudienceBreakdown, type ConcertForecast, type SlotTuple, type Work } from '../types/core'
 
 interface ConcertForecastProps {
@@ -7,12 +8,12 @@ interface ConcertForecastProps {
   workCount: 2 | 3
 }
 
-function fmt$(n: number): string {
+function fmt$(value: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
-  }).format(n)
+  }).format(value)
 }
 
 function riskClass(value: number): string {
@@ -27,13 +28,21 @@ function qualityClass(value: number): string {
   return 'risk-high'
 }
 
-function riskToneBar(value: number): string {
-  if (value <= 25) return ''
+function statusTone(value: number): string {
+  if (value <= 25) return 'safe'
   if (value <= 55) return 'warn'
   return 'crit'
 }
 
-function ForecastLine({ label, value, animKey }: { label: string; value: React.ReactNode; animKey: string | number }) {
+function ForecastLine({
+  label,
+  value,
+  animKey,
+}: {
+  label: string
+  value: ReactNode
+  animKey: string | number
+}) {
   return (
     <div className="forecast-line">
       <span className="forecast-line-key">{label}</span>
@@ -56,16 +65,17 @@ function ForecastLine({ label, value, animKey }: { label: string; value: React.R
 }
 
 function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
-  const totalAttendance = rows.reduce((s, r) => s + r.attendance, 0)
+  const total = rows.reduce((sum, row) => sum + row.attendance, 0)
+
   return (
-    <>
-      {totalAttendance > 0 && (
+    <div className="forecast-audience">
+      {total > 0 && (
         <div className="audience-stack" aria-hidden="true">
           {rows.map(row => (
             <div
               key={row.segmentId}
               className="audience-stack-cell"
-              style={{ width: `${(row.attendance / totalAttendance) * 100}%` }}
+              style={{ width: `${(row.attendance / total) * 100}%` }}
             />
           ))}
         </div>
@@ -81,19 +91,19 @@ function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
           </div>
         ))}
       </div>
-    </>
+    </div>
   )
 }
 
 export default function ConcertForecastView({ forecast, slotWorks, workCount }: ConcertForecastProps) {
   const isLive = forecast.isComplete
-  const netClass = isLive ? (forecast.projectedNet >= 0 ? 'positive' : 'negative') : 'dim'
   const memoryAnchor = isLive
     ? slotWorks.slice(0, workCount).find(work => work?.id === forecast.memoryAnchorWorkId)
     : null
+  const netTone = isLive ? (forecast.projectedNet >= 0 ? 'positive' : 'negative') : 'dim'
 
   return (
-    <div className="forecast-rail">
+    <section className="forecast-rail" aria-label="Live forecast">
       <div className="forecast-rail-head">
         <span className="eyebrow">Live Forecast</span>
         <span className={`forecast-rail-status ${isLive ? 'live' : ''}`}>
@@ -101,36 +111,39 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
         </span>
       </div>
 
-      {!isLive && (
-        <div className="forecast-empty">
-          <p>
-            {forecast.forecastNotes[0] ?? 'Drag works into the program to see the forecast take shape.'}
-          </p>
-        </div>
-      )}
-
-      {/* Hero — always present, dim when empty */}
       <div className="forecast-hero">
         <div className="forecast-hero-cell">
-          <span className="eyebrow">Attendance</span>
-          <span className={`forecast-hero-num ${isLive ? '' : 'dim'}`}>
+          <span className="forecast-hero-label">Attendance</span>
+          <span className={`forecast-hero-value ${isLive ? '' : 'dim'}`}>
             {isLive ? forecast.projectedAttendance.toLocaleString() : '—'}
           </span>
         </div>
         <div className="forecast-hero-cell">
-          <span className="eyebrow">Net</span>
-          <span className={`forecast-hero-num ${netClass}`}>
+          <span className="forecast-hero-label">Net</span>
+          <span className={`forecast-hero-value ${netTone}`}>
             {isLive ? fmt$(forecast.projectedNet) : '—'}
           </span>
         </div>
       </div>
 
+      {!isLive && (
+        <div className="forecast-empty">
+          <p>{forecast.forecastNotes[0] ?? 'Awaiting a complete programme.'}</p>
+        </div>
+      )}
+
       {isLive && (
-        <>
-          <div className="forecast-block">
-            <div className="forecast-block-head"><span className="eyebrow">Financials</span></div>
+        <div className="forecast-blocks">
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Financials</span>
+            </div>
             <div className="forecast-rows">
-              <ForecastLine label="Ticket revenue" value={fmt$(forecast.projectedRevenue)} animKey={forecast.projectedRevenue} />
+              <ForecastLine
+                label="Ticket revenue"
+                value={fmt$(forecast.projectedRevenue)}
+                animKey={forecast.projectedRevenue}
+              />
               {forecast.projectedDonorUplift > 0 && (
                 <ForecastLine
                   label="Donor support"
@@ -138,39 +151,47 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
                   animKey={`donor-${forecast.projectedDonorUplift}`}
                 />
               )}
-              <ForecastLine label="Expenses" value={fmt$(forecast.projectedExpenses)} animKey={forecast.projectedExpenses} />
               <ForecastLine
-                label="  Base"
+                label="Expenses"
+                value={fmt$(forecast.projectedExpenses)}
+                animKey={forecast.projectedExpenses}
+              />
+              <ForecastLine
+                label="Base"
                 value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.baseConcert)}</span>}
                 animKey={`base-${forecast.projectedExpenseBreakdown.baseConcert}`}
               />
               <ForecastLine
-                label="  Rehearsal"
+                label="Rehearsal"
                 value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.rehearsal)}</span>}
                 animKey={`reh-${forecast.projectedExpenseBreakdown.rehearsal}`}
               />
               <ForecastLine
-                label="  Marketing"
+                label="Marketing"
                 value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.marketing)}</span>}
                 animKey={`mkt-${forecast.projectedExpenseBreakdown.marketing}`}
               />
               {forecast.projectedExpenseBreakdown.production > 0 && (
                 <ForecastLine
-                  label="  Production"
+                  label="Production"
                   value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.production)}</span>}
                   animKey={`prod-${forecast.projectedExpenseBreakdown.production}`}
                 />
               )}
             </div>
-          </div>
+          </section>
 
-          <div className="forecast-block">
-            <div className="forecast-block-head"><span className="eyebrow">Audience Mix</span></div>
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Audience Mix</span>
+            </div>
             <AudienceMix rows={forecast.projectedAudienceBreakdown} />
-          </div>
+          </section>
 
-          <div className="forecast-block">
-            <div className="forecast-block-head"><span className="eyebrow">Risk Profile</span></div>
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Risk Profile</span>
+            </div>
             <div className="forecast-rows">
               <ForecastLine
                 label="Performance"
@@ -204,10 +225,12 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
                 animKey={Math.round(forecast.identityImpact)}
               />
             </div>
-          </div>
+          </section>
 
-          <div className="forecast-block">
-            <div className="forecast-block-head"><span className="eyebrow">Program Arc</span></div>
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Program Arc</span>
+            </div>
             <div className="forecast-rows">
               <ForecastLine
                 label="Arc risk"
@@ -221,10 +244,12 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
               />
             </div>
             {memoryAnchor && <p className="arc-note">Anchor: {memoryAnchor.title}</p>}
-          </div>
+          </section>
 
-          <div className="forecast-block">
-            <div className="forecast-block-head"><span className="eyebrow">Section Stress</span></div>
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Section Stress</span>
+            </div>
             <div className="stress-bars">
               {(Object.entries(forecast.sectionStress) as [string, number][]).map(([section, stress]) => {
                 const pct = Math.max(0, Math.min(100, stress))
@@ -233,16 +258,18 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
                     <span className="stress-cell-label">{section.slice(0, 4).toUpperCase()}</span>
                     <span className="stress-cell-value">{Math.round(stress)}</span>
                     <div className="stress-cell-bar">
-                      <i className={riskToneBar(stress)} style={{ width: `${pct}%` }} />
+                      <i className={statusTone(stress)} style={{ width: `${pct}%` }} />
                     </div>
                   </div>
                 )
               })}
             </div>
-          </div>
+          </section>
 
-          <div className="forecast-block">
-            <div className="forecast-block-head"><span className="eyebrow">Roster Fit</span></div>
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Roster Fit</span>
+            </div>
             <div className="fit-list">
               {forecast.repertoireFit.map(row => (
                 <div key={row.section} className="fit-row">
@@ -252,20 +279,23 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          <div className="forecast-block">
-            <div className="forecast-block-head"><span className="eyebrow">Per-Piece Risk</span></div>
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Per-Piece Risk</span>
+            </div>
             <div className="perpiece-list">
-              {slotWorks.slice(0, workCount).map((work, i) => {
-                const risk = forecast.perWorkPerformanceRisk[i]
-                const arcDamage = forecast.perWorkArcDamage[i]
-                const need = forecast.perWorkRehearsalHoursNeeded[i]
-                const alloc = forecast.perWorkRehearsalHoursAllocated[i]
+              {slotWorks.slice(0, workCount).map((work, index) => {
+                const risk = forecast.perWorkPerformanceRisk[index]
+                const arcDamage = forecast.perWorkArcDamage[index]
+                const need = forecast.perWorkRehearsalHoursNeeded[index]
+                const alloc = forecast.perWorkRehearsalHoursAllocated[index]
                 const gap = need !== null && alloc !== null ? need - alloc : 0
+
                 return (
-                  <div key={i} className="perpiece-row">
-                    <span className="perpiece-num">{['I', 'II', 'III'][i]}</span>
+                  <div key={index} className="perpiece-row">
+                    <span className="perpiece-num">{['I', 'II', 'III'][index]}</span>
                     <span className="perpiece-title">
                       {work?.title ?? <em className="text-faint">empty</em>}
                     </span>
@@ -280,20 +310,22 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
                 )
               })}
             </div>
-          </div>
+          </section>
 
           {forecast.forecastNotes.length > 0 && (
-            <div className="forecast-block">
-              <div className="forecast-block-head"><span className="eyebrow">Notes</span></div>
+            <section className="forecast-block">
+              <div className="forecast-block-head">
+                <span className="eyebrow">Notes</span>
+              </div>
               <ul className="notes-list">
-                {forecast.forecastNotes.map((note, i) => (
-                  <li key={`${i}-${note}`}>{note}</li>
+                {forecast.forecastNotes.map((note, index) => (
+                  <li key={`${index}-${note}`}>{note}</li>
                 ))}
               </ul>
-            </div>
+            </section>
           )}
-        </>
+        </div>
       )}
-    </div>
+    </section>
   )
 }

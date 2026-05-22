@@ -1,12 +1,15 @@
-import { useState, type CSSProperties } from 'react'
+import { useMemo, useState } from 'react'
 import { type ConcertForecast, type Principal, type RosterState, type SectionKey } from '../types/core'
 import { calculateSectionStrengths } from '../sim/roster'
+import '../styles/roster.css'
 
 interface RosterOverviewProps {
   roster: RosterState
   forecast: ConcertForecast
   currentSlotName: string | null
 }
+
+const SECTION_ORDER: SectionKey[] = ['strings', 'winds', 'brass', 'percussion']
 
 const SECTION_LABELS: Record<SectionKey, string> = {
   strings: 'Strings',
@@ -15,10 +18,35 @@ const SECTION_LABELS: Record<SectionKey, string> = {
   percussion: 'Percussion',
 }
 
-function strengthTone(value: number): 'aurora' | 'amber' | 'berry' {
-  if (value >= 65) return 'aurora'
-  if (value >= 45) return 'amber'
-  return 'berry'
+const SECTION_COLORS: Record<SectionKey, string> = {
+  strings: 'var(--silver)',
+  winds: 'var(--bark-dim)',
+  brass: 'var(--ember)',
+  percussion: 'var(--pine)',
+}
+
+const STAGE_VIEWBOX = { w: 600, h: 460, cx: 300, cy: 410 }
+
+const STAGE_ARCS = [
+  { section: 'strings' as SectionKey, radius: 100, from: 185, to: 355, chairs: 14 },
+  { section: 'strings' as SectionKey, radius: 148, from: 185, to: 355, chairs: 16 },
+  { section: 'winds' as SectionKey, radius: 198, from: 205, to: 335, chairs: 12 },
+  { section: 'brass' as SectionKey, radius: 248, from: 215, to: 325, chairs: 10 },
+  { section: 'percussion' as SectionKey, radius: 298, from: 240, to: 300, chairs: 5 },
+]
+
+const STAGE_LABELS = [
+  { section: 'strings' as SectionKey, angle: 268, radius: 170 },
+  { section: 'winds' as SectionKey, angle: 268, radius: 218 },
+  { section: 'brass' as SectionKey, angle: 268, radius: 268 },
+  { section: 'percussion' as SectionKey, angle: 268, radius: 318 },
+]
+
+function strengthTone(value: number): 'pine' | 'silver' | 'bark' | 'ember' {
+  if (value >= 70) return 'pine'
+  if (value >= 55) return 'silver'
+  if (value >= 40) return 'bark'
+  return 'ember'
 }
 
 function strengthLabel(value: number): string {
@@ -29,8 +57,12 @@ function strengthLabel(value: number): string {
   return 'an orchestra in crisis'
 }
 
-function summarizePrincipal(principal: Principal): string {
-  const attributes = [
+function toneClass(value: number): string {
+  return `roster-tone-${strengthTone(value)}`
+}
+
+function summarizePrincipal(principal: Principal): { best: string; watch: string } {
+  const metrics = [
     ['leadership', principal.leadership],
     ['stress resistance', principal.stressResistance],
     ['endurance', principal.endurance],
@@ -39,136 +71,395 @@ function summarizePrincipal(principal: Principal): string {
     ['new music', principal.newMusicFluency],
     ['classical', principal.classicalFluency],
     ['romantic', principal.romanticFluency],
+    ['intonation', principal.intonation],
+    ['rhythm', principal.rhythm],
+    ['tone', principal.tone],
   ] as const
-  const strongest = [...attributes].sort((a, b) => b[1] - a[1])[0]
-  const weakest = [...attributes].sort((a, b) => a[1] - b[1])[0]
-  return `Best: ${strongest[0]}. Watch: ${weakest[0]}.`
+  const ranked = [...metrics].sort((a, b) => b[1] - a[1])
+  return {
+    best: ranked[0][0],
+    watch: ranked[ranked.length - 1][0],
+  }
 }
 
-function PrincipalRow({ principal }: { principal: Principal }) {
-  const overallTone = strengthTone(principal.overall)
+function buildStageChairs() {
+  const chairs: Array<{ section: SectionKey; x: number; y: number; arcIndex: number }> = []
+
+  STAGE_ARCS.forEach((arc, arcIndex) => {
+    for (let i = 0; i < arc.chairs; i += 1) {
+      const t = arc.chairs === 1 ? 0.5 : i / (arc.chairs - 1)
+      const angleDeg = arc.from + (arc.to - arc.from) * t
+      const angle = (angleDeg * Math.PI) / 180
+      chairs.push({
+        section: arc.section,
+        x: STAGE_VIEWBOX.cx + arc.radius * Math.cos(angle),
+        y: STAGE_VIEWBOX.cy + arc.radius * Math.sin(angle),
+        arcIndex,
+      })
+    }
+  })
+
+  return chairs
+}
+
+function SectionCard({
+  section,
+  active,
+  principalCount,
+  fit,
+  onSelect,
+}: {
+  section: {
+    section: SectionKey
+    label: string
+    strength: number
+    note: string
+    bottleneck: string
+  }
+  active: boolean
+  principalCount: number
+  fit?: {
+    demand: number
+    stress: number
+    note: string
+  }
+  onSelect: () => void
+}) {
   return (
-    <div className="roster-principal">
-      <div className="roster-principal-name-block">
-        <span className="roster-principal-name">{principal.name}</span>
-        <span className="roster-principal-position">{principal.position}</span>
-      </div>
-      <div className="roster-principal-stat">
-        <span className="roster-principal-stat-label">Overall</span>
-        <span className={`roster-principal-stat-value ${overallTone}`}>{principal.overall}</span>
-      </div>
-      <div className="roster-principal-stat">
-        <span className="roster-principal-stat-label">Form</span>
-        <span className="roster-principal-stat-value">{principal.form}</span>
-        <div className="roster-principal-mini-bar">
-          <i style={{ width: `${principal.form}%` }} />
+    <button
+      type="button"
+      className={`roster-section-card ${active ? 'active' : ''}`}
+      aria-pressed={active}
+      onClick={onSelect}
+    >
+      <div className="roster-section-card-head">
+        <div>
+          <div className="roster-section-label">{section.label}</div>
+          <div className="roster-section-meta">
+            {principalCount} principal{principalCount === 1 ? '' : 's'}
+          </div>
+        </div>
+        <div className="roster-section-strength-stack">
+          <div className={`roster-section-strength ${toneClass(section.strength)}`}>{section.strength}</div>
+          {active && <div className="roster-section-active">ACTIVE</div>}
         </div>
       </div>
-      <div className="roster-principal-stat">
-        <span className="roster-principal-stat-label">Morale</span>
-        <span className="roster-principal-stat-value">{principal.morale}</span>
-        <div className="roster-principal-mini-bar">
-          <i style={{ width: `${principal.morale}%` }} />
+
+      <div className="roster-section-strength-block">
+        <div className="roster-section-strength-caption">Composite</div>
+        <div className="roster-track">
+          <span className={`roster-track-fill ${toneClass(section.strength)}`} style={{ width: `${section.strength}%` }} />
         </div>
       </div>
-      <span className="roster-principal-note">{summarizePrincipal(principal)}</span>
-    </div>
+
+      <p className="roster-section-note">{section.note}</p>
+
+      {fit && (
+        <div className="roster-section-metrics">
+          <div className="roster-section-metric">
+            <div className="roster-section-metric-head">
+              <span className="roster-section-metric-label">Demand</span>
+              <span className="roster-section-metric-value">{fit.demand}</span>
+            </div>
+            <div className="roster-track">
+              <span className="roster-track-fill roster-tone-silver" style={{ width: `${fit.demand}%` }} />
+            </div>
+          </div>
+
+          <div className="roster-section-metric">
+            <div className="roster-section-metric-head">
+              <span className="roster-section-metric-label">Stress</span>
+              <span className="roster-section-metric-value">{fit.stress}</span>
+            </div>
+            <div className="roster-track">
+              <span className={`roster-track-fill ${toneClass(fit.stress)}`} style={{ width: `${fit.stress}%` }} />
+            </div>
+          </div>
+        </div>
+      )}
+    </button>
+  )
+}
+
+function PrincipalCard({ principal }: { principal: Principal }) {
+  const overallTone = strengthTone(principal.overall)
+  const { best, watch } = summarizePrincipal(principal)
+
+  return (
+    <article className="roster-principal-card">
+      <div className="roster-principal-head">
+        <div className="roster-principal-name-block">
+          <div className="roster-principal-name">{principal.name}</div>
+          <div className="roster-principal-position">{principal.position}</div>
+        </div>
+        <div className={`roster-principal-overall roster-tone-${overallTone}`}>{principal.overall}</div>
+      </div>
+
+      <div className="roster-principal-meters">
+        <div className="roster-principal-meter">
+          <div className="roster-principal-meter-head">
+            <span className="roster-principal-meter-label">Form</span>
+            <span className="roster-principal-meter-value">{principal.form}</span>
+          </div>
+          <div className="roster-track">
+            <span className={`roster-track-fill ${toneClass(principal.form)}`} style={{ width: `${principal.form}%` }} />
+          </div>
+        </div>
+
+        <div className="roster-principal-meter">
+          <div className="roster-principal-meter-head">
+            <span className="roster-principal-meter-label">Morale</span>
+            <span className="roster-principal-meter-value">{principal.morale}</span>
+          </div>
+          <div className="roster-track">
+            <span className={`roster-track-fill ${toneClass(principal.morale)}`} style={{ width: `${principal.morale}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="roster-principal-watchline">
+        <span>Best</span>
+        <strong>{best}</strong>
+        <span>Watch</span>
+        <strong>{watch}</strong>
+      </div>
+    </article>
   )
 }
 
 export default function RosterOverview({ roster, forecast, currentSlotName }: RosterOverviewProps) {
-  const strengths =
+  const sectionStrengths =
     forecast.sectionStrengths.length > 0 ? forecast.sectionStrengths : calculateSectionStrengths(roster.principals)
-  const fit = forecast.repertoireFit
-  const orchestraStrength = Math.round(
-    strengths.reduce((sum, row) => sum + row.strength, 0) / strengths.length,
-  )
-  const overallTone = strengthTone(orchestraStrength)
-  const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
-  const activePrincipals = activeSection
-    ? roster.principals.filter(p => p.section === activeSection)
-    : []
+  const repertoireFit = forecast.repertoireFit
+  const compositeStrength =
+    sectionStrengths.length > 0
+      ? Math.round(sectionStrengths.reduce((sum, row) => sum + row.strength, 0) / sectionStrengths.length)
+      : 0
+  const [activeSection, setActiveSection] = useState<SectionKey>('strings')
+  const activePrincipals = roster.principals.filter(principal => principal.section === activeSection)
+  const activeSectionStrength = sectionStrengths.find(row => row.section === activeSection)
+  const activeSectionFit = repertoireFit.find(row => row.section === activeSection)
+  const stageChairs = useMemo(() => buildStageChairs(), [])
+  const slotLabel = currentSlotName ?? 'Season complete'
 
   return (
     <div className="roster-page">
-      <section className="roster-hero">
-        <div className={`roster-hero-num ${overallTone}`}>{orchestraStrength}</div>
-        <div className="roster-hero-info">
-          <span className="eyebrow">{currentSlotName ?? 'Season complete'} · Orchestra Strength</span>
-          <p className="roster-hero-sub">
-            <strong style={{ color: 'var(--birch)' }}>{orchestraStrength}</strong> reads as {strengthLabel(orchestraStrength)}.
+      <section className="roster-canopy">
+        <div className="roster-canopy-copy-block">
+          <div className="roster-kicker">Roster</div>
+          <h1 className="roster-canopy-title">{strengthLabel(compositeStrength)}</h1>
+          <p className="roster-canopy-copy">
+            {slotLabel} is reading the orchestra as a {strengthLabel(compositeStrength)}. The section
+            cards track live strength and repertoire fit while the ledger stays open on the active section.
           </p>
-          <div
-            className="roster-spectrum"
-            style={{ ['--strength' as string]: `${orchestraStrength}%` } as CSSProperties}
-            aria-label={`Overall orchestra strength ${orchestraStrength} out of 100`}
-          >
-            <i />
-            <span className="roster-spectrum-marker" />
+        </div>
+
+        <div className="roster-canopy-strength-block">
+          <div className="roster-canopy-strength-label">Composite strength</div>
+          <div className={`roster-canopy-strength-value ${toneClass(compositeStrength)}`}>
+            {compositeStrength}
+            <span className="roster-canopy-strength-suffix">/100</span>
           </div>
-          <div className="roster-spectrum-scale">
-            <span>fragile</span>
-            <span>stable</span>
-            <span>commanding</span>
+          <div className="roster-strength-scale">
+            <span className="roster-strength-scale-end">fragile 0</span>
+            <div className="roster-strength-scale-track">
+              <span className={`roster-strength-scale-fill ${toneClass(compositeStrength)}`} style={{ width: `${compositeStrength}%` }} />
+              <span className="roster-strength-scale-marker" />
+            </div>
+            <span className="roster-strength-scale-end right">commanding 100</span>
           </div>
         </div>
       </section>
 
-      <div className="roster-grid">
-        {strengths.map(row => {
-          const fitRow = fit.find(c => c.section === row.section)
-          const tone = strengthTone(row.strength)
-          const principalsInSection = roster.principals.filter(p => p.section === row.section).slice(0, 3)
-          const isActive = activeSection === row.section
-          return (
-            <button
-              key={row.section}
-              type="button"
-              className={`roster-section-cell ${isActive ? 'active' : ''}`}
-              onClick={() => setActiveSection(prev => (prev === row.section ? null : row.section))}
-            >
-              <div>
-                <h3 className="roster-section-name">{SECTION_LABELS[row.section]}</h3>
-                <p className="roster-section-note">{fitRow?.note ?? row.note}</p>
-                {fitRow && (
-                  <div className="roster-section-pressure">
-                    <span>Demand {fitRow.demand}</span>
-                    <span>Stress {fitRow.stress}</span>
-                  </div>
-                )}
-                <div className="roster-section-cell-preview">
-                  {principalsInSection.map(p => (
-                    <div key={p.id} className="roster-section-cell-preview-row">
-                      <strong>{p.name}</strong>
-                      <span>{p.position} · {p.overall}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="roster-section-cell-inspect">
-                  {isActive ? '— Showing below' : 'Inspect →'}
-                </div>
-              </div>
-              <div className={`roster-section-score ${tone}`}>{row.strength}</div>
-            </button>
-          )
-        })}
-      </div>
+      <section className="roster-floor">
+        <div className="roster-side-stack">
+          {SECTION_ORDER.slice(0, 2).map(section => {
+            const row = sectionStrengths.find(item => item.section === section)
+            if (!row) return null
+            const fitRow = activeSectionFit?.section === section ? activeSectionFit : repertoireFit.find(item => item.section === section)
+            const note = fitRow?.note ?? row.note
+            const sectionPrincipalCount = roster.principals.filter(principal => principal.section === section).length
 
-      {activeSection && activePrincipals.length > 0 && (
-        <div className="roster-principal-ledger">
-          <div className="roster-principal-ledger-head">
-            <span className="eyebrow">{SECTION_LABELS[activeSection]} · Principal Ledger</span>
-            <button type="button" className="text-link" onClick={() => setActiveSection(null)}>
-              Close ✕
-            </button>
+            return (
+              <SectionCard
+                key={section}
+                section={{ ...row, note, bottleneck: row.bottleneck }}
+                active={activeSection === section}
+                principalCount={sectionPrincipalCount}
+                fit={fitRow}
+                onSelect={() => setActiveSection(section)}
+              />
+            )
+          })}
+        </div>
+
+        <section className="roster-stage-shell" aria-label="Roster stage schematic">
+          <div className="roster-stage-caption">
+            <span className="roster-stage-caption-slot">{slotLabel}</span>
+            <span className="roster-stage-caption-side">Audience perspective</span>
           </div>
-          <div className="roster-principals">
-            {activePrincipals.map(p => (
-              <PrincipalRow key={p.id} principal={p} />
-            ))}
+
+          <svg
+            className="roster-stage-svg"
+            viewBox={`0 0 ${STAGE_VIEWBOX.w} ${STAGE_VIEWBOX.h}`}
+            preserveAspectRatio="xMidYMid meet"
+            role="img"
+            aria-label="Semicircular roster stage schematic"
+          >
+            {STAGE_ARCS.map((arc, index) => {
+              const fromA = (arc.from * Math.PI) / 180
+              const toA = (arc.to * Math.PI) / 180
+              const x1 = STAGE_VIEWBOX.cx + arc.radius * Math.cos(fromA)
+              const y1 = STAGE_VIEWBOX.cy + arc.radius * Math.sin(fromA)
+              const x2 = STAGE_VIEWBOX.cx + arc.radius * Math.cos(toA)
+              const y2 = STAGE_VIEWBOX.cy + arc.radius * Math.sin(toA)
+              const sectionActive = arc.section === activeSection
+              return (
+                <path
+                  key={`${arc.section}-${index}`}
+                  d={`M ${x1} ${y1} A ${arc.radius} ${arc.radius} 0 0 1 ${x2} ${y2}`}
+                  fill="none"
+                  stroke={sectionActive ? 'var(--silver)' : 'var(--hairline)'}
+                  strokeWidth={sectionActive ? 1.2 : 0.7}
+                  strokeDasharray={sectionActive ? 'none' : '2 4'}
+                  opacity={sectionActive ? 0.95 : 0.55}
+                />
+              )
+            })}
+
+            {stageChairs.map((chair, index) => {
+              const sectionActive = chair.section === activeSection
+              const tone = SECTION_COLORS[chair.section]
+              return (
+                <circle
+                  key={`${chair.section}-${chair.arcIndex}-${index}`}
+                  cx={chair.x}
+                  cy={chair.y}
+                  r={sectionActive ? 6 : 4.25}
+                  fill={sectionActive ? tone : 'var(--ink-2)'}
+                  stroke={sectionActive ? tone : 'var(--bark-dim)'}
+                  strokeWidth={sectionActive ? 1.2 : 0.8}
+                  opacity={sectionActive ? 1 : 0.55}
+                />
+              )
+            })}
+
+            <circle
+              cx={STAGE_VIEWBOX.cx}
+              cy={STAGE_VIEWBOX.cy}
+              r={14}
+              fill="none"
+              stroke="var(--bark-dim)"
+              strokeWidth="1"
+              strokeDasharray="2 3"
+            />
+            <circle cx={STAGE_VIEWBOX.cx} cy={STAGE_VIEWBOX.cy} r={4} fill="var(--bark-dim)" />
+            <text
+              x={STAGE_VIEWBOX.cx}
+              y={STAGE_VIEWBOX.cy + 31}
+              textAnchor="middle"
+              fontFamily="var(--font-mono)"
+              fontSize="8"
+              fill="var(--silver-dim)"
+              letterSpacing="2"
+            >
+              CONDUCTOR
+            </text>
+
+            {STAGE_LABELS.map((label, index) => {
+              const angle = (label.angle * Math.PI) / 180
+              const x = STAGE_VIEWBOX.cx + label.radius * Math.cos(angle)
+              const y = STAGE_VIEWBOX.cy + label.radius * Math.sin(angle)
+              const row = sectionStrengths.find(item => item.section === label.section)
+              const sectionActive = label.section === activeSection
+              return (
+                <g key={`${label.section}-${index}`}>
+                  <text
+                    x={x}
+                    y={y}
+                    textAnchor="middle"
+                    fontFamily="Georgia, 'Times New Roman', serif"
+                    fontStyle="italic"
+                    fontSize={sectionActive ? 14 : 11.5}
+                    fill={sectionActive ? 'var(--birch)' : 'var(--birch-dim)'}
+                  >
+                    {row?.label ?? SECTION_LABELS[label.section]} ·{' '}
+                    <tspan fontFamily="var(--font-mono)" fontStyle="normal" fontSize={sectionActive ? 13 : 11}>
+                      {row?.strength ?? 50}
+                    </tspan>
+                  </text>
+                </g>
+              )
+            })}
+
+            <line
+              x1={40}
+              y1={STAGE_VIEWBOX.cy + 36}
+              x2={STAGE_VIEWBOX.w - 40}
+              y2={STAGE_VIEWBOX.cy + 36}
+              stroke="var(--hairline)"
+              strokeWidth="0.7"
+              strokeDasharray="3 4"
+            />
+            <text
+              x={STAGE_VIEWBOX.w - 40}
+              y={STAGE_VIEWBOX.cy + 50}
+              textAnchor="end"
+              fontFamily="var(--font-mono)"
+              fontSize="7.5"
+              fill="var(--silver-dim)"
+              letterSpacing="2"
+            >
+              AUDIENCE
+            </text>
+          </svg>
+        </section>
+
+        <div className="roster-side-stack">
+          {SECTION_ORDER.slice(2).map(section => {
+            const row = sectionStrengths.find(item => item.section === section)
+            if (!row) return null
+            const fitRow = repertoireFit.find(item => item.section === section)
+            const note = fitRow?.note ?? row.note
+            const sectionPrincipalCount = roster.principals.filter(principal => principal.section === section).length
+
+            return (
+              <SectionCard
+                key={section}
+                section={{ ...row, note, bottleneck: row.bottleneck }}
+                active={activeSection === section}
+                principalCount={sectionPrincipalCount}
+                fit={fitRow}
+                onSelect={() => setActiveSection(section)}
+              />
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="roster-ledger">
+        <div className="roster-ledger-head">
+          <div>
+            <div className="roster-ledger-kicker">Principal ledger</div>
+            <h2 className="roster-ledger-title">{SECTION_LABELS[activeSection]}</h2>
+            <p className="roster-ledger-copy">
+              {activeSectionStrength?.note ?? 'Section detail stays anchored to the live roster.'}
+            </p>
+          </div>
+
+          <div className="roster-ledger-meta">
+            <span>{activePrincipals.length} principals</span>
+            <span>Active section</span>
+            <span>{slotLabel}</span>
           </div>
         </div>
-      )}
+
+        <div className="roster-principal-grid">
+          {activePrincipals.map(principal => (
+            <PrincipalCard key={principal.id} principal={principal} />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
