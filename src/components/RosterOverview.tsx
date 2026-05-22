@@ -288,7 +288,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
             <span className="roster-strength-scale-end">fragile 0</span>
             <div className="roster-strength-scale-track">
               <span className={`roster-strength-scale-fill ${toneClass(compositeStrength)}`} style={{ width: `${compositeStrength}%` }} />
-              <span className="roster-strength-scale-marker" />
+              <span className="roster-strength-scale-marker" aria-label="Stable threshold" />
             </div>
             <span className="roster-strength-scale-end right">commanding 100</span>
           </div>
