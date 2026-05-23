@@ -95,6 +95,14 @@
 .home-stratum.trail { padding: 0; background: linear-gradient(180deg, #050d0a 0%, #030806 100%); border-bottom: none; }
 .home-stratum.console-screen-floor { min-height: 0; overflow: visible; }
 .home-stratum.programme-console-floor { padding-top: 14px; padding-bottom: 18px; }
+.home-console .release-result-strata { min-height: 100%; }
+.home-console .release-screen-floor { padding-bottom: 56px; }
+.home-console .release-screen-floor .screen-report {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding-right: 0;
+}
 
 /* ── Canopy ───────────────────────────────────────────────── */
 .canopy-topbar {
