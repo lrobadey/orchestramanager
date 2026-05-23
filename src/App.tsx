@@ -84,7 +84,7 @@ export default function App() {
 
   function applyPendingReport() {
     if (!report) return
-    setSeason(prev => resolveSeasonConcert(prev, program, report))
+    setSeason(prev => resolveSeasonConcert(prev, program, report, works))
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')

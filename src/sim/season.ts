@@ -7,9 +7,11 @@ import {
   SeasonState,
   SeasonSummary,
   Principal,
+  Work,
 } from '../types/core'
 import { createInitialDonors } from '../data/donors'
 import { applyConcertReport } from './applyConcertReport'
+import { updateDonorsAfterConcert } from './donorReactions'
 import { buildConcertFinanceTransactions } from './finance'
 import { createInitialRoster, updateRosterAfterConcert } from './roster'
 import { average, HALL_CAPACITY } from './scoring'
@@ -50,6 +52,7 @@ export function resolveSeasonConcert(
   season: SeasonState,
   program: ConcertProgram,
   report: ConcertReport,
+  works: Work[],
 ): SeasonState {
   const idx = season.currentSlotIndex
   if (idx >= 4) return season
@@ -85,13 +88,19 @@ export function resolveSeasonConcert(
     settlementCashDelta + immediateCashDelta,
   )
   const nextRoster = updateRosterAfterConcert(season.roster, report.rosterChanges)
+  const nextDonors = updateDonorsAfterConcert({
+    donorState: season.donors,
+    program,
+    report,
+    works,
+  })
 
   return {
     slots: newSlots,
     currentSlotIndex: idx + 1,
     institution: nextInstitution,
     roster: nextRoster,
-    donors: season.donors,
+    donors: nextDonors,
   }
 }
 

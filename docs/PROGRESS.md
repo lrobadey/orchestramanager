@@ -8,13 +8,62 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 **Last updated:** 2026-05-22
 **Current milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
-**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Donors, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. The season now persists a five-donor advancement cohort with distinct music tastes, institutional priorities, influence weights, relationship scores, capacity, volatility, and gift restrictions. The Donor Relations tab presents a roster-like cultivation map with donor cards, relationship meters, an influence split, and side-by-side radar charts for music taste and institutional priorities. Ledger still uses sim-backed finance transactions for Recent transactions, Donor watch, and Bills queued.
-**Latest PR:** Donor radar model refinement — split music taste and institutional priorities
+**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Donors, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. The season now persists a five-donor advancement cohort with distinct music tastes, institutional priorities, influence weights, relationship scores, capacity, volatility, and gift restrictions. Named donors now react individually after each resolved concert using the program's works and concert report outcomes. The Donor Relations tab presents a roster-like cultivation map with donor cards, relationship meters, an influence split, and side-by-side radar charts for music taste and institutional priorities. Ledger still uses sim-backed finance transactions for Recent transactions, Donor watch, and Bills queued.
+**Latest PR:** Donor reaction foundation — individual post-concert relationship deltas
 **Known blockers:** None currently recorded.
-**Current risks:** Donors are now real persisted state, but they do not yet react to concerts or drive pledge amounts individually. The Donor Relations screen is diagnostic/inspectable only; cultivation actions such as dinner, salons, or gala events are not implemented yet. Donor radar glyphs are visual shorthand derived from 0–100 values, not separate mechanics. Several Home panels remain clearly-labeled stubs in `src/data/homeStubs.ts`. Roster, Programme, Library, Ledger, Donors, Report, and Summary inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
+**Current risks:** Donor relationships now react to concerts, but named donors still do not drive pledge amounts individually. The Donor Relations screen remains diagnostic/inspectable only; cultivation actions such as dinner, salons, or gala events are not implemented yet. Donor radar glyphs are visual shorthand derived from 0–100 values, not separate mechanics. Several Home panels remain clearly-labeled stubs in `src/data/homeStubs.ts`. Roster, Programme, Library, Ledger, Donors, Report, and Summary inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
 **Next recommended action:** Browser-check the new Donors tab and then implement post-concert donor reactions so each donor's relationship changes based on repertoire, access policy, attendance, critical response, and financial stability.
 
 ## Log Entries
+
+### 2026-05-22 — Donor reaction foundation: individual post-concert deltas
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+**Secondary milestone:** Milestone 3 — Audience and Finance Systems
+
+**Summary**
+
+Attached the named donor cohort to concert resolution. `resolveSeasonConcert` now receives the work library, derives a concert music profile and an institutional outcome profile, then updates each donor's relationship, `lastDelta`, and `recentReaction` according to that donor's music taste, institutional priorities, influence weights, and volatility.
+
+**Rationale**
+
+This individualizes the existing global donor-response idea without replacing global `institution.donorConfidence` yet. Donor confidence remains an aggregate institution stat, while named donors now become an inspectable relationship layer that reacts differently to the same program and report.
+
+**Files changed**
+
+- `src/sim/donorReactions.ts` — new pure donor reaction/profile scoring layer.
+- `src/sim/season.ts` — passes resolved concerts through donor reactions.
+- `src/App.tsx` — passes `works` into `resolveSeasonConcert`.
+- `tests/season.test.ts` and `tests/audienceFinance.test.ts` — update resolver calls and assert donor mutation.
+- `TODO.md` and `docs/PROGRESS.md` — update handoff state.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 508ms
+```
+
+**Known issues / risks**
+
+- Named donor relationship changes are deterministic but early-tuned heuristics.
+- Named donors do not yet create individual pledge transactions or emails.
+- Browser verification was not run in this pass.
+
+**Handoff note**
+
+The next donor slice should surface clearer reason packets in the UI and eventually route named donor reactions into pledge/cultivation mechanics.
+
+---
 
 ### 2026-05-22 — Donor radar model refinement: split music and institution charts
 
