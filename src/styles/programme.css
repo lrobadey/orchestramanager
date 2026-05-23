@@ -959,9 +959,28 @@
 }
 
 .forecast-line-key {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 0.95rem;
   color: var(--birch-dim, rgba(230, 222, 210, 0.74));
+}
+
+.forecast-line-key small,
+.forecast-risk-note {
+  font-family: var(--mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: 8px;
+  line-height: 1.35;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--silver-dim, rgba(255, 255, 255, 0.44));
+}
+
+.forecast-risk-note {
+  margin: -4px 0 2px;
+  text-transform: none;
+  letter-spacing: 0.04em;
 }
 
 .forecast-line-val {

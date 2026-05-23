@@ -61,6 +61,12 @@ function toneClass(value: number): string {
   return `roster-tone-${strengthTone(value)}`
 }
 
+function splitStrengthHeadline(value: number): { article: string; phrase: string } {
+  const label = strengthLabel(value)
+  const match = label.match(/^(a|an)\s+(.+)$/)
+  return match ? { article: match[1], phrase: match[2] } : { article: 'A', phrase: label }
+}
+
 function summarizePrincipal(principal: Principal): { best: string; watch: string } {
   const metrics = [
     ['leadership', principal.leadership],
@@ -80,6 +86,13 @@ function summarizePrincipal(principal: Principal): { best: string; watch: string
     best: ranked[0][0],
     watch: ranked[ranked.length - 1][0],
   }
+}
+
+function sectionChairCounts(): Record<SectionKey, number> {
+  return STAGE_ARCS.reduce(
+    (counts, arc) => ({ ...counts, [arc.section]: counts[arc.section] + arc.chairs }),
+    { strings: 0, winds: 0, brass: 0, percussion: 0 } as Record<SectionKey, number>,
+  )
 }
 
 function buildStageChairs() {
@@ -106,6 +119,7 @@ function SectionCard({
   section,
   active,
   principalCount,
+  chairCount,
   fit,
   onSelect,
 }: {
@@ -118,6 +132,7 @@ function SectionCard({
   }
   active: boolean
   principalCount: number
+  chairCount: number
   fit?: {
     demand: number
     stress: number
@@ -136,7 +151,7 @@ function SectionCard({
         <div>
           <div className="roster-section-label">{section.label}</div>
           <div className="roster-section-meta">
-            {principalCount} principal{principalCount === 1 ? '' : 's'}
+            {chairCount} chairs · {principalCount} principal{principalCount === 1 ? '' : 's'}
           </div>
         </div>
         <div className="roster-section-strength-stack">
@@ -187,13 +202,12 @@ function PrincipalCard({ principal }: { principal: Principal }) {
 
   return (
     <article className="roster-principal-card">
-      <div className="roster-principal-head">
-        <div className="roster-principal-name-block">
-          <div className="roster-principal-name">{principal.name}</div>
-          <div className="roster-principal-position">{principal.position}</div>
-        </div>
-        <div className={`roster-principal-overall roster-tone-${overallTone}`}>{principal.overall}</div>
+      <div className="roster-principal-name-block">
+        <div className="roster-principal-name">{principal.name}</div>
+        <div className="roster-principal-position">{principal.position}</div>
       </div>
+
+      <div className={`roster-principal-overall roster-tone-${overallTone}`}>{principal.overall}</div>
 
       <div className="roster-principal-meters">
         <div className="roster-principal-meter">
@@ -218,10 +232,8 @@ function PrincipalCard({ principal }: { principal: Principal }) {
       </div>
 
       <div className="roster-principal-watchline">
-        <span>Best</span>
-        <strong>{best}</strong>
-        <span>Watch</span>
-        <strong>{watch}</strong>
+        <span className="roster-principal-best">↑ {best}</span>
+        <span className="roster-principal-watch">watch · {watch}</span>
       </div>
     </article>
   )
@@ -240,18 +252,30 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
   const activeSectionStrength = sectionStrengths.find(row => row.section === activeSection)
   const activeSectionFit = repertoireFit.find(row => row.section === activeSection)
   const stageChairs = useMemo(() => buildStageChairs(), [])
+  const chairCounts = useMemo(() => sectionChairCounts(), [])
+  const totalChairs = Object.values(chairCounts).reduce((sum, count) => sum + count, 0)
   const slotLabel = currentSlotName ?? 'Season complete'
+  const sortedSections = [...sectionStrengths].sort((a, b) => b.strength - a.strength)
+  const strongestSection = sortedSections[0]
+  const weakestSection = sortedSections[sortedSections.length - 1]
+  const watchCount = sectionStrengths.filter(row => row.strength < 55).length
+  const stableCount = sectionStrengths.length - watchCount
+  const rosterDiagnosis = strongestSection && weakestSection
+    ? `${strongestSection.label} carries the institution; ${weakestSection.label.toLowerCase()} is the section on watch. ${stableCount} section${stableCount === 1 ? '' : 's'} stable, ${watchCount} on watch.`
+    : 'The orchestra is still settling into its first readable shape.'
+  const headline = splitStrengthHeadline(compositeStrength)
 
   return (
     <div className="roster-page">
       <section className="roster-canopy">
         <div className="roster-canopy-copy-block">
-          <div className="roster-kicker">Roster</div>
-          <h1 className="roster-canopy-title">{strengthLabel(compositeStrength)}</h1>
-          <p className="roster-canopy-copy">
-            {slotLabel} is reading the orchestra as a {strengthLabel(compositeStrength)}. The section
-            cards track live strength and repertoire fit while the ledger stays open on the active section.
-          </p>
+          <div className="roster-kicker">
+            The Orchestra · {roster.principals.length} principals · {totalChairs} chairs
+          </div>
+          <h1 className="roster-canopy-title">
+            <span>{headline.article}</span> {headline.phrase}<span>.</span>
+          </h1>
+          <p className="roster-canopy-copy">{rosterDiagnosis}</p>
         </div>
 
         <div className="roster-canopy-strength-block">
@@ -264,7 +288,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
             <span className="roster-strength-scale-end">fragile 0</span>
             <div className="roster-strength-scale-track">
               <span className={`roster-strength-scale-fill ${toneClass(compositeStrength)}`} style={{ width: `${compositeStrength}%` }} />
-              <span className="roster-strength-scale-marker" />
+              <span className="roster-strength-scale-marker" aria-label="Stable threshold" />
             </div>
             <span className="roster-strength-scale-end right">commanding 100</span>
           </div>
@@ -286,6 +310,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
                 section={{ ...row, note, bottleneck: row.bottleneck }}
                 active={activeSection === section}
                 principalCount={sectionPrincipalCount}
+                chairCount={chairCounts[section]}
                 fit={fitRow}
                 onSelect={() => setActiveSection(section)}
               />
@@ -295,7 +320,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
 
         <section className="roster-stage-shell" aria-label="Roster stage schematic">
           <div className="roster-stage-caption">
-            <span className="roster-stage-caption-slot">{slotLabel}</span>
+            <span className="roster-stage-caption-slot">The Stage · {slotLabel}</span>
             <span className="roster-stage-caption-side">Audience perspective</span>
           </div>
 
@@ -429,6 +454,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
                 section={{ ...row, note, bottleneck: row.bottleneck }}
                 active={activeSection === section}
                 principalCount={sectionPrincipalCount}
+                chairCount={chairCounts[section]}
                 fit={fitRow}
                 onSelect={() => setActiveSection(section)}
               />
@@ -449,7 +475,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
 
           <div className="roster-ledger-meta">
             <span>{activePrincipals.length} principals</span>
-            <span>Active section</span>
+            <span>{chairCounts[activeSection]} chairs</span>
             <span>{slotLabel}</span>
           </div>
         </div>

@@ -23,9 +23,10 @@ import CanopyHeader from './components/home/CanopyHeader'
 import UnderstoryVitals from './components/home/UnderstoryVitals'
 import LibraryScreen from './components/LibraryScreen'
 import LedgerScreen from './components/LedgerScreen'
+import DonorRelationsScreen from './components/DonorRelationsScreen'
 
 type Phase = 'planning' | 'report'
-type MainView = 'home' | 'programme' | 'roster' | 'library' | 'ledger'
+type MainView = 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors'
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -83,7 +84,7 @@ export default function App() {
 
   function applyPendingReport() {
     if (!report) return
-    setSeason(prev => resolveSeasonConcert(prev, program, report))
+    setSeason(prev => resolveSeasonConcert(prev, program, report, works))
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
@@ -264,6 +265,18 @@ export default function App() {
           institution={institution}
           season={season}
           forecast={forecast}
+          onNavigate={handleHomeNavigate}
+        />
+      </AppShell>
+    )
+  }
+
+  if (mainView === 'donors' && phase === 'planning') {
+    return (
+      <AppShell chromeless>
+        <DonorRelationsScreen
+          institution={institution}
+          season={season}
           onNavigate={handleHomeNavigate}
         />
       </AppShell>

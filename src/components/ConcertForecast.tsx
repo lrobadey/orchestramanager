@@ -34,18 +34,30 @@ function statusTone(value: number): string {
   return 'crit'
 }
 
+function rehearsalPressureLabel(value: number): string {
+  const rounded = Math.round(value)
+  if (rounded > 0) return `+${rounded} gap`
+  if (rounded < 0) return `${rounded} cushion`
+  return '0 adequate'
+}
+
 function ForecastLine({
   label,
   value,
   animKey,
+  hint,
 }: {
   label: string
   value: ReactNode
   animKey: string | number
+  hint?: string
 }) {
   return (
     <div className="forecast-line">
-      <span className="forecast-line-key">{label}</span>
+      <span className="forecast-line-key">
+        {label}
+        {hint && <small>{hint}</small>}
+      </span>
       <span className="forecast-line-val">
         <AnimatePresence mode="popLayout">
           <motion.span
@@ -188,23 +200,27 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
             <AudienceMix rows={forecast.projectedAudienceBreakdown} />
           </section>
 
-          <section className="forecast-block">
+          <section className="forecast-block forecast-risk-block">
             <div className="forecast-block-head">
               <span className="eyebrow">Risk Profile</span>
             </div>
+            <p className="forecast-risk-note">
+              Risk profile estimates what can go wrong before the concert. Lower risk is safer;
+              rehearsal pressure is a gap reading where negative means cushion.
+            </p>
             <div className="forecast-rows">
               <ForecastLine
-                label="Performance"
+                label="Performance risk"
+                hint="0 safe · 100 danger"
                 value={<span className={riskClass(forecast.performanceRisk)}>{Math.round(forecast.performanceRisk)}</span>}
                 animKey={Math.round(forecast.performanceRisk)}
               />
               <ForecastLine
-                label="Rehearsal"
+                label="Rehearsal pressure"
+                hint="+ gap · − cushion"
                 value={
                   <span className={riskClass(Math.max(0, forecast.rehearsalPressure))}>
-                    {forecast.rehearsalPressure > 0
-                      ? `+${Math.round(forecast.rehearsalPressure)}`
-                      : Math.round(forecast.rehearsalPressure)}
+                    {rehearsalPressureLabel(forecast.rehearsalPressure)}
                   </span>
                 }
                 animKey={Math.round(forecast.rehearsalPressure)}

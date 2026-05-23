@@ -2,7 +2,7 @@ import type { InstitutionState, SeasonState } from '../../types/core'
 import { daysToCurtain, concertDate, seasonWeekLabel } from '../../data/homeStubs'
 import { CONCERT_ROMAN } from '../../data/numerals'
 
-type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger'
+type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors'
 
 interface CanopyHeaderProps {
   institution: InstitutionState
@@ -11,7 +11,7 @@ interface CanopyHeaderProps {
   onNavigate: (key: HomeNavKey) => void
 }
 
-const NAV_KEYS: HomeNavKey[] = ['home', 'roster', 'programme', 'library', 'ledger']
+const NAV_KEYS: HomeNavKey[] = ['home', 'roster', 'programme', 'library', 'ledger', 'donors']
 
 const NAV_LABELS: Record<HomeNavKey, string> = {
   home: 'home',
@@ -19,6 +19,7 @@ const NAV_LABELS: Record<HomeNavKey, string> = {
   programme: 'programme',
   library: 'library',
   ledger: 'ledger',
+  donors: 'donors',
 }
 
 const ENABLED: Record<HomeNavKey, boolean> = {
@@ -27,6 +28,7 @@ const ENABLED: Record<HomeNavKey, boolean> = {
   programme: true,
   library: true,
   ledger: true,
+  donors: true,
 }
 
 export default function CanopyHeader({
