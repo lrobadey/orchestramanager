@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties } from 'react'
+import { useMemo, useState } from 'react'
 import type { Donor, DonorPreferences, InstitutionState, SeasonState } from '../types/core'
 import CanopyHeader from './home/CanopyHeader'
 import UnderstoryVitals from './home/UnderstoryVitals'
@@ -118,20 +118,9 @@ export default function DonorRelationsScreen({
                     </div>
                   </section>
 
-                  <section className="donor-radar-panel" aria-label="Donor preference constellation">
-                    <span className="hc-label">Opinion spectrum</span>
-                    <div className="donor-radar-orbit">
-                      {TASTE_LABELS.slice(0, 6).map(({ key, label }, index) => (
-                        <div
-                          key={key}
-                          className="donor-radar-point"
-                          style={radarPointStyle(index, activeDonor.preferences[key])}
-                          title={`${label}: ${activeDonor.preferences[key]}`}
-                        >
-                          <span>{label}</span>
-                        </div>
-                      ))}
-                    </div>
+                  <section className="donor-radar-panel" aria-label="Donor preference radar chart">
+                    <span className="hc-label">Taste radar</span>
+                    <DonorRadarChart donor={activeDonor} />
                   </section>
                 </div>
 
@@ -214,13 +203,81 @@ function cultivationIdea(donor: Donor): string {
   return 'Offer an artist-led salon around Romantic and early modern repertoire.'
 }
 
-function radarPointStyle(index: number, value: number): CSSProperties {
-  const angle = (Math.PI * 2 * index) / 6 - Math.PI / 2
-  const radius = 26 + value * 0.42
-  return {
-    left: `calc(50% + ${Math.cos(angle) * radius}px)`,
-    top: `calc(50% + ${Math.sin(angle) * radius}px)`,
-  }
+function DonorRadarChart({ donor }: { donor: Donor }) {
+  const center = 150
+  const maxRadius = 104
+  const axes = TASTE_LABELS.map(({ key, label }, index) => {
+    const angle = (Math.PI * 2 * index) / TASTE_LABELS.length - Math.PI / 2
+    const value = donor.preferences[key]
+    return {
+      key,
+      label,
+      value,
+      x: center + Math.cos(angle) * maxRadius,
+      y: center + Math.sin(angle) * maxRadius,
+      dataX: center + Math.cos(angle) * maxRadius * (value / 100),
+      dataY: center + Math.sin(angle) * maxRadius * (value / 100),
+      labelX: center + Math.cos(angle) * (maxRadius + 26),
+      labelY: center + Math.sin(angle) * (maxRadius + 26),
+    }
+  })
+  const polygonPoints = axes.map(axis => `${axis.dataX},${axis.dataY}`).join(' ')
+  const rings = [25, 50, 75, 100].map(percent =>
+    axes
+      .map(axis => {
+        const dx = axis.x - center
+        const dy = axis.y - center
+        return `${center + dx * (percent / 100)},${center + dy * (percent / 100)}`
+      })
+      .join(' '),
+  )
+
+  return (
+    <div className="donor-radar-wrap">
+      <svg className="donor-radar-svg" viewBox="0 0 300 300" role="img">
+        <title>{donor.name} taste radar</title>
+        {rings.map((points, index) => (
+          <polygon key={index} className="donor-radar-ring" points={points} />
+        ))}
+        {axes.map(axis => (
+          <line
+            key={`${axis.key}-axis`}
+            className="donor-radar-axis"
+            x1={center}
+            y1={center}
+            x2={axis.x}
+            y2={axis.y}
+          />
+        ))}
+        <polygon className="donor-radar-shape" points={polygonPoints} />
+        {axes.map(axis => (
+          <circle
+            key={`${axis.key}-point`}
+            className="donor-radar-dot"
+            cx={axis.dataX}
+            cy={axis.dataY}
+            r="3.5"
+          />
+        ))}
+        {axes.map(axis => (
+          <text
+            key={`${axis.key}-label`}
+            className="donor-radar-label"
+            x={axis.labelX}
+            y={axis.labelY}
+            textAnchor={axis.labelX < center - 8 ? 'end' : axis.labelX > center + 8 ? 'start' : 'middle'}
+            dominantBaseline="middle"
+          >
+            {axis.label}
+          </text>
+        ))}
+      </svg>
+      <div className="donor-radar-caption">
+        <span>Center = indifferent</span>
+        <span>Edge = defining priority</span>
+      </div>
+    </div>
+  )
 }
 
 function money(value: number): string {

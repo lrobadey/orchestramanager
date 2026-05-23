@@ -1537,45 +1537,56 @@
 }
 .home-console .donor-taste-track { height: 5px; margin-top: 6px; }
 .home-console .donor-taste-track i { background: linear-gradient(90deg, var(--bark), var(--silver)); }
-.home-console .donor-radar-panel { min-height: 320px; }
-.home-console .donor-radar-orbit {
-  position: relative;
-  height: 260px;
-  margin-top: 18px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, transparent 0 28%, rgba(255,255,255,0.045) 28.5% 29%, transparent 29.5% 56%, rgba(255,255,255,0.04) 56.5% 57%, transparent 57.5%),
-    radial-gradient(circle at center, rgba(213,201,171,0.06), transparent 58%);
-  border: 1px solid var(--hairline-soft);
-}
-.home-console .donor-radar-orbit::after {
-  content: '';
-  position: absolute;
-  inset: 50% auto auto 50%;
-  width: 8px;
-  height: 8px;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: var(--silver);
-  box-shadow: 0 0 18px rgba(213,201,171,0.45);
-}
-.home-console .donor-radar-point {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  min-width: 72px;
-  min-height: 28px;
-  border: 1px solid rgba(213,201,171,0.32);
-  background: rgba(5, 13, 10, 0.9);
+.home-console .donor-radar-panel { min-height: 360px; }
+.home-console .donor-radar-wrap {
+  margin-top: 12px;
   display: grid;
-  place-items: center;
-  padding: 4px 7px;
+  justify-items: center;
+  gap: 8px;
 }
-.home-console .donor-radar-point span {
+.home-console .donor-radar-svg {
+  width: min(100%, 360px);
+  height: auto;
+  overflow: visible;
+  filter: drop-shadow(0 18px 30px rgba(0,0,0,0.22));
+}
+.home-console .donor-radar-ring {
+  fill: none;
+  stroke: rgba(213, 201, 171, 0.16);
+  stroke-width: 1;
+}
+.home-console .donor-radar-axis {
+  stroke: rgba(213, 201, 171, 0.11);
+  stroke-width: 1;
+}
+.home-console .donor-radar-shape {
+  fill: rgba(128, 164, 132, 0.22);
+  stroke: var(--pine);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.home-console .donor-radar-dot {
+  fill: var(--silver);
+  stroke: var(--ink-0);
+  stroke-width: 1.5;
+}
+.home-console .donor-radar-label {
+  fill: var(--birch-dim);
   font-family: var(--hc-mono);
-  font-size: 8px;
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+.home-console .donor-radar-caption {
+  width: min(100%, 360px);
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--silver-dim);
+  font-family: var(--hc-mono);
+  font-size: 8.5px;
   letter-spacing: 0.12em;
-  color: var(--birch-dim);
+  text-transform: uppercase;
 }
 .home-console .donor-note-row {
   margin-top: 16px;
