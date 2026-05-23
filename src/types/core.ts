@@ -60,14 +60,27 @@ export type DonorRestrictionStyle =
   | 'prestige'
   | 'general'
 
-export interface DonorPreferences {
-  canon: number
-  romanticModernist: number
+export interface DonorMusicTaste {
+  classicalCanon: number
+  romantic: number
+  modernist: number
   contemporary: number
-  communityAccess: number
-  institutionalStability: number
-  criticalPrestige: number
-  audienceReach: number
+  experimental: number
+  accessible: number
+}
+
+export interface DonorInstitutionalPriorities {
+  prestige: number
+  stability: number
+  access: number
+  reach: number
+  revenue: number
+  innovation: number
+}
+
+export interface DonorInfluenceWeights {
+  music: number
+  institutional: number
 }
 
 export interface Donor {
@@ -79,7 +92,9 @@ export interface Donor {
   capacity: number
   volatility: number
   restrictionStyle: DonorRestrictionStyle
-  preferences: DonorPreferences
+  musicTaste: DonorMusicTaste
+  institutionalPriorities: DonorInstitutionalPriorities
+  influenceWeights: DonorInfluenceWeights
   recentReaction: string
   lastDelta: number
 }

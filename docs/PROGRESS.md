@@ -8,13 +8,67 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 **Last updated:** 2026-05-22
 **Current milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
-**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Donors, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. The season now persists a five-donor advancement cohort with distinct taste profiles, relationship scores, capacity, volatility, and gift restrictions. The new Donor Relations tab presents a roster-like cultivation map with donor cards, relationship meters, taste bars, and an opinion-spectrum graphic. Ledger still uses sim-backed finance transactions for Recent transactions, Donor watch, and Bills queued.
-**Latest PR:** Donor relations foundation — named donor cohort and Donors tab
+**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Donors, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. The season now persists a five-donor advancement cohort with distinct music tastes, institutional priorities, influence weights, relationship scores, capacity, volatility, and gift restrictions. The Donor Relations tab presents a roster-like cultivation map with donor cards, relationship meters, an influence split, and side-by-side radar charts for music taste and institutional priorities. Ledger still uses sim-backed finance transactions for Recent transactions, Donor watch, and Bills queued.
+**Latest PR:** Donor radar model refinement — split music taste and institutional priorities
 **Known blockers:** None currently recorded.
-**Current risks:** Donors are now real persisted state, but they do not yet react to concerts or drive pledge amounts individually. The Donor Relations screen is diagnostic/inspectable only; cultivation actions such as dinner, salons, or gala events are not implemented yet. Several Home panels remain clearly-labeled stubs in `src/data/homeStubs.ts`. Roster, Programme, Library, Ledger, Donors, Report, and Summary inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
+**Current risks:** Donors are now real persisted state, but they do not yet react to concerts or drive pledge amounts individually. The Donor Relations screen is diagnostic/inspectable only; cultivation actions such as dinner, salons, or gala events are not implemented yet. Donor radar glyphs are visual shorthand derived from 0–100 values, not separate mechanics. Several Home panels remain clearly-labeled stubs in `src/data/homeStubs.ts`. Roster, Programme, Library, Ledger, Donors, Report, and Summary inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
 **Next recommended action:** Browser-check the new Donors tab and then implement post-concert donor reactions so each donor's relationship changes based on repertoire, access policy, attendance, critical response, and financial stability.
 
 ## Log Entries
+
+### 2026-05-22 — Donor radar model refinement: split music and institution charts
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+**Secondary milestone:** Milestone 3 — Audience and Finance Systems
+
+**Summary**
+
+Refined donor profiles into separate `musicTaste`, `institutionalPriorities`, and `influenceWeights` models. The Donor Relations screen now removes the old taste-bar table and shows two radar charts side by side: Music taste and Institutional priorities. Radar labels include plus/minus glyph annotations derived from the underlying 0–100 values.
+
+**Rationale**
+
+Splitting taste from institutional priority lets donors become more multidimensional. Victor Saye can have modernist taste while still judging outcomes mostly by revenue/stability, and Eleanor Voss can be music-led while prioritizing prestige over generic stability. The influence split establishes the foundation for future post-concert donor reaction math.
+
+**Files changed**
+
+- `src/types/core.ts` — replaces mixed donor preferences with music taste, institutional priorities, and influence weights.
+- `src/data/donors.ts` — updates all five donor profiles to the agreed axis values.
+- `src/components/DonorRelationsScreen.tsx` — replaces taste bars with two radar charts and influence split copy.
+- `src/styles/home.css` — adds/updates styles for dual radar layout, influence bar, and radar glyphs.
+- `tests/season.test.ts` — verifies representative donor values and weight totals.
+- `TODO.md` and `docs/PROGRESS.md` — update handoff state.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 511ms
+```
+
+**Known issues / risks**
+
+- Donor relationships still do not react to concerts; this remains a display/data foundation.
+- Radar glyphs are shorthand only and should not be treated as separate state.
+- Browser verification was not run in this pass.
+
+**Handoff note**
+
+Future donor reaction logic should compute a music-fit score and institutional-fit score independently, then combine them using `influenceWeights`.
+
+**Next recommended action**
+
+Browser-check Donors tab at desktop and narrow widths, then implement post-concert donor relationship deltas using the split radar model.
+
+---
 
 ### 2026-05-22 — Donor relations foundation: named cohort and Donors tab
 

@@ -4,6 +4,9 @@ Working checklist for **Orchestra Manager**. Keep this aligned with `docs/PROGRE
 
 ## Now
 
+- [x] Split donor data into music taste, institutional priorities, and influence weights.
+- [x] Replace donor taste bars with two radar charts and radar glyph annotations.
+- [x] Update tests/docs and push PR branch.
 - [x] Add five named donor objects and persist them in season state.
 - [x] Add Donor Relations screen with relationship and taste charts.
 - [x] Add Donors tab to the shared canopy navigation.
@@ -48,3 +51,4 @@ Working checklist for **Orchestra Manager**. Keep this aligned with `docs/PROGRE
 - [x] Add sim-backed transaction rows for Ledger Recent transactions.
 - [x] Add cash timing with scheduled donor support and queued bills.
 - [x] Add initial named donor cohort and Donor Relations screen.
+- [x] Split donor profiles into music/institution radar models.

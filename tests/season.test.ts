@@ -73,6 +73,12 @@ describe('createInitialSeason', () => {
       'okafor-civic-fund',
       'victor-saye',
     ])
+    expect(season.donors.donors[0].musicTaste.classicalCanon).toBe(98)
+    expect(season.donors.donors[0].institutionalPriorities.prestige).toBe(96)
+    expect(season.donors.donors[0].influenceWeights).toEqual({ music: 75, institutional: 25 })
+    for (const donor of season.donors.donors) {
+      expect(donor.influenceWeights.music + donor.influenceWeights.institutional).toBe(100)
+    }
   })
 
   it('slots have the correct names in order', () => {

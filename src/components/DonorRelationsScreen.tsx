@@ -1,5 +1,11 @@
 import { useMemo, useState } from 'react'
-import type { Donor, DonorPreferences, InstitutionState, SeasonState } from '../types/core'
+import type {
+  Donor,
+  DonorInstitutionalPriorities,
+  DonorMusicTaste,
+  InstitutionState,
+  SeasonState,
+} from '../types/core'
 import CanopyHeader from './home/CanopyHeader'
 import UnderstoryVitals from './home/UnderstoryVitals'
 import '../styles/home.css'
@@ -10,14 +16,24 @@ interface DonorRelationsScreenProps {
   onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors') => void
 }
 
-const TASTE_LABELS: Array<{ key: keyof DonorPreferences; label: string }> = [
-  { key: 'canon', label: 'Canon' },
-  { key: 'romanticModernist', label: '19th/20th c.' },
+type RadarAxis<T> = { key: keyof T; label: string }
+
+const MUSIC_AXES: Array<RadarAxis<DonorMusicTaste>> = [
+  { key: 'classicalCanon', label: 'Canon' },
+  { key: 'romantic', label: 'Romantic' },
+  { key: 'modernist', label: 'Modernist' },
   { key: 'contemporary', label: 'Contemporary' },
-  { key: 'communityAccess', label: 'Access' },
-  { key: 'institutionalStability', label: 'Stability' },
-  { key: 'criticalPrestige', label: 'Prestige' },
-  { key: 'audienceReach', label: 'Reach' },
+  { key: 'experimental', label: 'Experimental' },
+  { key: 'accessible', label: 'Accessible' },
+]
+
+const PRIORITY_AXES: Array<RadarAxis<DonorInstitutionalPriorities>> = [
+  { key: 'prestige', label: 'Prestige' },
+  { key: 'stability', label: 'Stability' },
+  { key: 'access', label: 'Access' },
+  { key: 'reach', label: 'Reach' },
+  { key: 'revenue', label: 'Revenue' },
+  { key: 'innovation', label: 'Innovation' },
 ]
 
 export default function DonorRelationsScreen({
@@ -40,12 +56,7 @@ export default function DonorRelationsScreen({
   return (
     <div className="home-console">
       <div className="home-strata">
-        <CanopyHeader
-          institution={institution}
-          season={season}
-          activeNav="donors"
-          onNavigate={onNavigate}
-        />
+        <CanopyHeader institution={institution} season={season} activeNav="donors" onNavigate={onNavigate} />
         <UnderstoryVitals institution={institution} />
         <div className="home-stratum floor console-screen-floor">
           <section className="donor-page">
@@ -79,9 +90,7 @@ export default function DonorRelationsScreen({
                         <div className="donor-name">{donor.name}</div>
                         <div className="donor-archetype">{donor.archetype}</div>
                       </div>
-                      <div className={`donor-score ${toneClass(donor.relationship)}`}>
-                        {donor.relationship}
-                      </div>
+                      <div className={`donor-score ${toneClass(donor.relationship)}`}>{donor.relationship}</div>
                     </div>
                     <RelationshipBar value={donor.relationship} />
                     <div className="donor-card-tags">
@@ -105,22 +114,44 @@ export default function DonorRelationsScreen({
                   </div>
                 </div>
 
-                <div className="donor-profile-grid">
-                  <section className="donor-taste-panel">
+                <div className="donor-influence-panel">
+                  <div>
+                    <span className="hc-label">Influence model</span>
+                    <p>
+                      Music taste drives {activeDonor.influenceWeights.music}% of this donor's read;
+                      institutional priorities drive {activeDonor.influenceWeights.institutional}%.
+                    </p>
+                  </div>
+                  <div className="donor-influence-track">
+                    <i style={{ width: `${activeDonor.influenceWeights.music}%` }} />
+                    <span>Music {activeDonor.influenceWeights.music}%</span>
+                    <em>Institution {activeDonor.influenceWeights.institutional}%</em>
+                  </div>
+                </div>
+
+                <div className="donor-radar-grid">
+                  <section className="donor-radar-panel" aria-label="Donor music taste radar chart">
                     <div className="donor-panel-head">
-                      <span className="hc-label">Taste chart</span>
+                      <span className="hc-label">Music taste</span>
                       <span className="donor-restriction">{restrictionLabel(activeDonor)}</span>
                     </div>
-                    <div className="donor-taste-bars">
-                      {TASTE_LABELS.map(({ key, label }) => (
-                        <TasteBar key={key} label={label} value={activeDonor.preferences[key]} />
-                      ))}
-                    </div>
+                    <DonorRadarChart
+                      title={`${activeDonor.name} music taste`}
+                      axes={MUSIC_AXES}
+                      values={activeDonor.musicTaste}
+                    />
                   </section>
 
-                  <section className="donor-radar-panel" aria-label="Donor preference radar chart">
-                    <span className="hc-label">Taste radar</span>
-                    <DonorRadarChart donor={activeDonor} />
+                  <section className="donor-radar-panel" aria-label="Donor institutional priority radar chart">
+                    <div className="donor-panel-head">
+                      <span className="hc-label">Institutional priorities</span>
+                      <span className="donor-restriction">weight {activeDonor.influenceWeights.institutional}%</span>
+                    </div>
+                    <DonorRadarChart
+                      title={`${activeDonor.name} institutional priorities`}
+                      axes={PRIORITY_AXES}
+                      values={activeDonor.institutionalPriorities}
+                    />
                   </section>
                 </div>
 
@@ -156,21 +187,9 @@ function RelationshipBar({ value }: { value: number }) {
   return <div className="donor-relationship-track"><i className={toneClass(value)} style={{ width: `${value}%` }} /></div>
 }
 
-function TasteBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="donor-taste-row">
-      <div className="donor-taste-row-head">
-        <span>{label}</span>
-        <em>{preferenceGlyph(value)}</em>
-      </div>
-      <div className="donor-taste-track"><i style={{ width: `${value}%` }} /></div>
-    </div>
-  )
-}
-
 function topTastes(donor: Donor): string[] {
-  return TASTE_LABELS
-    .map(({ key, label }) => ({ label, value: donor.preferences[key] }))
+  return MUSIC_AXES
+    .map(({ key, label }) => ({ label, value: donor.musicTaste[key] }))
     .sort((a, b) => b.value - a.value)
     .slice(0, 3)
     .map(taste => taste.label)
@@ -203,27 +222,35 @@ function cultivationIdea(donor: Donor): string {
   return 'Offer an artist-led salon around Romantic and early modern repertoire.'
 }
 
-function DonorRadarChart({ donor }: { donor: Donor }) {
+function DonorRadarChart<T extends object>({
+  title,
+  axes,
+  values,
+}: {
+  title: string
+  axes: Array<RadarAxis<T>>
+  values: T
+}) {
   const center = 150
-  const maxRadius = 104
-  const axes = TASTE_LABELS.map(({ key, label }, index) => {
-    const angle = (Math.PI * 2 * index) / TASTE_LABELS.length - Math.PI / 2
-    const value = donor.preferences[key]
+  const maxRadius = 96
+  const plotted = axes.map(({ key, label }, index) => {
+    const angle = (Math.PI * 2 * index) / axes.length - Math.PI / 2
+    const value = Number(values[key])
     return {
-      key,
+      key: String(key),
       label,
       value,
       x: center + Math.cos(angle) * maxRadius,
       y: center + Math.sin(angle) * maxRadius,
       dataX: center + Math.cos(angle) * maxRadius * (value / 100),
       dataY: center + Math.sin(angle) * maxRadius * (value / 100),
-      labelX: center + Math.cos(angle) * (maxRadius + 26),
-      labelY: center + Math.sin(angle) * (maxRadius + 26),
+      labelX: center + Math.cos(angle) * (maxRadius + 30),
+      labelY: center + Math.sin(angle) * (maxRadius + 30),
     }
   })
-  const polygonPoints = axes.map(axis => `${axis.dataX},${axis.dataY}`).join(' ')
+  const polygonPoints = plotted.map(axis => `${axis.dataX},${axis.dataY}`).join(' ')
   const rings = [25, 50, 75, 100].map(percent =>
-    axes
+    plotted
       .map(axis => {
         const dx = axis.x - center
         const dy = axis.y - center
@@ -235,46 +262,39 @@ function DonorRadarChart({ donor }: { donor: Donor }) {
   return (
     <div className="donor-radar-wrap">
       <svg className="donor-radar-svg" viewBox="0 0 300 300" role="img">
-        <title>{donor.name} taste radar</title>
-        {rings.map((points, index) => (
-          <polygon key={index} className="donor-radar-ring" points={points} />
-        ))}
-        {axes.map(axis => (
-          <line
-            key={`${axis.key}-axis`}
-            className="donor-radar-axis"
-            x1={center}
-            y1={center}
-            x2={axis.x}
-            y2={axis.y}
-          />
+        <title>{title}</title>
+        {rings.map((points, index) => <polygon key={index} className="donor-radar-ring" points={points} />)}
+        {plotted.map(axis => (
+          <line key={`${axis.key}-axis`} className="donor-radar-axis" x1={center} y1={center} x2={axis.x} y2={axis.y} />
         ))}
         <polygon className="donor-radar-shape" points={polygonPoints} />
-        {axes.map(axis => (
-          <circle
-            key={`${axis.key}-point`}
-            className="donor-radar-dot"
-            cx={axis.dataX}
-            cy={axis.dataY}
-            r="3.5"
-          />
-        ))}
-        {axes.map(axis => (
-          <text
-            key={`${axis.key}-label`}
-            className="donor-radar-label"
-            x={axis.labelX}
-            y={axis.labelY}
-            textAnchor={axis.labelX < center - 8 ? 'end' : axis.labelX > center + 8 ? 'start' : 'middle'}
-            dominantBaseline="middle"
-          >
-            {axis.label}
-          </text>
+        {plotted.map(axis => <circle key={`${axis.key}-point`} className="donor-radar-dot" cx={axis.dataX} cy={axis.dataY} r="3.5" />)}
+        {plotted.map(axis => (
+          <g key={`${axis.key}-label`}>
+            <text
+              className="donor-radar-label"
+              x={axis.labelX}
+              y={axis.labelY - 5}
+              textAnchor={axis.labelX < center - 8 ? 'end' : axis.labelX > center + 8 ? 'start' : 'middle'}
+              dominantBaseline="middle"
+            >
+              {axis.label}
+            </text>
+            <text
+              className="donor-radar-glyph"
+              x={axis.labelX}
+              y={axis.labelY + 8}
+              textAnchor={axis.labelX < center - 8 ? 'end' : axis.labelX > center + 8 ? 'start' : 'middle'}
+              dominantBaseline="middle"
+            >
+              {preferenceGlyph(axis.value)}
+            </text>
+          </g>
         ))}
       </svg>
       <div className="donor-radar-caption">
-        <span>Center = indifferent</span>
-        <span>Edge = defining priority</span>
+        <span>− low</span>
+        <span>+++ defining priority</span>
       </div>
     </div>
   )
