@@ -4,13 +4,14 @@ import { clamp } from './scoring'
 export function applyConcertReport(
   state: InstitutionState,
   report: ConcertReport,
+  cashDelta = report.institutionalDeltas.cash,
 ): InstitutionState {
   const d = report.institutionalDeltas
   return {
     name: state.name,
     city: state.city,
     seasonLabel: state.seasonLabel,
-    cash: state.cash + d.cash,
+    cash: state.cash + cashDelta,
     artisticReputation: clamp(state.artisticReputation + d.artisticReputation, 0, 100),
     audienceTrust: clamp(state.audienceTrust + d.audienceTrust, 0, 100),
     donorConfidence: clamp(state.donorConfidence + d.donorConfidence, 0, 100),

@@ -61,9 +61,18 @@ describe('createInitialSeason', () => {
       expect(slot.status).toBe('pending')
       expect(slot.program).toBeNull()
       expect(slot.report).toBeNull()
+      expect(slot.financeTransactions).toEqual([])
     }
     expect(season.currentSlotIndex).toBe(0)
     expect(season.roster.principals).toHaveLength(principals.length)
+    expect(season.donors.donors).toHaveLength(5)
+    expect(season.donors.donors.map(donor => donor.id)).toEqual([
+      'eleanor-voss',
+      'aster-foundation',
+      'rehnquist-circle',
+      'okafor-civic-fund',
+      'victor-saye',
+    ])
   })
 
   it('slots have the correct names in order', () => {
@@ -88,6 +97,7 @@ describe('resolveSeasonConcert', () => {
     expect(next.slots[1].status).toBe('pending')
     expect(next.slots[2].status).toBe('pending')
     expect(next.slots[3].status).toBe('pending')
+    expect(next.donors).toEqual(season.donors)
   })
 
   it('advances currentSlotIndex after each resolve', () => {
@@ -106,14 +116,43 @@ describe('resolveSeasonConcert', () => {
     const report0 = makeReport(safeProgram, season0.institution)
     const season1 = resolveSeasonConcert(season0, safeProgram, report0)
 
-    // institution in season1 should differ from startingInstitution
-    expect(season1.institution.cash).toBe(startingInstitution.cash + report0.net)
+    // cash now reflects posted transactions only; scheduled donor support and bills settle later
+    const postedNow = season1.slots[0].financeTransactions
+      .filter(tx => tx.status === 'posted')
+      .reduce((sum, tx) => sum + tx.amount, 0)
+    expect(season1.institution.cash).toBe(startingInstitution.cash + postedNow)
     expect(season1.institution).not.toEqual(startingInstitution)
 
     // slot[1] will receive the updated institution as institutionBefore when resolved
+    const scheduledFromFirstConcert = season1.slots[0].financeTransactions
+      .filter(tx => tx.status === 'scheduled' && tx.dueSlotIndex === 1)
+      .reduce((sum, tx) => sum + tx.amount, 0)
     const report1 = makeReport(safeProgram, season1.institution, season1.roster.principals)
     const season2 = resolveSeasonConcert(season1, safeProgram, report1)
     expect(season2.slots[1].institutionBefore).toEqual(season1.institution)
+    expect(season2.slots[0].financeTransactions.every(tx => tx.status === 'posted')).toBe(true)
+    expect(season2.institution.cash).toBeGreaterThanOrEqual(
+      season1.institution.cash + scheduledFromFirstConcert,
+    )
+  })
+
+  it('stores finance transactions on resolved slots', () => {
+    const season = createInitialSeason(startingInstitution, principals)
+    const report = makeReport(safeProgram)
+    const next = resolveSeasonConcert(season, safeProgram, report)
+    const transactionTotal = next.slots[0].financeTransactions.reduce(
+      (sum, tx) => sum + tx.amount,
+      0,
+    )
+    const postedTotal = next.slots[0].financeTransactions
+      .filter(tx => tx.status === 'posted')
+      .reduce((sum, tx) => sum + tx.amount, 0)
+
+    expect(next.slots[0].financeTransactions).toHaveLength(6)
+    expect(transactionTotal).toBe(report.net)
+    expect(postedTotal).not.toBe(report.net)
+    expect(next.slots[0].financeTransactions.some(tx => tx.status === 'scheduled')).toBe(true)
+    expect(next.slots[1].financeTransactions).toEqual([])
   })
 
   it('roster form and morale persist into the next concert', () => {

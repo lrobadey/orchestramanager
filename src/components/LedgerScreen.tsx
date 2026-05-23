@@ -1,9 +1,5 @@
-import {
-  LEDGER_BILL_STUBS,
-  LEDGER_DONOR_STUBS,
-  LEDGER_TRANSACTION_STUBS,
-} from '../data/consoleStubs'
-import type { ConcertForecast, InstitutionState, SeasonState } from '../types/core'
+import type { ReactNode } from 'react'
+import type { ConcertForecast, FinanceTransaction, InstitutionState, SeasonState } from '../types/core'
 import CanopyHeader from './home/CanopyHeader'
 import UnderstoryVitals from './home/UnderstoryVitals'
 import '../styles/home.css'
@@ -12,7 +8,7 @@ interface LedgerScreenProps {
   season: SeasonState
   forecast: ConcertForecast
   institution: InstitutionState
-  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger') => void
+  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors') => void
 }
 
 export default function LedgerScreen({
@@ -21,6 +17,19 @@ export default function LedgerScreen({
   institution,
   onNavigate,
 }: LedgerScreenProps) {
+  const allTransactions = season.slots.flatMap(slot => slot.financeTransactions)
+  const transactions = allTransactions
+    .filter(transaction => transaction.status === 'posted')
+    .slice()
+    .reverse()
+    .slice(0, 8)
+  const donorWatch = allTransactions
+    .filter(transaction => transaction.status === 'scheduled' && transaction.kind === 'donor-support' && transaction.amount > 0)
+    .slice(0, 4)
+  const billsQueued = allTransactions
+    .filter(transaction => transaction.status === 'scheduled' && transaction.amount < 0)
+    .slice(0, 4)
+
   const rows = season.slots.map(slot => {
     if (slot.report) {
       return {
@@ -103,34 +112,28 @@ export default function LedgerScreen({
               </div>
 
               <aside className="ledger-side">
-                <StubPanel title="Donor watch">
-                  {LEDGER_DONOR_STUBS.map(row => (
-                    <div key={row.id} className="ledger-stub-row">
-                      <strong>{row.name}</strong>
-                      <span>{row.pledgeLabel}</span>
-                      <em>{row.restriction}</em>
-                    </div>
-                  ))}
+                <StubPanel title="Donor watch" stub={false}>
+                  {donorWatch.length > 0 ? donorWatch.map(row => (
+                    <TransactionRow key={row.id} transaction={row} />
+                  )) : (
+                    <EmptyFinanceRow label="No donor pledges scheduled" />
+                  )}
                 </StubPanel>
 
-                <StubPanel title="Bills queued">
-                  {LEDGER_BILL_STUBS.map(row => (
-                    <div key={row.id} className="ledger-stub-row">
-                      <strong>{row.vendor}</strong>
-                      <span>{row.amountLabel}</span>
-                      <em>{row.dueLabel}</em>
-                    </div>
-                  ))}
+                <StubPanel title="Bills queued" stub={false}>
+                  {billsQueued.length > 0 ? billsQueued.map(row => (
+                    <TransactionRow key={row.id} transaction={row} />
+                  )) : (
+                    <EmptyFinanceRow label="No bills queued" />
+                  )}
                 </StubPanel>
 
-                <StubPanel title="Recent transactions">
-                  {LEDGER_TRANSACTION_STUBS.map(row => (
-                    <div key={row.id} className={`ledger-stub-row ${row.kind}`}>
-                      <strong>{row.label}</strong>
-                      <span>{row.amountLabel}</span>
-                      <em>STUB row</em>
-                    </div>
-                  ))}
+                <StubPanel title="Recent transactions" stub={false}>
+                  {transactions.length > 0 ? transactions.map(row => (
+                    <TransactionRow key={row.id} transaction={row} />
+                  )) : (
+                    <EmptyFinanceRow label="No resolved transactions yet" note="Run a concert" />
+                  )}
                 </StubPanel>
               </aside>
             </div>
@@ -141,12 +144,32 @@ export default function LedgerScreen({
   )
 }
 
-function StubPanel({ title, children }: { title: string; children: React.ReactNode }) {
+function TransactionRow({ transaction }: { transaction: FinanceTransaction }) {
+  return (
+    <div className={`ledger-stub-row ${transaction.amount < 0 ? 'expense' : 'income'}`}>
+      <strong>{transaction.label}</strong>
+      <span>{fullMoney(transaction.amount)}</span>
+      <em>{transaction.concertName} · {dueLabel(transaction)}</em>
+    </div>
+  )
+}
+
+function EmptyFinanceRow({ label, note = 'Pending' }: { label: string; note?: string }) {
+  return (
+    <div className="ledger-stub-row">
+      <strong>{label}</strong>
+      <span>Pending</span>
+      <em>{note}</em>
+    </div>
+  )
+}
+
+function StubPanel({ title, children, stub = true }: { title: string; children: ReactNode; stub?: boolean }) {
   return (
     <div className="ledger-stub-panel">
       <div className="ledger-stub-head">
         <span className="hc-label">{title}</span>
-        <span className="inbox-stub-flag">STUB</span>
+        {stub && <span className="inbox-stub-flag">STUB</span>}
       </div>
       {children}
     </div>
@@ -157,4 +180,15 @@ function money(value: number): string {
   const rounded = Math.round(value / 1000)
   const prefix = rounded > 0 ? '+' : ''
   return `${prefix}$${rounded}K`
+}
+
+function fullMoney(value: number): string {
+  const prefix = value > 0 ? '+' : value < 0 ? '-' : ''
+  return `${prefix}$${Math.round(Math.abs(value)).toLocaleString()}`
+}
+
+function dueLabel(transaction: FinanceTransaction): string {
+  if (transaction.status === 'posted') return 'posted'
+  if (transaction.dueSlotIndex >= 4) return 'due after season'
+  return `due before concert ${transaction.dueSlotIndex + 1}`
 }

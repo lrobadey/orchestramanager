@@ -53,6 +53,41 @@ export interface RosterState {
   principals: Principal[]
 }
 
+export type DonorRestrictionStyle =
+  | 'unrestricted'
+  | 'new-music'
+  | 'education'
+  | 'prestige'
+  | 'general'
+
+export interface DonorPreferences {
+  canon: number
+  romanticModernist: number
+  contemporary: number
+  communityAccess: number
+  institutionalStability: number
+  criticalPrestige: number
+  audienceReach: number
+}
+
+export interface Donor {
+  id: string
+  name: string
+  archetype: string
+  description: string
+  relationship: number
+  capacity: number
+  volatility: number
+  restrictionStyle: DonorRestrictionStyle
+  preferences: DonorPreferences
+  recentReaction: string
+  lastDelta: number
+}
+
+export interface DonorState {
+  donors: Donor[]
+}
+
 export interface SectionStrength {
   section: SectionKey
   label: string
@@ -240,11 +275,33 @@ export interface ConcertReport {
   institutionalDeltas: InstitutionalDeltas
 }
 
+export type FinanceTransactionKind =
+  | 'ticket-revenue'
+  | 'donor-support'
+  | 'base-cost'
+  | 'rehearsal-cost'
+  | 'marketing-cost'
+  | 'production-cost'
+
+export type FinanceTransactionStatus = 'posted' | 'scheduled'
+
+export interface FinanceTransaction {
+  id: string
+  concertIndex: number
+  concertName: string
+  label: string
+  kind: FinanceTransactionKind
+  amount: number
+  status: FinanceTransactionStatus
+  dueSlotIndex: number
+}
+
 export interface SeasonConcertSlot {
   index: number
   name: string
   program: ConcertProgram | null
   report: ConcertReport | null
+  financeTransactions: FinanceTransaction[]
   institutionBefore: InstitutionState | null
   status: 'pending' | 'resolved'
 }
@@ -254,6 +311,7 @@ export interface SeasonState {
   currentSlotIndex: number
   institution: InstitutionState
   roster: RosterState
+  donors: DonorState
 }
 
 export interface SeasonSummary {

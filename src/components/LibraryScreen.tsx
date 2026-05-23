@@ -11,7 +11,7 @@ type LibraryEraFilter = Era | 'all'
 interface LibraryScreenProps {
   season: SeasonState
   works: Work[]
-  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger') => void
+  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors') => void
 }
 
 const ERA_OPTIONS: Array<{ value: LibraryEraFilter; label: string }> = [
