@@ -132,7 +132,15 @@ function scoreInstitutionalFit(
 
 function scoreToRelationshipDelta(score: number, volatility: number): number {
   const volatilityScale = 0.75 + volatility / 200
-  const delta = Math.round(clamp((score / 14) * volatilityScale, -6, 6))
+  const rawDelta = clamp((score / 10) * volatilityScale, -6, 6)
+  let delta = Math.round(rawDelta)
+
+  // Keep concert reactions visible: a clearly positive/negative read should move
+  // the relationship by at least one point even if rounding would hide it.
+  if (delta === 0 && Math.abs(score) >= 6) {
+    delta = score > 0 ? 1 : -1
+  }
+
   return Object.is(delta, -0) ? 0 : delta
 }
 
