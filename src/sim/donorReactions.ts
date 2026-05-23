@@ -132,7 +132,8 @@ function scoreInstitutionalFit(
 
 function scoreToRelationshipDelta(score: number, volatility: number): number {
   const volatilityScale = 0.75 + volatility / 200
-  return Math.round(clamp((score / 14) * volatilityScale, -6, 6))
+  const delta = Math.round(clamp((score / 14) * volatilityScale, -6, 6))
+  return Object.is(delta, -0) ? 0 : delta
 }
 
 function summarizeReaction(

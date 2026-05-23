@@ -4,6 +4,7 @@ Working checklist for **Orchestra Manager**. Keep this aligned with `docs/PROGRE
 
 ## Now
 
+- [x] Add prominent last-delta movement graphic to Donor Relations.
 - [x] Individualize donor relationship changes after each resolved concert.
 - [x] Split donor data into music taste, institutional priorities, and influence weights.
 - [x] Replace donor taste bars with two radar charts and radar glyph annotations.
@@ -54,3 +55,4 @@ Working checklist for **Orchestra Manager**. Keep this aligned with `docs/PROGRE
 - [x] Add initial named donor cohort and Donor Relations screen.
 - [x] Split donor profiles into music/institution radar models.
 - [x] Attach named donors to concert resolution with deterministic individual reactions.
+- [x] Show last-concert donor movement prominently in donor cards and selected profile.

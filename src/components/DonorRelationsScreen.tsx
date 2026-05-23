@@ -90,7 +90,10 @@ export default function DonorRelationsScreen({
                         <div className="donor-name">{donor.name}</div>
                         <div className="donor-archetype">{donor.archetype}</div>
                       </div>
-                      <div className={`donor-score ${toneClass(donor.relationship)}`}>{donor.relationship}</div>
+                      <div className="donor-card-metrics">
+                        <div className={`donor-score ${toneClass(donor.relationship)}`}>{donor.relationship}</div>
+                        <LastDeltaBadge delta={donor.lastDelta} compact />
+                      </div>
                     </div>
                     <RelationshipBar value={donor.relationship} />
                     <div className="donor-card-tags">
@@ -111,6 +114,7 @@ export default function DonorRelationsScreen({
                     <span className="hc-label">Relationship</span>
                     <strong className={toneClass(activeDonor.relationship)}>{activeDonor.relationship}</strong>
                     <RelationshipBar value={activeDonor.relationship} />
+                    <LastDeltaBadge delta={activeDonor.lastDelta} />
                   </div>
                 </div>
 
@@ -185,6 +189,32 @@ function SummaryTile({ label, value, suffix = '', compact = false }: { label: st
 
 function RelationshipBar({ value }: { value: number }) {
   return <div className="donor-relationship-track"><i className={toneClass(value)} style={{ width: `${value}%` }} /></div>
+}
+
+function LastDeltaBadge({ delta, compact = false }: { delta: number; compact?: boolean }) {
+  const normalized = Object.is(delta, -0) ? 0 : delta
+  const direction = normalized > 0 ? 'up' : normalized < 0 ? 'down' : 'flat'
+  const label = normalized > 0 ? `+${normalized}` : `${normalized}`
+  const ariaLabel = normalized > 0
+    ? `Relationship warmed by ${normalized}`
+    : normalized < 0
+      ? `Relationship cooled by ${Math.abs(normalized)}`
+      : 'No relationship movement yet'
+
+  return (
+    <div className={`donor-delta-badge ${direction} ${compact ? 'compact' : ''}`} aria-label={ariaLabel}>
+      <span className="donor-delta-spark" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
+      <span className="donor-delta-copy">
+        <em>{direction === 'up' ? '↗' : direction === 'down' ? '↘' : '→'}</em>
+        <strong>{label}</strong>
+        {!compact && <small>{direction === 'flat' ? 'Last concert' : 'Last move'}</small>}
+      </span>
+    </div>
+  )
 }
 
 function topTastes(donor: Donor): string[] {

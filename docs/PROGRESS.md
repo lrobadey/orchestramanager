@@ -8,13 +8,50 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 
 **Last updated:** 2026-05-22
 **Current milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
-**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Donors, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. The season now persists a five-donor advancement cohort with distinct music tastes, institutional priorities, influence weights, relationship scores, capacity, volatility, and gift restrictions. Named donors now react individually after each resolved concert using the program's works and concert report outcomes. The Donor Relations tab presents a roster-like cultivation map with donor cards, relationship meters, an influence split, and side-by-side radar charts for music taste and institutional priorities. Ledger still uses sim-backed finance transactions for Recent transactions, Donor watch, and Bills queued.
-**Latest PR:** Donor reaction foundation — individual post-concert relationship deltas
+**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Donors, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. The season now persists a five-donor advancement cohort with distinct music tastes, institutional priorities, influence weights, relationship scores, capacity, volatility, and gift restrictions. Named donors now react individually after each resolved concert using the program's works and concert report outcomes. The Donor Relations tab presents a roster-like cultivation map with donor cards, relationship meters, prominent last-move badges, an influence split, and side-by-side radar charts for music taste and institutional priorities. Ledger still uses sim-backed finance transactions for Recent transactions, Donor watch, and Bills queued.
+**Latest PR:** Donor UI movement readout — prominent last-delta badges
 **Known blockers:** None currently recorded.
 **Current risks:** Donor relationships now react to concerts, but named donors still do not drive pledge amounts individually. The Donor Relations screen remains diagnostic/inspectable only; cultivation actions such as dinner, salons, or gala events are not implemented yet. Donor radar glyphs are visual shorthand derived from 0–100 values, not separate mechanics. Several Home panels remain clearly-labeled stubs in `src/data/homeStubs.ts`. Roster, Programme, Library, Ledger, Donors, Report, and Summary inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
 **Next recommended action:** Browser-check the new Donors tab and then implement post-concert donor reactions so each donor's relationship changes based on repertoire, access policy, attendance, critical response, and financial stability.
 
 ## Log Entries
+
+### 2026-05-22 — Donor UI movement readout: prominent last-delta badges
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+
+**Summary**
+
+Added a prominent movement badge for each donor's `lastDelta`. Donor cards now show a compact trend badge beside the relationship score, and the selected donor profile shows a larger last-move graphic below the relationship meter. The badge uses up/down/flat arrows, a small bar-spark graphic, and tone coloring to make the last concert's effect immediately visible.
+
+**Files changed**
+
+- `src/components/DonorRelationsScreen.tsx` — adds `LastDeltaBadge` and places it on donor cards/profile.
+- `src/styles/home.css` — styles the movement badge graphic and compact profile/card variants.
+- `src/sim/donorReactions.ts` — normalizes negative zero relationship deltas to zero.
+- `TODO.md` and `docs/PROGRESS.md` — update handoff state.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 506ms
+```
+
+**Known issues / risks**
+
+- Browser verification was not run in this pass; badge spacing should be checked at narrow widths.
+
+---
 
 ### 2026-05-22 — Donor reaction foundation: individual post-concert deltas
 

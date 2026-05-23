@@ -1457,11 +1457,93 @@
   text-transform: uppercase;
   color: var(--silver-dim);
 }
+.home-console .donor-card-metrics {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
 .home-console .donor-score,
 .home-console .donor-profile-score-block strong {
   font-family: var(--display);
   font-size: 32px;
   line-height: 1;
+}
+.home-console .donor-delta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(213, 201, 171, 0.18);
+  background:
+    linear-gradient(135deg, rgba(213, 201, 171, 0.08), rgba(0,0,0,0.16)),
+    rgba(255,255,255,0.025);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.025);
+}
+.home-console .donor-delta-badge.compact {
+  margin-top: 0;
+  padding: 5px 7px;
+  gap: 6px;
+}
+.home-console .donor-delta-spark {
+  display: inline-flex;
+  align-items: end;
+  gap: 2px;
+  width: 18px;
+  height: 15px;
+}
+.home-console .donor-delta-badge.compact .donor-delta-spark {
+  width: 14px;
+  height: 11px;
+}
+.home-console .donor-delta-spark i {
+  display: block;
+  width: 3px;
+  height: 7px;
+  background: var(--silver-dim);
+}
+.home-console .donor-delta-spark i:nth-child(2) { height: 11px; }
+.home-console .donor-delta-spark i:nth-child(3) { height: 15px; }
+.home-console .donor-delta-badge.down .donor-delta-spark {
+  transform: scaleX(-1);
+}
+.home-console .donor-delta-badge.flat .donor-delta-spark i { height: 8px; }
+.home-console .donor-delta-badge.up .donor-delta-spark i,
+.home-console .donor-delta-badge.up .donor-delta-copy strong,
+.home-console .donor-delta-badge.up .donor-delta-copy em { color: var(--pine); background: var(--pine); }
+.home-console .donor-delta-badge.down .donor-delta-spark i,
+.home-console .donor-delta-badge.down .donor-delta-copy strong,
+.home-console .donor-delta-badge.down .donor-delta-copy em { color: var(--ember); background: var(--ember); }
+.home-console .donor-delta-badge.flat .donor-delta-copy strong,
+.home-console .donor-delta-badge.flat .donor-delta-copy em { color: var(--silver); }
+.home-console .donor-delta-badge.up .donor-delta-copy strong,
+.home-console .donor-delta-badge.up .donor-delta-copy em,
+.home-console .donor-delta-badge.down .donor-delta-copy strong,
+.home-console .donor-delta-badge.down .donor-delta-copy em { background: transparent; }
+.home-console .donor-delta-copy {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 4px;
+  align-items: baseline;
+  font-family: var(--hc-mono);
+  text-transform: uppercase;
+}
+.home-console .donor-delta-copy em {
+  font-style: normal;
+  font-size: 11px;
+}
+.home-console .donor-delta-copy strong {
+  font-family: var(--display);
+  font-size: 24px;
+  line-height: 0.9;
+}
+.home-console .donor-delta-badge.compact .donor-delta-copy strong { font-size: 16px; }
+.home-console .donor-delta-copy small {
+  grid-column: 1 / -1;
+  color: var(--silver-dim);
+  font-size: 8px;
+  letter-spacing: 0.14em;
+  margin-top: 3px;
 }
 .home-console .donor-relationship-track,
 .home-console .donor-taste-track {
