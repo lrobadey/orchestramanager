@@ -860,6 +860,19 @@
   overflow: visible;
 }
 
+.home-console .programme-column-center {
+  max-height: calc(100dvh - 230px);
+  overflow: hidden;
+}
+
+.home-console .programme-column-center .programme-library-wall {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+
 .home-console .programme-slot,
 .home-console .programme-library-group,
 .home-console .forecast-rail {
