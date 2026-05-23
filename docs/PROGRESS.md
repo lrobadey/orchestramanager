@@ -7,14 +7,328 @@ Agents must update it after each PR. Keep entries concise, factual, and self-con
 ## Current Status
 
 **Last updated:** 2026-05-22
-**Current milestone:** Milestone 6 — Vertical Slice Release (UI transformation, step 3 of N)
-**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. Library and Ledger are now real navigable production screens. Library renders from production repertoire data with filter/search/detail views and disabled acquisition placeholders. Ledger renders current cash, resolved concert P&L, and the live current-concert forecast where available, with donor/payable/transaction placeholders isolated in `src/data/consoleStubs.ts`. The four-concert loop still runs, returning to Home after each report and showing the season summary after the fourth concert.
-**Latest PR:** UI transformation step 3 — production Library/Ledger and full-loop console cutover
+**Current milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+**Current playable state:** The app now uses the new **Home Console** chrome across the full Season One loop. Home, Roster, Programme, Library, Ledger, Donors, Report, and Summary all render through chromeless full-screen strata surfaces with the shared canopy/nav and institutional vitals band. The season now persists a five-donor advancement cohort with distinct music tastes, institutional priorities, influence weights, relationship scores, capacity, volatility, and gift restrictions. Named donors now react individually after each resolved concert using the program's works and concert report outcomes. The Donor Relations tab presents a roster-like cultivation map with donor cards, relationship meters, prominent last-move badges, an influence split, and side-by-side radar charts for music taste and institutional priorities. Ledger still uses sim-backed finance transactions for Recent transactions, Donor watch, and Bills queued.
+**Latest PR:** Donor UI movement readout — prominent last-delta badges
 **Known blockers:** None currently recorded.
-**Current risks:** This is presentation + entry-point work, not new simulation. Several Home panels remain clearly-labeled stubs (inbox messages, finance sparkline, trail annotations, days-to-curtain, concert dates, venue name) backed by static data in `src/data/homeStubs.ts`. Library/Ledger placeholders are isolated in `src/data/consoleStubs.ts` and marked `STUB`. Roster, Programme, Library, Ledger, Report, and Summary now inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
-**Next recommended action:** Manually browser-check the full navigation path Home → Roster → Programme → Library → Ledger, then run one concert through Report → Home and complete four concerts to Summary. After this UI cutover, the highest-value next system slice is replacing Ledger donor/payable/transaction stubs with sim-backed finance history.
+**Current risks:** Donor relationships now react to concerts, but named donors still do not drive pledge amounts individually. The Donor Relations screen remains diagnostic/inspectable only; cultivation actions such as dinner, salons, or gala events are not implemented yet. Donor radar glyphs are visual shorthand derived from 0–100 values, not separate mechanics. Several Home panels remain clearly-labeled stubs in `src/data/homeStubs.ts`. Roster, Programme, Library, Ledger, Donors, Report, and Summary inherit `.home-console` styles, so visual regressions are most likely in dense/narrow viewport layouts.
+**Next recommended action:** Browser-check the new Donors tab and then implement post-concert donor reactions so each donor's relationship changes based on repertoire, access policy, attendance, critical response, and financial stability.
 
 ## Log Entries
+
+### 2026-05-22 — Donor UI movement readout: prominent last-delta badges
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+
+**Summary**
+
+Added a prominent movement badge for each donor's `lastDelta`. Donor cards now show a compact trend badge beside the relationship score, and the selected donor profile shows a larger last-move graphic below the relationship meter. The badge uses up/down/flat arrows, a small bar-spark graphic, and tone coloring to make the last concert's effect immediately visible.
+
+**Files changed**
+
+- `src/components/DonorRelationsScreen.tsx` — adds `LastDeltaBadge` and places it on donor cards/profile.
+- `src/styles/home.css` — styles the movement badge graphic and compact profile/card variants.
+- `src/sim/donorReactions.ts` — normalizes negative zero relationship deltas to zero.
+- `TODO.md` and `docs/PROGRESS.md` — update handoff state.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 506ms
+```
+
+**Known issues / risks**
+
+- Browser verification was not run in this pass; badge spacing should be checked at narrow widths.
+
+---
+
+### 2026-05-22 — Donor reaction foundation: individual post-concert deltas
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+**Secondary milestone:** Milestone 3 — Audience and Finance Systems
+
+**Summary**
+
+Attached the named donor cohort to concert resolution. `resolveSeasonConcert` now receives the work library, derives a concert music profile and an institutional outcome profile, then updates each donor's relationship, `lastDelta`, and `recentReaction` according to that donor's music taste, institutional priorities, influence weights, and volatility.
+
+**Rationale**
+
+This individualizes the existing global donor-response idea without replacing global `institution.donorConfidence` yet. Donor confidence remains an aggregate institution stat, while named donors now become an inspectable relationship layer that reacts differently to the same program and report.
+
+**Files changed**
+
+- `src/sim/donorReactions.ts` — new pure donor reaction/profile scoring layer.
+- `src/sim/season.ts` — passes resolved concerts through donor reactions.
+- `src/App.tsx` — passes `works` into `resolveSeasonConcert`.
+- `tests/season.test.ts` and `tests/audienceFinance.test.ts` — update resolver calls and assert donor mutation.
+- `TODO.md` and `docs/PROGRESS.md` — update handoff state.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 508ms
+```
+
+**Known issues / risks**
+
+- Named donor relationship changes are deterministic but early-tuned heuristics.
+- Named donors do not yet create individual pledge transactions or emails.
+- Browser verification was not run in this pass.
+
+**Handoff note**
+
+The next donor slice should surface clearer reason packets in the UI and eventually route named donor reactions into pledge/cultivation mechanics.
+
+---
+
+### 2026-05-22 — Donor radar model refinement: split music and institution charts
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+**Secondary milestone:** Milestone 3 — Audience and Finance Systems
+
+**Summary**
+
+Refined donor profiles into separate `musicTaste`, `institutionalPriorities`, and `influenceWeights` models. The Donor Relations screen now removes the old taste-bar table and shows two radar charts side by side: Music taste and Institutional priorities. Radar labels include plus/minus glyph annotations derived from the underlying 0–100 values.
+
+**Rationale**
+
+Splitting taste from institutional priority lets donors become more multidimensional. Victor Saye can have modernist taste while still judging outcomes mostly by revenue/stability, and Eleanor Voss can be music-led while prioritizing prestige over generic stability. The influence split establishes the foundation for future post-concert donor reaction math.
+
+**Files changed**
+
+- `src/types/core.ts` — replaces mixed donor preferences with music taste, institutional priorities, and influence weights.
+- `src/data/donors.ts` — updates all five donor profiles to the agreed axis values.
+- `src/components/DonorRelationsScreen.tsx` — replaces taste bars with two radar charts and influence split copy.
+- `src/styles/home.css` — adds/updates styles for dual radar layout, influence bar, and radar glyphs.
+- `tests/season.test.ts` — verifies representative donor values and weight totals.
+- `TODO.md` and `docs/PROGRESS.md` — update handoff state.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 511ms
+```
+
+**Known issues / risks**
+
+- Donor relationships still do not react to concerts; this remains a display/data foundation.
+- Radar glyphs are shorthand only and should not be treated as separate state.
+- Browser verification was not run in this pass.
+
+**Handoff note**
+
+Future donor reaction logic should compute a music-fit score and institutional-fit score independently, then combine them using `influenceWeights`.
+
+**Next recommended action**
+
+Browser-check Donors tab at desktop and narrow widths, then implement post-concert donor relationship deltas using the split radar model.
+
+---
+
+### 2026-05-22 — Donor relations foundation: named cohort and Donors tab
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (donor relations foundation)
+**Secondary milestone:** Milestone 3 — Audience and Finance Systems
+
+**Summary**
+
+Added five named donors as persistent season state and introduced a new Donor Relations screen/tab. The donor cohort spans canon traditionalism, avant-garde foundation support, 19th/20th-century prestige patronage, community/access funding, and pragmatic corporate sponsorship. The screen follows the existing Home Console conventions and borrows the Roster screen's inspectable-card pattern: donor list on the left, selected donor profile on the right, relationship meter, taste bars, opinion-spectrum graphic, restriction/capacity copy, and cultivation notes.
+
+**Rationale**
+
+The prior donor system was still mostly institutional and abstract. This slice turns donors into a visible cast with differing values, giving future concert-reaction and cultivation mechanics concrete relationships to update. It intentionally stops before adding donor reactions or actions so the first vertical step remains inspectable and stable.
+
+**Files changed**
+
+- `src/types/core.ts` — adds `Donor`, `DonorPreferences`, `DonorState`, restriction styles, and `donors` on `SeasonState`.
+- `src/data/donors.ts` — defines Eleanor Voss, The Aster Foundation, Martin & Celia Rehnquist, Okafor Civic Fund, and Victor Saye.
+- `src/sim/season.ts` — initializes donors in new seasons and preserves them through concert resolution.
+- `src/components/DonorRelationsScreen.tsx` — new donor relationship/taste chart screen.
+- `src/components/HomeConsole.tsx` and `src/components/home/CanopyHeader.tsx` — add the `donors` navigation key/tab.
+- `src/App.tsx` — routes the Donors tab.
+- `src/components/LibraryScreen.tsx` and `src/components/LedgerScreen.tsx` — widen navigation callback types for the new tab.
+- `src/styles/home.css` — adds Donor Relations screen styling.
+- `tests/season.test.ts` — verifies initial donor cohort and donor persistence through resolution.
+- `TODO.md` — tracks this donor-relations slice.
+- `docs/PROGRESS.md` — records this slice and test results.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 507ms
+```
+
+**Known issues / risks**
+
+- Donors are inspectable state only; no concert reactions, relationship deltas, individual pledges, dinners, or gala actions have been added yet.
+- The new screen needs browser/layout verification, especially narrow viewport behavior and canopy nav spacing with the added tab.
+- Donor watch in Ledger still comes from finance transaction timing, not named donor-specific pledges.
+
+**Handoff note**
+
+The next donor slice should evaluate each donor after concert resolution and update `relationship`, `lastDelta`, and `recentReaction`. Keep donor preferences as the source of disagreement; avoid collapsing the system back into one global donor-confidence score.
+
+**Next recommended action**
+
+Implement post-concert donor reactions using existing program/report signals, then connect individual donor pledge rows to Ledger Donor watch.
+
+---
+
+### 2026-05-22 — Cash timing finance slice: scheduled donor support and queued bills
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (finance legibility)
+**Secondary milestone:** Milestone 3 — Audience and Finance Systems
+
+**Summary**
+
+Added minimal cash timing to the existing concert finance loop. Finance transactions now have `posted` or `scheduled` status plus a `dueSlotIndex`. Ticket revenue, rehearsal costs, and marketing costs post immediately when a concert resolves. Donor support, base concert costs, and production costs are scheduled for the next concert slot and settle automatically when that slot resolves. Ledger now renders Donor watch and Bills queued from scheduled transactions instead of static stubs.
+
+**Rationale**
+
+The previous ledger history made finance explainable, but cash still behaved like instant settlement. This slice makes liquidity more realistic and emergent without adding a full accounting system: a concert can look profitable on paper while donor pledges and vendor bills land later.
+
+**Files changed**
+
+- `src/types/core.ts` — adds transaction status and due-slot fields.
+- `src/sim/finance.ts` — assigns immediate vs scheduled timing to generated transaction rows.
+- `src/sim/applyConcertReport.ts` — accepts an optional cash delta so non-cash institutional deltas can still apply while cash follows posted/settled transactions.
+- `src/sim/season.ts` — settles due scheduled transactions at concert resolution and applies only posted/settled cash movements.
+- `src/components/LedgerScreen.tsx` — renders real scheduled donor pledges and queued bills alongside posted recent transactions.
+- `tests/finance.test.ts` — verifies transaction status and due-slot assignment.
+- `tests/season.test.ts` — verifies cash uses posted transactions first and scheduled rows settle later.
+- `TODO.md` — tracks and marks the cash-timing slice.
+- `docs/PROGRESS.md` — records this slice and test results.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 492ms
+```
+
+**Known issues / risks**
+
+- Scheduled final-concert donor/bill rows remain due after the season because there is no explicit end-of-season settlement phase yet.
+- Settlement currently occurs when the next concert resolves, not when the player opens the next planning screen.
+- Ledger rows are derived from transaction labels only; there are no named vendors, named donors, or manual payment controls.
+- Browser verification was not run in this pass.
+
+**Handoff note**
+
+`ConcertReport.net` still describes full concert profitability. Institution cash now describes liquidity: posted immediate movements plus settled prior scheduled movements. Keep that distinction clear in future UI copy and tests.
+
+**Next recommended action**
+
+Browser-check Ledger across two resolved concerts. If the timing model reads well, add a small season-end settlement step before/inside Summary so final-concert scheduled rows do not remain dangling.
+
+---
+
+### 2026-05-22 — Finance transaction history slice: real Ledger recent transactions
+
+**Primary milestone:** Milestone 6 — Vertical Slice Release (finance legibility)
+**Secondary milestone:** Milestone 3 — Audience and Finance Systems
+
+**Summary**
+
+Added a small sim-backed finance transaction layer for resolved concerts. Each resolved `SeasonConcertSlot` now stores six transaction rows generated from its `ConcertReport`: ticket revenue, donor support, base concert costs, rehearsal costs, marketing spend, and production costs. Ledger's Recent transactions panel now renders those real rows instead of `LEDGER_TRANSACTION_STUBS`, while Donor watch and Bills queued remain explicitly stubbed.
+
+**Rationale**
+
+The Ledger screen already showed real concert P&L totals, but its transaction panel was decorative. This slice makes the finance loop more inspectable without changing forecast formulas, concert resolution, cash timing, or balance: report totals remain the source of truth, and transaction rows explain the existing net cash movement.
+
+**Files changed**
+
+- `src/types/core.ts` — adds `FinanceTransactionKind`, `FinanceTransaction`, and `financeTransactions` on `SeasonConcertSlot`.
+- `src/sim/finance.ts` — new builder that converts a `ConcertReport` into transaction rows whose amounts sum to `report.net`.
+- `src/sim/season.ts` — initializes empty slot transactions and stores generated transactions when a concert resolves.
+- `src/components/LedgerScreen.tsx` — renders real recent transactions from resolved season slots and removes the STUB flag from that panel.
+- `tests/finance.test.ts` — verifies generated transactions sum to report net.
+- `tests/season.test.ts` — verifies initial slots have no transactions and resolved slots store transaction rows.
+- `TODO.md` — project checklist added for current and upcoming work.
+- `docs/PROGRESS.md` — records this finance-history slice and test results.
+
+**Tests run and results**
+
+```
+npm test
+
+Test Files  8 passed (8)
+Tests       81 passed (81)
+```
+
+```
+npm run build
+
+tsc && vite build
+✓ built in 525ms
+```
+
+**Known issues / risks**
+
+- Transaction rows are immediate resolved-concert explanatory rows; there is still no payable due date, delayed payment, donor account, or accounting-period system.
+- Ledger Donor watch and Bills queued remain static stubs.
+- Recent transactions are newest-concert-first by reversing the flattened slot transaction list; within a concert this currently displays production costs before ticket revenue.
+- Browser verification was not run in this pass.
+
+**Handoff note**
+
+`src/sim/finance.ts` is intentionally derived from `ConcertReport`; it should not become a second source of truth for cash. If finance timing/payables are added later, introduce them explicitly rather than overloading these resolved-concert transaction rows.
+
+**Next recommended action**
+
+Browser-check Ledger before and after resolving one concert. If the panel reads well, replace either Donor watch or Bills queued with another narrow sim-backed slice.
+
+---
 
 ### 2026-05-22 — UI transformation step 3: production Library/Ledger and full-loop console cutover
 

@@ -101,7 +101,7 @@ describe('audience & finance systems', () => {
         program: safeProgram,
         roll: 50,
       })
-      season = resolveSeasonConcert(season, safeProgram, report)
+      season = resolveSeasonConcert(season, safeProgram, report, works)
     }
     const summary = summarizeSeason(season)!
     expect(summary.averageCapacityPercent).toBeGreaterThan(0)

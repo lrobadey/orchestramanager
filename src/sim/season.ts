@@ -2,12 +2,17 @@ import {
   InstitutionState,
   ConcertProgram,
   ConcertReport,
+  FinanceTransaction,
   SeasonConcertSlot,
   SeasonState,
   SeasonSummary,
   Principal,
+  Work,
 } from '../types/core'
+import { createInitialDonors } from '../data/donors'
 import { applyConcertReport } from './applyConcertReport'
+import { updateDonorsAfterConcert } from './donorReactions'
+import { buildConcertFinanceTransactions } from './finance'
 import { createInitialRoster, updateRosterAfterConcert } from './roster'
 import { average, HALL_CAPACITY } from './scoring'
 
@@ -24,6 +29,7 @@ function makeSlot(index: number): SeasonConcertSlot {
     name: SLOT_NAMES[index],
     program: null,
     report: null,
+    financeTransactions: [],
     institutionBefore: null,
     status: 'pending',
   }
@@ -38,6 +44,7 @@ export function createInitialSeason(
     currentSlotIndex: 0,
     institution,
     roster: createInitialRoster(initialPrincipals),
+    donors: createInitialDonors(),
   }
 }
 
@@ -45,30 +52,80 @@ export function resolveSeasonConcert(
   season: SeasonState,
   program: ConcertProgram,
   report: ConcertReport,
+  works: Work[],
 ): SeasonState {
   const idx = season.currentSlotIndex
   if (idx >= 4) return season
 
+  const { slots: settledSlots, cashDelta: settlementCashDelta } = settleDueTransactions(
+    season.slots,
+    idx,
+  )
+  const financeTransactions = buildConcertFinanceTransactions(
+    settledSlots[idx].name,
+    idx,
+    report,
+  )
+  const immediateCashDelta = financeTransactions
+    .filter(transaction => transaction.status === 'posted')
+    .reduce((sum, transaction) => sum + transaction.amount, 0)
+
   const updatedSlot: SeasonConcertSlot = {
-    ...season.slots[idx],
+    ...settledSlots[idx],
     program,
     report,
+    financeTransactions,
     institutionBefore: season.institution,
     status: 'resolved',
   }
 
-  const newSlots = [...season.slots] as SeasonState['slots']
+  const newSlots = [...settledSlots] as SeasonState['slots']
   newSlots[idx] = updatedSlot
 
-  const nextInstitution = applyConcertReport(season.institution, report)
+  const nextInstitution = applyConcertReport(
+    season.institution,
+    report,
+    settlementCashDelta + immediateCashDelta,
+  )
   const nextRoster = updateRosterAfterConcert(season.roster, report.rosterChanges)
+  const nextDonors = updateDonorsAfterConcert({
+    donorState: season.donors,
+    program,
+    report,
+    works,
+  })
 
   return {
     slots: newSlots,
     currentSlotIndex: idx + 1,
     institution: nextInstitution,
     roster: nextRoster,
+    donors: nextDonors,
   }
+}
+
+function settleDueTransactions(
+  slots: SeasonState['slots'],
+  currentSlotIndex: number,
+): { slots: SeasonState['slots']; cashDelta: number } {
+  let cashDelta = 0
+  const nextSlots = slots.map(slot => ({
+    ...slot,
+    financeTransactions: slot.financeTransactions.map(transaction => {
+      if (transaction.status !== 'scheduled' || transaction.dueSlotIndex > currentSlotIndex) {
+        return transaction
+      }
+
+      cashDelta += transaction.amount
+      return { ...transaction, status: 'posted' as const }
+    }),
+  })) as SeasonState['slots']
+
+  return { slots: nextSlots, cashDelta }
+}
+
+export function getAllFinanceTransactions(season: SeasonState): FinanceTransaction[] {
+  return season.slots.flatMap(slot => slot.financeTransactions)
 }
 
 function buildIdentityNarrative(
