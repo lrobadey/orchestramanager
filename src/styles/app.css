@@ -146,18 +146,18 @@ button { font-family: inherit; }
 
 .shell-brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 1.25rem;
   flex-wrap: wrap;
 }
 
-.shell-mark {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.28em;
-  color: var(--aurora);
-  text-transform: uppercase;
-  font-weight: 500;
+.shell-logo {
+  display: block;
+  height: 1.45rem;
+  width: auto;
+  max-width: 8rem;
+  object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .shell-title {

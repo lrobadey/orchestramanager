@@ -1,4 +1,5 @@
 import React from 'react'
+import logo from '../assets/logo.png'
 
 interface AppShellProps {
   vitals?: React.ReactNode
@@ -29,7 +30,7 @@ export default function AppShell({
       <header className="shell-header">
         <div className="shell-header-inner">
           <div className="shell-brand">
-            <span className="shell-mark">OM</span>
+            <img src={logo} alt="Orchestra Manager" className="shell-logo" />
             <span className="shell-title">Orchestra Manager</span>
             {position && <span className="shell-position">{position}</span>}
             {seasonDots}
