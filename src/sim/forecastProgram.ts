@@ -4,6 +4,7 @@ import {
   AudienceSegment,
   InstitutionState,
   ConcertProgram,
+  DonorState,
   ConcertForecast,
   AudienceBreakdown,
   ExpenseBreakdown,
@@ -28,6 +29,7 @@ import {
   computeDonorUplift,
 } from './scoring'
 import { computeProgramArcSalience } from './programArcSalience'
+import { estimateDonorUpliftFromDonors } from './donorReactions'
 
 const EMPTY_ARC_SALIENCE: ProgramArcSalienceResult = {
   perWork: [],
@@ -43,6 +45,7 @@ export interface ForecastInput {
   principals: Principal[]
   audienceSegments: AudienceSegment[]
   program: ConcertProgram
+  donorState?: DonorState
 }
 
 function resolveSlotWorks(input: ForecastInput): SlotTuple<Work | null> {
@@ -60,18 +63,97 @@ function activeSlotWorks(slotWorks: SlotTuple<Work | null>, program: ConcertProg
     .filter((w): w is Work => w !== null)
 }
 
+export function computeIdentityProgramFit(
+  institution: InstitutionState,
+  programPrestige: number,
+  programNovelty: number,
+  programIdentityValue: number,
+  program: ConcertProgram,
+): number {
+  const adventurousSignal = clamp(programNovelty * 0.65 + programIdentityValue * 0.35, 0, 100)
+  const scholarlySignal = clamp(programPrestige * 0.75 + (100 - programNovelty) * 0.25, 0, 100)
+  const communitySignal = clamp(
+    (program.studentTicketsEnabled ? 35 : 0) +
+      (program.ticketPrice <= 55 ? 25 : 0) +
+      (100 - program.ticketPrice) * 0.15,
+    0,
+    100,
+  )
+  const identity = institution.identity
+  const totalIdentity = identity.adventurous + identity.scholarly + identity.communityFocused
+  if (totalIdentity <= 0) return 0
+
+  const weightedInstitutionalExpectation =
+    identity.adventurous * adventurousSignal +
+    identity.scholarly * scholarlySignal +
+    identity.communityFocused * communitySignal
+
+  const expectationFit = weightedInstitutionalExpectation / totalIdentity
+  return clamp((expectationFit - 50) / 2, -20, 25)
+}
+
+function institutionalModifierForSegment(
+  seg: AudienceSegment,
+  institution: InstitutionState,
+  prestige: number,
+  novelty: number,
+  program: ConcertProgram,
+  identityFit: number,
+): number {
+  const trust = institution.audienceTrust - 50
+  const reputation = institution.artisticReputation - 50
+  const adventurous = institution.identity.adventurous
+  const scholarly = institution.identity.scholarly
+  const community = institution.identity.communityFocused
+  const communitySignal = program.studentTicketsEnabled || program.ticketPrice <= 55
+
+  let modifier = trust * (seg.loyalty / 100) * 0.16 + reputation * (seg.prestigeAffinity / 100) * 0.1
+
+  if (novelty > 55) {
+    modifier += (adventurous / 100) * (seg.contemporaryAffinity / 100) * 14
+    if (seg.canonAffinity > seg.contemporaryAffinity) modifier -= (novelty - 55) * 0.08
+  }
+
+  if (prestige > 65) {
+    modifier += (scholarly / 100) * (seg.prestigeAffinity / 100) * 9
+  }
+
+  if (communitySignal) {
+    modifier += (community / 100) * (seg.communityAffinity / 100) * 10
+  }
+
+  if (seg.id === 'seasoned-supporters' || seg.id === 'donors-patrons') {
+    modifier += identityFit * 0.28
+  } else if (seg.id === 'cultural-explorers' || seg.id === 'young-professionals') {
+    modifier += identityFit * 0.18
+  } else {
+    modifier += identityFit * 0.12
+  }
+
+  return clamp(modifier, -18, 22)
+}
+
 function computeAttendance(
   segments: AudienceSegment[],
+  institution: InstitutionState,
   adjustedDraw: number,
   prestige: number,
   donorComfort: number,
   novelty: number,
+  programIdentityValue: number,
   program: ConcertProgram,
 ): AudienceBreakdown[] {
   const prestigeSignal = Math.max(prestige, donorComfort)
   const donorPrestigeLift = program.ticketPrice > 80 && prestigeSignal > 70
     ? clamp(((program.ticketPrice - 80) / 80) * ((prestigeSignal - 70) / 30) * 8, 0, 6)
     : 0
+  const identityFit = computeIdentityProgramFit(
+    institution,
+    prestige,
+    novelty,
+    programIdentityValue,
+    program,
+  )
 
   const breakdown = segments.map(seg => {
     const effectiveTicketPrice =
@@ -87,8 +169,16 @@ function computeAttendance(
       3
     const priceAccessibilityScore = priceAccessibilityForSegment(seg, effectiveTicketPrice)
     const prestigeLift = donorPrestigeLiftForSegment(seg.id, donorPrestigeLift)
+    const institutionalModifier = institutionalModifierForSegment(
+      seg,
+      institution,
+      prestige,
+      novelty,
+      program,
+      identityFit,
+    )
     const interestRate =
-      clamp((tasteMatch + adjustedDraw) / 2 + prestigeLift, 0, 100) / 100
+      clamp((tasteMatch + adjustedDraw) / 2 + prestigeLift + institutionalModifier, 0, 100) / 100
     const attendance =
       seg.size * (seg.loyalty / 100) * interestRate * (priceAccessibilityScore / 100)
 
@@ -355,10 +445,12 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
 
   const projectedAudienceBreakdown = computeAttendance(
     audienceSegments,
+    institution,
     adjustedDraw,
     programPrestige,
     programDonorComfort,
     programNovelty,
+    programIdentityValue,
     program,
   )
   const projectedAttendance = projectedAudienceBreakdown.reduce(
@@ -372,10 +464,27 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const totalRehearsalHours = program.rehearsalAllocation.reduce((s, h) => s + h, 0)
   const projectedExpenseBreakdown = computeExpenseBreakdown(works, totalRehearsalHours, program.marketingSpend)
   const projectedExpenses = projectedExpenseBreakdown.total
-  const projectedDonorUplift = computeDonorUplift(institution.donorConfidence)
+  const projectedDonorUplift = input.donorState
+    ? estimateDonorUpliftFromDonors({
+        donorState: input.donorState,
+        institution,
+        program,
+        works,
+        projectedAttendance,
+        projectedRevenue,
+        projectedExpenseBreakdown,
+      })
+    : computeDonorUplift(institution.donorConfidence)
   const projectedNet = projectedRevenue + projectedDonorUplift - projectedExpenses
 
-  const donorResponse = clamp(programDonorComfort - programNovelty * 0.3, 0, 100)
+  const identityFit = computeIdentityProgramFit(
+    institution,
+    programPrestige,
+    programNovelty,
+    programIdentityValue,
+    program,
+  )
+  const donorResponse = clamp(programDonorComfort - programNovelty * 0.3 + identityFit * 0.45, 0, 100)
 
   const forecastNotes = buildForecastNotes(
     displaySlotWorks,

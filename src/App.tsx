@@ -64,8 +64,9 @@ export default function App() {
         principals: livePrincipals,
         audienceSegments,
         program,
+        donorState: season.donors,
       }),
-    [institution, livePrincipals, program],
+    [institution, livePrincipals, program, season.donors],
   )
 
   function handleRunConcert() {
@@ -76,6 +77,7 @@ export default function App() {
       principals: livePrincipals,
       audienceSegments,
       program,
+      donorState: season.donors,
       roll: Math.random() * 100,
     })
     setReport(result)

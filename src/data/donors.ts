@@ -8,6 +8,9 @@ export const donors: Donor[] = [
     description:
       'An old-money benefactor who sees the orchestra as a steward of Beethoven, Brahms, and prestige carried across generations.',
     relationship: 72,
+    loyalty: 82,
+    commitment: 68,
+    alignmentMemory: 0,
     capacity: 85_000,
     volatility: 34,
     restrictionStyle: 'prestige',
@@ -38,6 +41,9 @@ export const donors: Donor[] = [
     description:
       'A future-facing arts foundation that funds institutions willing to make contemporary music feel inevitable and credible.',
     relationship: 58,
+    loyalty: 44,
+    commitment: 32,
+    alignmentMemory: 0,
     capacity: 120_000,
     volatility: 78,
     restrictionStyle: 'new-music',
@@ -68,6 +74,9 @@ export const donors: Donor[] = [
     description:
       'Sophisticated patrons drawn to Romantic sweep, early modern color, and performances with real emotional scale.',
     relationship: 66,
+    loyalty: 63,
+    commitment: 54,
+    alignmentMemory: 0,
     capacity: 70_000,
     volatility: 48,
     restrictionStyle: 'prestige',
@@ -98,6 +107,9 @@ export const donors: Donor[] = [
     description:
       'A civic foundation that believes bold music belongs to the whole city, especially students and first-time listeners.',
     relationship: 61,
+    loyalty: 58,
+    commitment: 41,
+    alignmentMemory: 0,
     capacity: 55_000,
     volatility: 44,
     restrictionStyle: 'education',
@@ -128,6 +140,9 @@ export const donors: Donor[] = [
     description:
       'A board-adjacent sponsor with sharper musical taste than he admits, but little patience for weak optics or weak revenue.',
     relationship: 64,
+    loyalty: 39,
+    commitment: 35,
+    alignmentMemory: 0,
     capacity: 95_000,
     volatility: 52,
     restrictionStyle: 'general',
@@ -157,6 +172,9 @@ export function createInitialDonors(): DonorState {
   return {
     donors: donors.map(donor => ({
       ...donor,
+      loyalty: donor.loyalty,
+      commitment: donor.commitment,
+      alignmentMemory: donor.alignmentMemory,
       musicTaste: { ...donor.musicTaste },
       institutionalPriorities: { ...donor.institutionalPriorities },
       influenceWeights: { ...donor.influenceWeights },

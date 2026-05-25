@@ -7,6 +7,7 @@ import { works } from '../src/data/works'
 import { principals } from '../src/data/principals'
 import { audienceSegments } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
+import { createInitialDonors } from '../src/data/donors'
 import { ConcertProgram } from '../src/types/core'
 
 const safeProgram: ConcertProgram = {
@@ -61,6 +62,48 @@ describe('audience & finance systems', () => {
     const seasonedShareAdv = adventForecast.projectedAudienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')!.shareOfHouse
     expect(explorerShareAdv).toBeGreaterThan(explorerShareCanon)
     expect(seasonedShareCanon).toBeGreaterThan(seasonedShareAdv)
+  })
+
+  it('institutional trust and identity change audience demand for the same program', () => {
+    const mistrusted = forecastProgram({
+      ...makeInput(adventurousProgram),
+      institution: {
+        ...startingInstitution,
+        audienceTrust: 20,
+        artisticReputation: 35,
+        identity: { adventurous: 0, scholarly: 45, communityFocused: 0 },
+      },
+    })
+    const credibleAdventurous = forecastProgram({
+      ...makeInput(adventurousProgram),
+      institution: {
+        ...startingInstitution,
+        audienceTrust: 85,
+        artisticReputation: 70,
+        identity: { adventurous: 80, scholarly: 0, communityFocused: 0 },
+      },
+    })
+    const lowExplorers = mistrusted.projectedAudienceBreakdown.find(r => r.segmentId === 'cultural-explorers')!
+    const highExplorers = credibleAdventurous.projectedAudienceBreakdown.find(r => r.segmentId === 'cultural-explorers')!
+
+    expect(credibleAdventurous.projectedAttendance).toBeGreaterThan(mistrusted.projectedAttendance)
+    expect(highExplorers.attendance).toBeGreaterThan(lowExplorers.attendance)
+  })
+
+  it('named donor relationships now drive projected donor uplift', () => {
+    const lowRelationships = createInitialDonors()
+    const asterActivated = createInitialDonors()
+
+    lowRelationships.donors = lowRelationships.donors.map(donor => ({ ...donor, relationship: 25 }))
+    asterActivated.donors = asterActivated.donors.map(donor => ({
+      ...donor,
+      relationship: donor.id === 'aster-foundation' ? 95 : 25,
+    }))
+
+    const lowForecast = forecastProgram({ ...makeInput(adventurousProgram), donorState: lowRelationships })
+    const asterForecast = forecastProgram({ ...makeInput(adventurousProgram), donorState: asterActivated })
+
+    expect(asterForecast.projectedDonorUplift).toBeGreaterThan(lowForecast.projectedDonorUplift)
   })
 
   it('expense breakdown total matches projectedExpenses and includes all four components', () => {

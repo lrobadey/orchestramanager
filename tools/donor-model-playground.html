@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Donor Relationship Model Playground</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; margin: 32px; color: #172033; background: #f7f4ef; }
+    h1 { margin-bottom: 4px; }
+    .sub { color: #5f6673; margin-top: 0; }
+    .grid { display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start; }
+    .card { background: white; border: 1px solid #ded7cc; border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    label { display: grid; gap: 6px; margin: 16px 0; font-weight: 700; }
+    input[type="range"] { width: 100%; }
+    .value { font-variant-numeric: tabular-nums; color: #77512d; }
+    .models { display: grid; grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 16px; }
+    .big { font-size: 42px; font-weight: 800; margin: 8px 0; }
+    .muted { color: #667085; }
+    code { background: #f1ece4; padding: 2px 5px; border-radius: 5px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    td, th { text-align: left; border-bottom: 1px solid #eee8de; padding: 8px; }
+    .bar { height: 12px; background: #efe6d9; border-radius: 99px; overflow: hidden; }
+    .fill { height: 100%; background: #9a6a3a; }
+    .warning { color: #a33b2f; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <h1>Donor Relationship Model Playground</h1>
+  <p class="sub">Compare an additive model against a multiplicative model. Adjust relationship, loyalty, and commitment.</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Inputs</h2>
+      <label>Relationship: <span class="value" id="relationshipValue"></span>
+        <input id="relationship" type="range" min="0" max="100" value="65" />
+      </label>
+      <label>Loyalty: <span class="value" id="loyaltyValue"></span>
+        <input id="loyalty" type="range" min="0" max="100" value="60" />
+      </label>
+      <label>Commitment: <span class="value" id="commitmentValue"></span>
+        <input id="commitment" type="range" min="0" max="100" value="45" />
+      </label>
+
+      <h2>Optional breach test</h2>
+      <label>Relationship Delta This Concert: <span class="value" id="deltaValue"></span>
+        <input id="delta" type="range" min="-20" max="10" value="-3" />
+      </label>
+      <p class="muted">Use this to see whether high commitment cushions a small disappointment or creates a betrayal cliff after a major drop.</p>
+    </section>
+
+    <main>
+      <div class="models">
+        <section class="card">
+          <h2>Model A: Additive Tail</h2>
+          <p class="muted"><code>relationship × .75 + loyalty × .15 + commitment × .10</code></p>
+          <div class="big" id="additiveEffective"></div>
+          <div class="bar"><div class="fill" id="additiveBar"></div></div>
+          <table>
+            <tr><th>Giving relationship factor</th><td id="additiveGiving"></td></tr>
+            <tr><th>Feel</th><td>Stable, readable, less volatile.</td></tr>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2>Model B: Multiplicative Tail</h2>
+          <p class="muted"><code>relationship × (0.85 + loyalty/300) × (0.90 + commitment/250)</code></p>
+          <div class="big" id="multiplicativeEffective"></div>
+          <div class="bar"><div class="fill" id="multiplicativeBar"></div></div>
+          <table>
+            <tr><th>Giving relationship factor</th><td id="multiplicativeGiving"></td></tr>
+            <tr><th>Feel</th><td>Amplifies or suppresses current relationship.</td></tr>
+          </table>
+        </section>
+
+        <section class="card">
+          <h2>Model C: Weighted Geometric</h2>
+          <p class="muted"><code>100 × R<sup>.85</sup> × L<sup>.15</sup> × C<sup>.10</sup></code></p>
+          <div class="big" id="geometricEffective"></div>
+          <div class="bar"><div class="fill" id="geometricBar"></div></div>
+          <table>
+            <tr><th>Giving relationship factor</th><td id="geometricGiving"></td></tr>
+            <tr><th>Feel</th><td>Your weighted multiplication idea, normalized to 0–100.</td></tr>
+          </table>
+        </section>
+      </div>
+
+      <section class="card" style="margin-top:16px">
+        <h2>Commitment Movement Preview</h2>
+        <p class="muted">Assumes alignment/misalignment strength is inferred from relationship delta.</p>
+        <table>
+          <tr><th>Commitment gain if aligned</th><td id="commitmentGain"></td></tr>
+          <tr><th>Base loss if misaligned</th><td id="commitmentBaseLoss"></td></tr>
+          <tr><th>Protection threshold</th><td id="threshold"></td></tr>
+          <tr><th>Breach loss</th><td id="breachLoss"></td></tr>
+          <tr><th>Total commitment change</th><td id="totalCommitmentChange"></td></tr>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v))
+    const fmt = n => Number(n).toFixed(2)
+    const pct = n => `${Math.round(n * 100)}%`
+
+    const ids = ['relationship', 'loyalty', 'commitment', 'delta']
+    for (const id of ids) document.getElementById(id).addEventListener('input', render)
+
+    function givingFactor(effectiveRelationship) {
+      return clamp((effectiveRelationship - 25) / 75, 0, 1)
+    }
+
+    function render() {
+      const relationship = Number(document.getElementById('relationship').value)
+      const loyalty = Number(document.getElementById('loyalty').value)
+      const commitment = Number(document.getElementById('commitment').value)
+      const delta = Number(document.getElementById('delta').value)
+
+      relationshipValue.textContent = relationship
+      loyaltyValue.textContent = loyalty
+      commitmentValue.textContent = commitment
+      deltaValue.textContent = delta > 0 ? `+${delta}` : delta
+
+      const additive = clamp(relationship * 0.75 + loyalty * 0.15 + commitment * 0.10, 0, 100)
+      const multiplicative = clamp(
+        relationship * (0.85 + loyalty / 300) * (0.90 + commitment / 250),
+        0,
+        100,
+      )
+      const geometric = clamp(
+        100 *
+          Math.pow(relationship / 100, 0.85) *
+          Math.pow(loyalty / 100, 0.15) *
+          Math.pow(commitment / 100, 0.10),
+        0,
+        100,
+      )
+
+      additiveEffective.textContent = fmt(additive)
+      multiplicativeEffective.textContent = fmt(multiplicative)
+      geometricEffective.textContent = fmt(geometric)
+      additiveBar.style.width = `${additive}%`
+      multiplicativeBar.style.width = `${multiplicative}%`
+      geometricBar.style.width = `${geometric}%`
+      additiveGiving.textContent = pct(givingFactor(additive))
+      multiplicativeGiving.textContent = pct(givingFactor(multiplicative))
+      geometricGiving.textContent = pct(givingFactor(geometric))
+
+      const alignment = clamp(delta / 10, 0, 1)
+      const misalignment = clamp(-delta / 20, 0, 1)
+      const gain = alignment * (relationship / 100) * (1 - commitment / 100) * 2.0
+      const baseLoss = misalignment * (1 - loyalty / 140) * 1.5
+      const protectionThreshold = 2 + commitment / 20
+      const disappointment = Math.max(0, -delta)
+      const breach = Math.max(0, disappointment - protectionThreshold)
+      const cliffLoss = breach * breach * (commitment / 100) * 0.35
+      const totalChange = gain - baseLoss - cliffLoss
+
+      commitmentGain.textContent = `+${fmt(gain)}`
+      commitmentBaseLoss.textContent = `-${fmt(baseLoss)}`
+      threshold.textContent = fmt(protectionThreshold)
+      breachLoss.innerHTML = cliffLoss > 3 ? `<span class="warning">-${fmt(cliffLoss)} betrayal cliff</span>` : `-${fmt(cliffLoss)}`
+      totalCommitmentChange.innerHTML = totalChange < -3 ? `<span class="warning">${fmt(totalChange)}</span>` : (totalChange > 0 ? `+${fmt(totalChange)}` : fmt(totalChange))
+    }
+
+    render()
+  </script>
+</body>
+</html>
