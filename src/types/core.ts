@@ -89,6 +89,9 @@ export interface Donor {
   archetype: string
   description: string
   relationship: number
+  loyalty: number
+  commitment: number
+  alignmentMemory: number
   capacity: number
   volatility: number
   restrictionStyle: DonorRestrictionStyle

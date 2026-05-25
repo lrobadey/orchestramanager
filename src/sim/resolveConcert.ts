@@ -6,9 +6,10 @@ import {
   ExpenseBreakdown,
   Work,
 } from '../types/core'
-import { ForecastInput, forecastProgram } from './forecastProgram'
+import { ForecastInput, forecastProgram, computeIdentityProgramFit } from './forecastProgram'
 import { calculateRosterChangesAfterConcert } from './roster'
 import { clamp, average, HALL_CAPACITY, computeDonorUplift } from './scoring'
+import { estimateDonorUpliftFromDonors } from './donorReactions'
 
 // roll: 0-100, where 50 = neutral, <50 = worse than expected, >50 = better
 // Pass roll = 50 in tests for deterministic output.
@@ -242,16 +243,40 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   )
   const attendance = audienceBreakdown.reduce((sum, row) => sum + row.attendance, 0)
   const revenue = audienceBreakdown.reduce((sum, row) => sum + row.ticketRevenue, 0)
-  const donorUplift = computeDonorUplift(input.institution.donorConfidence)
   const expenses = forecast.projectedExpenses
   const expenseBreakdown = forecast.projectedExpenseBreakdown
+  const donorUplift = input.donorState
+    ? estimateDonorUpliftFromDonors({
+        donorState: input.donorState,
+        institution: input.institution,
+        program: input.program,
+        works,
+        projectedAttendance: attendance,
+        projectedRevenue: revenue,
+        projectedExpenseBreakdown: expenseBreakdown,
+      })
+    : computeDonorUplift(input.institution.donorConfidence)
   const net = revenue + donorUplift - expenses
 
-  // Audience response: draw and quality still matter, but arc damage captures
-  // where the failure occurred in the evening.
+  const programPrestige = average(works.map(w => w.artisticPrestige))
+  const programNovelty = average(works.map(w => w.novelty))
+  const programIdentityValue = average(works.map(w => w.identityValue))
+  const identityFit = computeIdentityProgramFit(
+    input.institution,
+    programPrestige,
+    programNovelty,
+    programIdentityValue,
+    input.program,
+  )
+
+  // Audience response: draw and quality still matter, but institutional identity
+  // changes whether the choice reads as coherent or confusing.
   const audienceResponse = Math.round(
     clamp(
-      forecast.audienceFit * 0.55 + performanceQuality * 0.35 - forecast.arcPerceivedDamage * 0.1,
+      forecast.audienceFit * 0.55 +
+        performanceQuality * 0.35 +
+        identityFit * 0.25 -
+        forecast.arcPerceivedDamage * 0.1,
       0,
       100,
     ),
@@ -259,12 +284,14 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
 
   // Critic response: prestige-seekers; quality, novelty, and prestige-weighted
   // failures all matter.
-  const programPrestige = average(works.map(w => w.artisticPrestige))
-  const programNovelty = average(works.map(w => w.novelty))
   const criticArcPenalty = prestigeWeightedArcDamage(works, forecast.perWorkArcDamage) * 0.1
   const criticResponse = Math.round(
     clamp(
-      performanceQuality * 0.45 + programPrestige * 0.3 + programNovelty * 0.2 - criticArcPenalty,
+      performanceQuality * 0.45 +
+        programPrestige * 0.3 +
+        programNovelty * 0.2 +
+        identityFit * 0.35 -
+        criticArcPenalty,
       0,
       100,
     ),
@@ -293,11 +320,12 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   )
   const seasonedRow = audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
   const seasonedShare = seasonedRow?.shareOfHouse ?? 0.2
-  const trustDelta = Math.round(clamp((audienceResponse - 50) * 0.2 + (seasonedShare - 0.25) * 10, -10, 10))
+  const trustDelta = Math.round(clamp((audienceResponse - 50) * 0.2 + (seasonedShare - 0.25) * 10 + identityFit * 0.08, -10, 10))
   const attendanceRate = attendance / HALL_CAPACITY
   const donorDelta = Math.round(clamp(
     (forecast.donorResponse - 50) * 0.25
     + (programPrestige - 50) * 0.1
+    + identityFit * 0.08
     + (attendanceRate - 0.5) * 8
     + (net > 0 ? Math.min(net / 5_000, 4) : Math.max(net / 5_000, -6))
     - programNovelty * 0.05,
