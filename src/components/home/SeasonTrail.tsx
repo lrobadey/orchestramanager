@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { SeasonState } from '../../types/core'
 import { TRAIL_ANNOTATIONS, slotHeadlineFallback } from '../../data/homeStubs'
 import { formatShortDate } from '../../sim/calendar'
@@ -30,14 +31,56 @@ const ANNOTATION_POS: Record<0 | 1 | 2 | 3, { x: number; y: number }> = {
 }
 
 export default function SeasonTrail({ season }: SeasonTrailProps) {
+  const [collapsed, setCollapsed] = useState(true)
   const resolvedCount = season.slots.filter(s => s.status === 'resolved').length
   const activeIdx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
 
   return (
-    <div className="home-stratum trail">
+    <div className={`home-stratum trail ${collapsed ? 'collapsed' : 'expanded'}`}>
       <div className="trail-contours" />
       <div className="trail-grid" />
+
+      <button
+        type="button"
+        className="trail-collapse-toggle"
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? 'Expand season timeline' : 'Collapse season timeline'}
+        onClick={() => setCollapsed(value => !value)}
+      >
+        {collapsed ? 'map' : '–'}
+      </button>
+
+      {collapsed && (
+        <div className="trail-compact" aria-label="Season concert timeline">
+          <div className="trail-compact-title">
+            <span className="hc-eyebrow">Season</span>
+            <span className="trail-compact-count">
+              {resolvedCount} done · {seasonComplete ? 'closed' : `${CONCERT_ROMAN[activeIdx]} in programming`}
+            </span>
+          </div>
+          <div className="trail-compact-rail">
+            {season.slots.map((slot, i) => {
+              const isActive = !seasonComplete && i === activeIdx
+              const isResolved = slot.status === 'resolved'
+              const cls = ['trail-compact-stop']
+              if (isActive) cls.push('active')
+              else if (isResolved) cls.push('resolved')
+              else cls.push('upcoming')
+
+              return (
+                <div key={slot.index} className={cls.join(' ')}>
+                  <span className="trail-compact-roman">{CONCERT_ROMAN[i]}</span>
+                  <span className="trail-compact-date">
+                    {formatShortDate(slot.scheduledDate, season.calendar.startDate).toUpperCase()}
+                  </span>
+                  <span className="trail-compact-name">{slot.name}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <svg
         className="trail-svg"
