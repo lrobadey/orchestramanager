@@ -1101,8 +1101,9 @@
 }
 
 .home-console .roster-floor {
-  grid-template-columns: minmax(230px, 1fr) minmax(430px, 600px) minmax(230px, 1fr);
-  gap: 18px 32px;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 18px;
 }
 
 .home-console .roster-section-card,
@@ -1126,12 +1127,13 @@
 }
 
 .home-console .roster-stage-shell {
-  min-height: 480px;
+  width: min(100%, 980px);
+  min-height: 0;
 }
 
 .home-console .roster-ledger {
-  border-top-color: var(--bark-dim);
-  padding-top: 16px;
+  border-color: var(--bark-dim);
+  padding: 16px;
 }
 
 .home-console .roster-principal-grid {
