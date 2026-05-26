@@ -49,13 +49,6 @@ export default function CanopyHeader({
   // — turn them into "I. Opening Night is taking shape."
   const headlineSlot = currentSlot.name
 
-  const dominantIdentity = pickDominantIdentity(institution)
-  const subline = seasonComplete
-    ? 'The season is closed. Review the summary or open the next.'
-    : dominantIdentity === 'Undeclared'
-      ? `${days} days to curtain. An identity has not yet emerged — the next concert sets the tone.`
-      : `${days} days to curtain. Identity drift leans ${dominantIdentity.toLowerCase()}; the next concert decides whether it sticks.`
-
   return (
     <div className="home-stratum canopy">
       <div className="canopy-topbar">
@@ -102,7 +95,6 @@ export default function CanopyHeader({
             {seasonComplete ? 'is in the books' : 'is taking shape'}
             <span className="punct">.</span>
           </h1>
-          <p className="canopy-headline-sub">{subline}</p>
         </div>
         <div className="canopy-countdown">
           <div className="canopy-countdown-num hc-display">
@@ -116,16 +108,4 @@ export default function CanopyHeader({
       </div>
     </div>
   )
-}
-
-function pickDominantIdentity(institution: InstitutionState): string {
-  const id = institution.identity
-  const entries: Array<[string, number]> = [
-    ['Adventurous', id.adventurous],
-    ['Community', id.communityFocused],
-    ['Scholarly', id.scholarly],
-  ]
-  entries.sort((a, b) => b[1] - a[1])
-  if (entries[0][1] === 0 && entries[1][1] === 0 && entries[2][1] === 0) return 'Undeclared'
-  return entries[0][0]
 }
