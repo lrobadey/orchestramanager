@@ -25,8 +25,8 @@
 
 .roster-canopy {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
-  gap: 2rem;
+  grid-template-columns: minmax(24rem, 34rem) minmax(34rem, 1fr);
+  gap: clamp(2rem, 4vw, 4rem);
   align-items: end;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--hairline);
@@ -56,9 +56,9 @@
 }
 
 .roster-canopy-strength-block {
-  align-self: end;
-  justify-self: end;
-  width: min(100%, 28rem);
+  align-self: center;
+  justify-self: stretch;
+  width: 100%;
 }
 
 .roster-canopy-strength-label {
@@ -86,10 +86,10 @@
 
 .roster-strength-scale {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 0.5rem;
+  grid-template-columns: auto minmax(18rem, 1fr) auto;
+  gap: 0.85rem;
   align-items: center;
-  margin-top: 0.7rem;
+  margin-top: 0.9rem;
 }
 
 .roster-strength-scale-end {
@@ -107,7 +107,7 @@
 
 .roster-strength-scale-track {
   position: relative;
-  height: 3px;
+  height: 5px;
   background: var(--ink-well);
 }
 
@@ -121,9 +121,9 @@
 .roster-strength-scale-marker {
   position: absolute;
   left: 65%;
-  top: -4px;
+  top: -5px;
   width: 1px;
-  height: 11px;
+  height: 15px;
   background: var(--bark-dim);
 }
 
@@ -458,9 +458,9 @@
   }
 
   .roster-canopy-strength-block {
-    justify-self: start;
+    align-self: stretch;
+    justify-self: stretch;
     width: 100%;
-    max-width: 28rem;
   }
 
   .roster-stage-shell {
