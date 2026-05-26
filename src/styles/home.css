@@ -206,18 +206,23 @@
   background: linear-gradient(
     105deg,
     var(--birch) 0%,
-    var(--birch) 36%,
-    #f3f6f2 46%,
+    var(--birch) 26%,
+    #d7ded9 38%,
+    #ffffff 46%,
     var(--silver) 52%,
-    var(--birch) 62%,
+    #ffffff 58%,
+    var(--birch) 72%,
     var(--birch) 100%
   );
-  background-size: 240% 100%;
+  background-size: 320% 100%;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 18px rgba(190, 200, 194, 0.08);
-  animation: canopy-day-shimmer 7.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 5px rgba(207, 218, 211, 0.16));
+  text-shadow:
+    0 0 14px rgba(190, 200, 194, 0.14),
+    0 0 34px rgba(190, 200, 194, 0.08);
+  animation: canopy-day-shimmer 4.8s cubic-bezier(0.45, 0, 0.25, 1) infinite;
 }
 .canopy-countdown-unit {
   color: var(--silver);
@@ -228,8 +233,18 @@
 .canopy-countdown-caption { margin-top: 4px; }
 
 @keyframes canopy-day-shimmer {
-  0%, 58% { background-position: 140% 0; }
-  74%, 100% { background-position: -80% 0; }
+  0%, 38% {
+    background-position: 145% 0;
+    filter: drop-shadow(0 0 5px rgba(207, 218, 211, 0.14));
+  }
+  54% {
+    background-position: 45% 0;
+    filter: drop-shadow(0 0 14px rgba(232, 238, 234, 0.34));
+  }
+  72%, 100% {
+    background-position: -95% 0;
+    filter: drop-shadow(0 0 5px rgba(207, 218, 211, 0.14));
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
