@@ -49,7 +49,7 @@ function VitalCell({ label, value, delta, isCash, pct, pctTone, cashClass }: Vit
 }
 
 export default function UnderstoryVitals({ institution, deltas }: UnderstoryVitalsProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const id = institution.identity
   const dominantKey = (['adventurous', 'communityFocused', 'scholarly'] as const).reduce(
     (acc, k) => (id[k] > id[acc] ? k : acc),
