@@ -25,7 +25,7 @@ const SECTION_COLORS: Record<SectionKey, string> = {
   percussion: 'var(--pine)',
 }
 
-const STAGE_VIEWBOX = { w: 600, h: 400, cx: 300, cy: 340 }
+const STAGE_VIEWBOX = { w: 600, h: 385, cx: 300, cy: 326 }
 
 const STAGE_ARCS = [
   { section: 'strings' as SectionKey, radius: 100, from: 185, to: 355, chairs: 14 },
@@ -39,7 +39,7 @@ const STAGE_LABELS = [
   { section: 'strings' as SectionKey, angle: 268, radius: 170 },
   { section: 'winds' as SectionKey, angle: 268, radius: 218 },
   { section: 'brass' as SectionKey, angle: 268, radius: 268 },
-  { section: 'percussion' as SectionKey, angle: 268, radius: 318 },
+  { section: 'percussion' as SectionKey, angle: 268, radius: 305 },
 ]
 
 function strengthTone(value: number): 'pine' | 'silver' | 'bark' | 'ember' {
@@ -344,10 +344,6 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
 
       <section className="roster-floor">
         <section className="roster-stage-shell" aria-label="Roster stage schematic">
-          <div className="roster-stage-caption">
-            <span className="roster-stage-caption-slot">The Stage · {slotLabel}</span>
-          </div>
-
           <svg
             className="roster-stage-svg"
             viewBox={`0 0 ${STAGE_VIEWBOX.w} ${STAGE_VIEWBOX.h}`}
