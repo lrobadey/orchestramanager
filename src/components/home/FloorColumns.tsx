@@ -41,8 +41,8 @@ export default function FloorColumns({
   onOpenProgramme,
 }: FloorColumnsProps) {
   const [collapsed, setCollapsed] = useState<Record<FloorPanelKey, boolean>>({
-    roster: false,
-    programme: false,
+    roster: true,
+    programme: true,
     inbox: true,
   })
 
