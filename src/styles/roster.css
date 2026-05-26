@@ -32,7 +32,7 @@
   grid-template-columns: minmax(24rem, 1fr) minmax(32rem, 0.95fr);
   gap: clamp(1.5rem, 3vw, 3.2rem);
   align-items: end;
-  padding: 0.45rem 0 0.1rem 48px;
+  padding: 0.95rem 0 0.1rem 48px;
   border-top: 1px solid rgba(184, 192, 188, 0.08);
 }
 
