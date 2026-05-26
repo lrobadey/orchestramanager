@@ -13,8 +13,7 @@
 
   width: 100%;
   height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
   font-family: var(--hc-sans);
   color: var(--birch);
   background:
@@ -81,8 +80,9 @@
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-rows: auto auto auto auto;
-  min-height: 100%;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
 }
 
 .home-stratum {
@@ -96,7 +96,14 @@
   transition: padding 180ms ease;
 }
 .home-stratum.understory.collapsed { padding: 8px 56px 9px; }
-.home-stratum.floor { background: linear-gradient(180deg, #08130f 0%, #050d0a 100%); padding: 18px 56px; }
+.home-stratum.floor {
+  background: linear-gradient(180deg, #08130f 0%, #050d0a 100%);
+  padding: 12px 56px 14px;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 .home-stratum.trail { padding: 0; background: linear-gradient(180deg, #050d0a 0%, #030806 100%); border-bottom: none; }
 .home-stratum.console-screen-floor { min-height: 0; overflow: visible; }
 .home-stratum.programme-console-floor { padding-top: 14px; padding-bottom: 18px; }
@@ -414,11 +421,98 @@
 .understory-identity-row .v { font-family: var(--hc-mono); font-size: 11px; color: var(--birch); text-align: right; }
 
 /* ── Floor ────────────────────────────────────────────────── */
+.floor-focus-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex: 0 0 auto;
+}
+.floor-focus-bar button,
+.floor-collapse-btn {
+  border: 1px solid var(--hairline-soft);
+  background: rgba(184, 192, 188, 0.025);
+  color: var(--silver-dim);
+  font-family: var(--hc-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.floor-focus-bar button { padding: 5px 8px; }
+.floor-focus-bar button:hover,
+.floor-collapse-btn:hover,
+.floor-collapsed-rail:hover { border-color: var(--silver-dim); color: var(--birch); background: rgba(184, 192, 188, 0.055); }
+
 .floor-grid {
   display: grid;
-  grid-template-columns: 1.05fr 1.4fr 1fr;
-  gap: 36px;
+  grid-template-columns: minmax(220px, 1.05fr) minmax(360px, 1.4fr) minmax(220px, 1fr);
+  gap: 20px;
   min-height: 0;
+  flex: 1 1 auto;
+  transition: grid-template-columns 180ms ease;
+}
+.floor-grid.roster-collapsed { grid-template-columns: 48px minmax(360px, 1.55fr) minmax(220px, 1fr); }
+.floor-grid.inbox-collapsed { grid-template-columns: minmax(220px, 1.05fr) minmax(360px, 1.65fr) 48px; }
+.floor-grid.programme-collapsed { grid-template-columns: minmax(220px, 1.15fr) 48px minmax(220px, 1.05fr); }
+.floor-grid.roster-collapsed.inbox-collapsed { grid-template-columns: 48px minmax(360px, 1fr) 48px; }
+.floor-grid.roster-collapsed.programme-collapsed.inbox-collapsed { grid-template-columns: repeat(3, 48px); justify-content: center; }
+
+.floor-panel {
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.floor-panel-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+}
+.floor-panel-body::-webkit-scrollbar { width: 4px; }
+.floor-panel-body::-webkit-scrollbar-thumb { background: var(--hairline-soft); }
+.floor-collapse-btn {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  letter-spacing: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+.floor-collapsed-rail {
+  min-height: 0;
+  width: 48px;
+  border: 1px solid var(--hairline-soft);
+  background: rgba(184, 192, 188, 0.02);
+  color: var(--birch-dim);
+  cursor: pointer;
+  display: grid;
+  grid-template-rows: 1fr auto auto 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+.floor-collapsed-rail span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--silver-dim);
+}
+.floor-collapsed-rail strong { font-family: var(--display); font-size: 21px; color: var(--birch); font-weight: 500; }
+.floor-collapsed-rail em {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--hc-mono);
+  font-size: 8px;
+  font-style: normal;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bark);
 }
 
 .floor-col-head {
@@ -637,8 +731,9 @@
 /* ── Trail ────────────────────────────────────────────────── */
 .home-stratum.trail {
   position: relative;
-  height: 240px;
+  height: clamp(96px, 15dvh, 150px);
   overflow: hidden;
+  flex: 0 0 auto;
 }
 .trail-contours {
   position: absolute;
