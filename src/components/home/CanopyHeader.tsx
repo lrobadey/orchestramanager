@@ -1,6 +1,7 @@
 import type { InstitutionState, SeasonState } from '../../types/core'
 import { daysToCurtain, concertDate, seasonWeekLabel } from '../../data/homeStubs'
 import { CONCERT_ROMAN } from '../../data/numerals'
+import logo from '../../assets/logo.png'
 
 type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors'
 
@@ -60,7 +61,7 @@ export default function CanopyHeader({
       <div className="canopy-topbar">
         <div className="canopy-brand">
           <div className="canopy-brand-line">
-            <div className="canopy-mark">OM</div>
+            <img src={logo} alt="Orchestra Manager" className="canopy-mark" />
             <span className="canopy-name">{institution.name}</span>
           </div>
           <span className="hc-eyebrow">{institution.city}</span>

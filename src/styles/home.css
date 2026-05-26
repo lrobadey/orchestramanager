@@ -119,13 +119,8 @@
 .canopy-mark {
   width: 24px;
   height: 24px;
-  border: 1px solid var(--silver-dim);
-  display: grid;
-  place-items: center;
-  color: var(--silver);
-  font-family: var(--hc-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
+  display: block;
+  object-fit: contain;
   align-self: center;
 }
 .canopy-brand-line {

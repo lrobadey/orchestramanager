@@ -1,6 +1,7 @@
 import { type DragEvent, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, PanInfo, useMotionValue } from 'framer-motion'
 import ConcertForecastView from './ConcertForecast'
+import logo from '../assets/logo.png'
 import {
   ConcertForecast,
   ConcertProgram,
@@ -533,7 +534,7 @@ export default function ProgramBuilder({
     <div className={`programme-shell ${isDragging ? 'dragging-mode' : ''}`}>
       <header className="programme-canopy">
         <div className="programme-canopy-brand">
-          <div className="programme-mark">OM</div>
+          <img src={logo} alt="Orchestra Manager" className="programme-mark" />
           <div className="programme-canopy-copy">
             <span className="eyebrow programme-canopy-kicker">Programme</span>
             <h1 className="programme-canopy-title">The programme room</h1>

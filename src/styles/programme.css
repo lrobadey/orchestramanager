@@ -32,13 +32,8 @@
 .programme-mark {
   width: 34px;
   height: 34px;
-  border: 1px solid var(--silver-dim, rgba(255, 255, 255, 0.24));
-  display: grid;
-  place-items: center;
-  font-family: var(--mono, ui-monospace, SFMono-Regular, monospace);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  color: var(--silver, #c7cdc7);
+  display: block;
+  object-fit: contain;
   flex: 0 0 auto;
 }
 
