@@ -174,6 +174,7 @@
   align-items: end;
   gap: 30px;
   margin-top: -10px;
+  margin-left: 48px;
 }
 .canopy-headline {
   font-family: var(--display);
@@ -1622,6 +1623,7 @@
   .home-stratum.canopy,
   .home-stratum.understory,
   .home-stratum.floor { padding-left: 28px; padding-right: 28px; }
+  .canopy-headline-row { margin-left: 0; }
   .canopy-headline { font-size: 48px; }
   .canopy-countdown-num { font-size: 60px; }
   .canopy-countdown-unit { font-size: 32px; }
@@ -1645,7 +1647,7 @@
   .home-stratum.understory.collapsed { padding: 8px 18px 10px; }
   .home-stratum.floor { padding: 16px 18px; }
   .canopy-topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .canopy-headline-row { grid-template-columns: 1fr; gap: 12px; }
+  .canopy-headline-row { grid-template-columns: 1fr; gap: 12px; margin-left: 12px; }
   .canopy-headline { font-size: 36px; }
   .canopy-countdown { text-align: left; }
   .canopy-countdown-num { font-size: 48px; }
