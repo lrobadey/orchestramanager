@@ -258,7 +258,7 @@
 .roster-stage-svg {
   width: 100%;
   display: block;
-  aspect-ratio: 600 / 460;
+  aspect-ratio: 600 / 400;
   min-width: 0;
 }
 

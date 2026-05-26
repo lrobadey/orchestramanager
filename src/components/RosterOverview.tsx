@@ -25,7 +25,7 @@ const SECTION_COLORS: Record<SectionKey, string> = {
   percussion: 'var(--pine)',
 }
 
-const STAGE_VIEWBOX = { w: 600, h: 460, cx: 300, cy: 340 }
+const STAGE_VIEWBOX = { w: 600, h: 400, cx: 300, cy: 340 }
 
 const STAGE_ARCS = [
   { section: 'strings' as SectionKey, radius: 100, from: 185, to: 355, chairs: 14 },
