@@ -36,24 +36,14 @@
   min-width: 0;
 }
 
-.roster-canopy-title {
-  margin: 0.35rem 0 0;
+.roster-canopy-status {
+  margin-top: 0.55rem;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 3.55rem;
-  line-height: 0.95;
+  font-size: 1.15rem;
+  line-height: 1.25;
   font-style: italic;
   font-weight: 500;
-  letter-spacing: -0.02em;
-  color: var(--birch);
-}
-
-.roster-canopy-title span:first-child {
-  color: var(--silver);
-  font-weight: 400;
-}
-
-.roster-canopy-title span:last-child {
-  color: var(--bark-dim);
+  color: var(--birch-dim);
 }
 
 .roster-canopy-copy {
@@ -66,6 +56,7 @@
 }
 
 .roster-canopy-strength-block {
+  align-self: end;
   justify-self: end;
   width: min(100%, 28rem);
 }
@@ -75,6 +66,7 @@
 }
 
 .roster-canopy-strength-value {
+  margin: 0.35rem 0 0;
   font-family: var(--font-mono);
   font-size: clamp(6.2rem, 9vw, 8.8rem);
   line-height: 0.82;
@@ -483,10 +475,6 @@
 @media (max-width: 760px) {
   .roster-page {
     padding: 1rem;
-  }
-
-  .roster-canopy-title {
-    font-size: 2.2rem;
   }
 
   .roster-canopy-strength-value {

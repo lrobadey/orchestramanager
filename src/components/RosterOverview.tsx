@@ -272,18 +272,18 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
           <div className="roster-kicker">
             The Orchestra · {roster.principals.length} principals · {totalChairs} chairs
           </div>
-          <h1 className="roster-canopy-title">
-            <span>{headline.article}</span> {headline.phrase}<span>.</span>
+          <h1 className={`roster-canopy-strength-value ${toneClass(compositeStrength)}`}>
+            {compositeStrength}
+            <span className="roster-canopy-strength-suffix">/100</span>
           </h1>
+          <div className="roster-canopy-status">
+            Composite strength · {headline.article} {headline.phrase}.
+          </div>
           <p className="roster-canopy-copy">{rosterDiagnosis}</p>
         </div>
 
         <div className="roster-canopy-strength-block">
-          <div className="roster-canopy-strength-label">Composite strength</div>
-          <div className={`roster-canopy-strength-value ${toneClass(compositeStrength)}`}>
-            {compositeStrength}
-            <span className="roster-canopy-strength-suffix">/100</span>
-          </div>
+          <div className="roster-canopy-strength-label">Strength range</div>
           <div className="roster-strength-scale">
             <span className="roster-strength-scale-end">fragile 0</span>
             <div className="roster-strength-scale-track">
