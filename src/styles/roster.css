@@ -36,6 +36,10 @@
   min-width: 0;
 }
 
+.roster-kicker {
+  margin-bottom: 0.8rem;
+}
+
 .roster-canopy-status {
   margin-top: 0.55rem;
   font-family: Georgia, 'Times New Roman', serif;
@@ -66,7 +70,7 @@
 }
 
 .roster-canopy-strength-value {
-  margin: 0.35rem 0 0;
+  margin: 0;
   font-family: var(--font-mono);
   font-size: clamp(6.2rem, 9vw, 8.8rem);
   line-height: 0.82;
