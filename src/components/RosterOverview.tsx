@@ -248,14 +248,6 @@ export function RosterStrengthHeader({ roster, forecast }: Pick<RosterOverviewPr
       : 0
   const chairCounts = sectionChairCounts()
   const totalChairs = Object.values(chairCounts).reduce((sum, count) => sum + count, 0)
-  const sortedSections = [...sectionStrengths].sort((a, b) => b.strength - a.strength)
-  const strongestSection = sortedSections[0]
-  const weakestSection = sortedSections[sortedSections.length - 1]
-  const watchCount = sectionStrengths.filter(row => row.strength < 55).length
-  const stableCount = sectionStrengths.length - watchCount
-  const rosterDiagnosis = strongestSection && weakestSection
-    ? `${strongestSection.label} carries the institution; ${weakestSection.label.toLowerCase()} is the section on watch. ${stableCount} section${stableCount === 1 ? '' : 's'} stable, ${watchCount} on watch.`
-    : 'The orchestra is still settling into its first readable shape.'
   return (
     <section className="roster-command-header" aria-label="Roster strength summary">
       <div className="roster-command-copy">
@@ -264,7 +256,6 @@ export function RosterStrengthHeader({ roster, forecast }: Pick<RosterOverviewPr
           <span>{roster.principals.length} principals</span>
           <span>{totalChairs} chairs</span>
         </div>
-        <p className="roster-command-diagnosis">{rosterDiagnosis}</p>
       </div>
 
       <div className="roster-command-score">
