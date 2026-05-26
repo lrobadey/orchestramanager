@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { InstitutionState, InstitutionalDeltas } from '../../types/core'
 
 interface UnderstoryVitalsProps {
@@ -48,6 +49,7 @@ function VitalCell({ label, value, delta, isCash, pct, pctTone, cashClass }: Vit
 }
 
 export default function UnderstoryVitals({ institution, deltas }: UnderstoryVitalsProps) {
+  const [collapsed, setCollapsed] = useState(false)
   const id = institution.identity
   const dominantKey = (['adventurous', 'communityFocused', 'scholarly'] as const).reduce(
     (acc, k) => (id[k] > id[acc] ? k : acc),
@@ -69,14 +71,58 @@ export default function UnderstoryVitals({ institution, deltas }: UnderstoryVita
     </>
   )
 
+  const compactVitals = [
+    { label: 'Cash', value: fmtCash(institution.cash) },
+    { label: 'Rep', value: institution.artisticReputation },
+    { label: 'Morale', value: institution.musicianMorale },
+    { label: 'Trust', value: institution.audienceTrust },
+    { label: 'Donors', value: institution.donorConfidence },
+  ]
+
   return (
-    <div className="home-stratum understory">
-      <div className="hc-rule-brown" style={{ marginBottom: 12 }} />
+    <div className={`home-stratum understory${collapsed ? ' collapsed' : ''}`}>
+      <div className="hc-rule-brown" style={{ marginBottom: collapsed ? 8 : 12 }} />
+      {collapsed ? (
+        <div className="understory-compact-strip">
+          <span className="hc-eyebrow understory-compact-title">Institutional state of play</span>
+          <div className="understory-compact-vitals">
+            {compactVitals.map((vital) => (
+              <div className="understory-compact-item" key={vital.label}>
+                <span className="understory-compact-label">{vital.label}</span>
+                <span className="understory-compact-value">{vital.value}</span>
+              </div>
+            ))}
+            <div className="understory-compact-identity">
+              <span>Identity:</span> {undeclared ? 'undeclared' : dominantLabel}
+            </div>
+          </div>
+          <button
+            className="understory-collapse-toggle"
+            type="button"
+            onClick={() => setCollapsed(false)}
+            aria-label="Expand institutional state of play"
+            aria-expanded="false"
+          >
+            ⌄
+          </button>
+        </div>
+      ) : (
       <div className="understory-grid">
         <div>
           <div className="understory-vitals-head">
             <span className="hc-eyebrow">Institutional state of play</span>
-            <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>read left to right</span>
+            <div className="understory-head-actions">
+              <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>read left to right</span>
+              <button
+                className="understory-collapse-toggle"
+                type="button"
+                onClick={() => setCollapsed(true)}
+                aria-label="Collapse institutional state of play"
+                aria-expanded="true"
+              >
+                ⌃
+              </button>
+            </div>
           </div>
           <div className="understory-vitals">
             <VitalCell label="Cash" value={fmtCash(institution.cash)} delta={deltas?.cash} isCash cashClass />
@@ -124,6 +170,7 @@ export default function UnderstoryVitals({ institution, deltas }: UnderstoryVita
           </div>
         </div>
       </div>
+      )}
     </div>
   )
 }
