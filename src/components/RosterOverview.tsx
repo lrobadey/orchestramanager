@@ -246,16 +246,10 @@ export function RosterStrengthHeader({ roster, forecast }: Pick<RosterOverviewPr
     sectionStrengths.length > 0
       ? Math.round(sectionStrengths.reduce((sum, row) => sum + row.strength, 0) / sectionStrengths.length)
       : 0
-  const chairCounts = sectionChairCounts()
-  const totalChairs = Object.values(chairCounts).reduce((sum, count) => sum + count, 0)
   return (
     <section className="roster-command-header" aria-label="Roster strength summary">
       <div className="roster-command-copy">
         <div className="roster-command-title">The Orchestra</div>
-        <div className="roster-command-sublabels">
-          <span>{roster.principals.length} principals</span>
-          <span>{totalChairs} chairs</span>
-        </div>
       </div>
 
       <div className="roster-command-score">
