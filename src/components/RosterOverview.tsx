@@ -261,8 +261,10 @@ export function RosterStrengthHeader({ roster, forecast }: Pick<RosterOverviewPr
   return (
     <section className="roster-command-header" aria-label="Roster strength summary">
       <div className="roster-command-copy">
-        <div className="roster-kicker">
-          The Orchestra · {roster.principals.length} principals · {totalChairs} chairs
+        <div className="roster-command-title">The Orchestra</div>
+        <div className="roster-command-sublabels">
+          <span>{roster.principals.length} principals</span>
+          <span>{totalChairs} chairs</span>
         </div>
         <div className="roster-command-status">
           Composite strength · {headline.article} {headline.phrase}.

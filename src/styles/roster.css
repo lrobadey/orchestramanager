@@ -40,8 +40,28 @@
   min-width: 0;
 }
 
+.roster-command-title {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.2rem, 3.6vw, 4.2rem);
+  font-style: italic;
+  line-height: 0.95;
+  color: var(--birch);
+}
+
+.roster-command-sublabels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 1rem;
+  margin-top: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--silver-dim);
+}
+
 .roster-command-status {
-  margin-top: 0.45rem;
+  margin-top: 0.7rem;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.05rem;
   line-height: 1.2;
@@ -69,12 +89,12 @@
 
 .roster-command-strength-value {
   margin: 0;
-  font-family: var(--font-mono);
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(4.2rem, 6vw, 6.2rem);
   line-height: 0.82;
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.06em;
+  letter-spacing: -0.04em;
 }
 
 .roster-canopy {
