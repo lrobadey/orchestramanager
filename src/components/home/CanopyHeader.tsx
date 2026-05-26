@@ -1,6 +1,5 @@
 import type { InstitutionState, SeasonState } from '../../types/core'
 import { formatShortDate, getSeasonWeekLabel } from '../../sim/calendar'
-import { CONCERT_ROMAN } from '../../data/numerals'
 import logo from '../../assets/logo.png'
 
 type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors' | 'audience'
@@ -43,12 +42,11 @@ export default function CanopyHeader({
   const idx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
   const currentSlot = seasonComplete ? season.slots[3] : season.slots[idx]
-  const roman = CONCERT_ROMAN[idx]
   const days = Math.max(0, currentSlot.scheduledDay - season.calendar.currentDay)
   const date = formatShortDate(currentSlot.scheduledDate, season.calendar.startDate)
 
   // Slot names are full phrases like "Opening Night" or "Spring Identity Concert"
-  // — turn them into "I. Opening Night is taking shape."
+  // — turn them into "Opening Night is taking shape."
   const headlineSlot = currentSlot.name
 
   return (
@@ -90,10 +88,10 @@ export default function CanopyHeader({
       <div className="canopy-headline-row">
         <div>
           <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>
-            {seasonComplete ? 'The hour · the season closed' : `The hour · prologue to ${roman}`}
+            {seasonComplete ? 'The hour · the season closed' : 'The hour · prologue'}
           </span>
           <h1 className="canopy-headline hc-display">
-            <span className="roman">{roman}.</span> {headlineSlot}{' '}
+            {headlineSlot}{' '}
             {seasonComplete ? 'is in the books' : 'is taking shape'}
             <span className="punct">.</span>
           </h1>

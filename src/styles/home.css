@@ -172,6 +172,7 @@
   grid-template-columns: 1.4fr 1fr;
   align-items: end;
   gap: 30px;
+  margin-top: -10px;
 }
 .canopy-headline {
   font-family: var(--display);
@@ -181,11 +182,6 @@
   line-height: 0.95;
   margin: 2px 0 0;
   color: var(--birch);
-}
-.canopy-headline .roman {
-  font-style: italic;
-  color: var(--silver);
-  font-weight: 400;
 }
 .canopy-headline .punct { color: var(--bark); }
 .canopy-headline-sub {
