@@ -25,7 +25,7 @@ const SECTION_COLORS: Record<SectionKey, string> = {
   percussion: 'var(--pine)',
 }
 
-const STAGE_VIEWBOX = { w: 600, h: 460, cx: 300, cy: 370 }
+const STAGE_VIEWBOX = { w: 600, h: 460, cx: 300, cy: 340 }
 
 const STAGE_ARCS = [
   { section: 'strings' as SectionKey, radius: 100, from: 185, to: 355, chairs: 14 },
@@ -346,7 +346,6 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
         <section className="roster-stage-shell" aria-label="Roster stage schematic">
           <div className="roster-stage-caption">
             <span className="roster-stage-caption-slot">The Stage · {slotLabel}</span>
-            <span className="roster-stage-caption-side">Audience perspective · hover to read, click to inspect</span>
           </div>
 
           <svg
