@@ -184,7 +184,7 @@
   color: var(--birch);
   white-space: nowrap;
 }
-.canopy-headline .punct { color: var(--bark); }
+.canopy-headline .punct { color: inherit; }
 .canopy-headline-sub {
   font-family: var(--serif);
   font-size: 16px;

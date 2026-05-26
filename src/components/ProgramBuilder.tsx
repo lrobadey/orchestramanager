@@ -544,7 +544,7 @@ export default function ProgramBuilder({
           <img src={logo} alt="Orchestra Manager" className="programme-mark" />
           <div className="programme-canopy-copy">
             <span className="eyebrow programme-canopy-kicker">Programme</span>
-            <h1 className="programme-canopy-title">The programme room</h1>
+            <h1 className="programme-canopy-title">The programme room.</h1>
           </div>
         </div>
 
