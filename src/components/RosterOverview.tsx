@@ -28,18 +28,18 @@ const SECTION_COLORS: Record<SectionKey, string> = {
 const STAGE_VIEWBOX = { w: 600, h: 385, cx: 300, cy: 326 }
 
 const STAGE_ARCS = [
-  { section: 'strings' as SectionKey, radius: 108, from: 178, to: 362, chairs: 14 },
-  { section: 'strings' as SectionKey, radius: 158, from: 178, to: 362, chairs: 16 },
-  { section: 'winds' as SectionKey, radius: 208, from: 195, to: 345, chairs: 12 },
-  { section: 'brass' as SectionKey, radius: 258, from: 205, to: 335, chairs: 10 },
-  { section: 'percussion' as SectionKey, radius: 306, from: 220, to: 320, chairs: 5 },
+  { section: 'strings' as SectionKey, radius: 100, from: 172, to: 368, chairs: 14 },
+  { section: 'strings' as SectionKey, radius: 148, from: 172, to: 368, chairs: 16 },
+  { section: 'winds' as SectionKey, radius: 198, from: 190, to: 350, chairs: 12 },
+  { section: 'brass' as SectionKey, radius: 248, from: 198, to: 342, chairs: 10 },
+  { section: 'percussion' as SectionKey, radius: 298, from: 210, to: 330, chairs: 5 },
 ]
 
 const STAGE_LABELS = [
-  { section: 'strings' as SectionKey, angle: 268, radius: 178 },
-  { section: 'winds' as SectionKey, angle: 268, radius: 228 },
-  { section: 'brass' as SectionKey, angle: 268, radius: 278 },
-  { section: 'percussion' as SectionKey, angle: 268, radius: 312 },
+  { section: 'strings' as SectionKey, angle: 268, radius: 170 },
+  { section: 'winds' as SectionKey, angle: 268, radius: 218 },
+  { section: 'brass' as SectionKey, angle: 268, radius: 268 },
+  { section: 'percussion' as SectionKey, angle: 268, radius: 305 },
 ]
 
 function strengthTone(value: number): 'pine' | 'silver' | 'bark' | 'ember' {
