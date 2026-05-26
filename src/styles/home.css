@@ -169,19 +169,20 @@
 
 .canopy-headline-row {
   display: grid;
-  grid-template-columns: 1.4fr 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: 30px;
   margin-top: -10px;
 }
 .canopy-headline {
   font-family: var(--display);
-  font-size: 64px;
+  font-size: clamp(50px, 4.4vw, 64px);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 0.95;
   margin: 2px 0 0;
   color: var(--birch);
+  white-space: nowrap;
 }
 .canopy-headline .punct { color: var(--bark); }
 .canopy-headline-sub {
