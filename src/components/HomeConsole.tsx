@@ -5,7 +5,7 @@ import UnderstoryVitals from './home/UnderstoryVitals'
 import FloorColumns from './home/FloorColumns'
 import SeasonTrail from './home/SeasonTrail'
 
-export type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors'
+export type HomeNavKey = 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors' | 'audience'
 
 interface HomeConsoleProps {
   season: SeasonState

@@ -6,7 +6,7 @@ export const startingInstitution: InstitutionState = {
   seasonLabel: 'Season I · Debut',
   cash: 180000,
   artisticReputation: 30,
-  audienceTrust: 25,
+  audienceTrust: 7,
   donorConfidence: 35,
   musicianMorale: 65,
   technicalQuality: 55,

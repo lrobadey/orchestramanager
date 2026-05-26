@@ -13,7 +13,7 @@ import '../styles/home.css'
 interface DonorRelationsScreenProps {
   season: SeasonState
   institution: InstitutionState
-  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors') => void
+  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors' | 'audience') => void
 }
 
 type RadarAxis<T> = { key: keyof T; label: string }

@@ -10,7 +10,9 @@ import {
   Work,
 } from '../types/core'
 import { createInitialDonors } from '../data/donors'
+import { cityAudienceSegments, createInitialAudience } from '../data/audienceSegments'
 import { applyConcertReport } from './applyConcertReport'
+import { updateAudienceAfterConcert, summarizeAudienceTrust } from './audienceReactions'
 import { updateDonorsAfterConcert } from './donorReactions'
 import { buildConcertFinanceTransactions } from './finance'
 import { createInitialRoster, updateRosterAfterConcert } from './roster'
@@ -45,6 +47,7 @@ export function createInitialSeason(
     institution,
     roster: createInitialRoster(initialPrincipals),
     donors: createInitialDonors(),
+    audience: createInitialAudience(),
   }
 }
 
@@ -82,7 +85,7 @@ export function resolveSeasonConcert(
   const newSlots = [...settledSlots] as SeasonState['slots']
   newSlots[idx] = updatedSlot
 
-  const nextInstitution = applyConcertReport(
+  const baseInstitution = applyConcertReport(
     season.institution,
     report,
     settlementCashDelta + immediateCashDelta,
@@ -94,6 +97,22 @@ export function resolveSeasonConcert(
     report,
     works,
   })
+  const selectedWorks = program.workIds
+    .slice(0, program.workCount)
+    .map(id => works.find(work => work.id === id))
+    .filter((work): work is Work => Boolean(work))
+  const nextAudience = updateAudienceAfterConcert({
+    audienceState: season.audience,
+    cityAudienceSegments,
+    program,
+    report,
+    works: selectedWorks,
+    isOpeningNight: idx === 0,
+  })
+  const nextInstitution = {
+    ...baseInstitution,
+    audienceTrust: summarizeAudienceTrust(nextAudience),
+  }
 
   return {
     slots: newSlots,
@@ -101,6 +120,7 @@ export function resolveSeasonConcert(
     institution: nextInstitution,
     roster: nextRoster,
     donors: nextDonors,
+    audience: nextAudience,
   }
 }
 

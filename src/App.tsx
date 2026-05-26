@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { works } from './data/works'
 import { principals } from './data/principals'
-import { audienceSegments } from './data/audienceSegments'
+import { cityAudienceSegments } from './data/audienceSegments'
 import { startingInstitution } from './data/institution'
 import { forecastProgram } from './sim/forecastProgram'
 import { resolveConcert } from './sim/resolveConcert'
@@ -24,9 +24,10 @@ import UnderstoryVitals from './components/home/UnderstoryVitals'
 import LibraryScreen from './components/LibraryScreen'
 import LedgerScreen from './components/LedgerScreen'
 import DonorRelationsScreen from './components/DonorRelationsScreen'
+import AudienceRelationsScreen from './components/AudienceRelationsScreen'
 
 type Phase = 'planning' | 'report'
-type MainView = 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors'
+type MainView = 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors' | 'audience'
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -36,6 +37,7 @@ const emptyProgram = (): ConcertProgram => ({
   intermissionAfter: 1,
   rehearsalAllocation: evenAllocation(),
   marketingSpend: 15_000,
+  marketingStyle: 'digital',
   ticketPrice: 70,
   studentTicketsEnabled: false,
   studentTicketPrice: 25,
@@ -62,7 +64,8 @@ export default function App() {
         works,
         institution,
         principals: livePrincipals,
-        audienceSegments,
+        cityAudienceSegments,
+        audienceState: season.audience,
         program,
         donorState: season.donors,
       }),
@@ -75,7 +78,8 @@ export default function App() {
       works,
       institution,
       principals: livePrincipals,
-      audienceSegments,
+      cityAudienceSegments,
+      audienceState: season.audience,
       program,
       donorState: season.donors,
       roll: Math.random() * 100,
@@ -277,6 +281,18 @@ export default function App() {
     return (
       <AppShell chromeless>
         <DonorRelationsScreen
+          institution={institution}
+          season={season}
+          onNavigate={handleHomeNavigate}
+        />
+      </AppShell>
+    )
+  }
+
+  if (mainView === 'audience' && phase === 'planning') {
+    return (
+      <AppShell chromeless>
+        <AudienceRelationsScreen
           institution={institution}
           season={season}
           onNavigate={handleHomeNavigate}
