@@ -47,6 +47,13 @@ const SECTIONS: Array<'strings' | 'winds' | 'brass' | 'percussion'> = [
   'brass',
   'percussion',
 ]
+const MARKETING_STYLES = [
+  ['digital', 'Digital/social'],
+  ['prestige', 'Prestige'],
+  ['critical', 'Critical/artistic'],
+  ['grassroots', 'Grassroots'],
+  ['education', 'Education'],
+] as const
 
 function findWork(works: Work[], id: string | null): Work | null {
   if (!id) return null
@@ -665,6 +672,21 @@ export default function ProgramBuilder({
                   value={program.marketingSpend}
                   onChange={e => onProgramChange({ ...program, marketingSpend: Number(e.target.value) })}
                 />
+              </div>
+
+              <div className="programme-production-cell">
+                <div className="programme-production-row">
+                  <span className="programme-production-label">Campaign</span>
+                </div>
+                <select
+                  value={program.marketingStyle ?? 'digital'}
+                  onChange={e => onProgramChange({ ...program, marketingStyle: e.target.value as ConcertProgram['marketingStyle'] })}
+                  style={{ width: '100%' }}
+                >
+                  {MARKETING_STYLES.map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="programme-production-cell">

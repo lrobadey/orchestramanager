@@ -8,7 +8,7 @@ interface LedgerScreenProps {
   season: SeasonState
   forecast: ConcertForecast
   institution: InstitutionState
-  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors') => void
+  onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors' | 'audience') => void
 }
 
 export default function LedgerScreen({

@@ -2,6 +2,8 @@ import {
   Work,
   Principal,
   AudienceSegment,
+  AudienceState,
+  CityAudienceSegment,
   InstitutionState,
   ConcertProgram,
   DonorState,
@@ -43,7 +45,9 @@ export interface ForecastInput {
   works: Work[]
   institution: InstitutionState
   principals: Principal[]
-  audienceSegments: AudienceSegment[]
+  audienceSegments?: AudienceSegment[]
+  cityAudienceSegments?: CityAudienceSegment[]
+  audienceState?: AudienceState
   program: ConcertProgram
   donorState?: DonorState
 }
@@ -92,26 +96,55 @@ export function computeIdentityProgramFit(
   return clamp((expectationFit - 50) / 2, -20, 25)
 }
 
+function relationshipForSegment(
+  segment: CityAudienceSegment | AudienceSegment,
+  audienceState: AudienceState | undefined,
+): AudienceState['relationships'][number] {
+  const existing = audienceState?.relationships.find(row => row.segmentId === segment.id)
+  if (existing) return existing
+
+  const legacyLoyalty = 'loyalty' in segment ? segment.loyalty : 0
+  return {
+    segmentId: segment.id,
+    awareness: 'loyalty' in segment ? 100 : 5,
+    trust: 'loyalty' in segment ? legacyLoyalty : 5,
+    habit: legacyLoyalty,
+    alignmentMemory: 0,
+    recentReaction: '',
+    lastDelta: 0,
+  }
+}
+
+function noveltyAffinity(segment: CityAudienceSegment | AudienceSegment): number {
+  return 'contemporaryAffinity' in segment ? segment.contemporaryAffinity : segment.noveltyAffinity
+}
+
+function studentSegment(segmentId: string): boolean {
+  return segmentId === 'students-educators' || segmentId === 'students-emerging-artists'
+}
+
 function institutionalModifierForSegment(
-  seg: AudienceSegment,
+  seg: CityAudienceSegment | AudienceSegment,
+  rel: AudienceState['relationships'][number],
   institution: InstitutionState,
   prestige: number,
   novelty: number,
   program: ConcertProgram,
   identityFit: number,
 ): number {
-  const trust = institution.audienceTrust - 50
+  const trust = rel.trust - 50
   const reputation = institution.artisticReputation - 50
   const adventurous = institution.identity.adventurous
   const scholarly = institution.identity.scholarly
   const community = institution.identity.communityFocused
   const communitySignal = program.studentTicketsEnabled || program.ticketPrice <= 55
+  const noveltyFit = noveltyAffinity(seg)
 
-  let modifier = trust * (seg.loyalty / 100) * 0.16 + reputation * (seg.prestigeAffinity / 100) * 0.1
+  let modifier = trust * 0.12 + reputation * (seg.prestigeAffinity / 100) * 0.1
 
   if (novelty > 55) {
-    modifier += (adventurous / 100) * (seg.contemporaryAffinity / 100) * 14
-    if (seg.canonAffinity > seg.contemporaryAffinity) modifier -= (novelty - 55) * 0.08
+    modifier += (adventurous / 100) * (noveltyFit / 100) * 14
+    if (seg.canonAffinity > noveltyFit) modifier -= (novelty - 55) * 0.08
   }
 
   if (prestige > 65) {
@@ -122,19 +155,34 @@ function institutionalModifierForSegment(
     modifier += (community / 100) * (seg.communityAffinity / 100) * 10
   }
 
-  if (seg.id === 'seasoned-supporters' || seg.id === 'donors-patrons') {
-    modifier += identityFit * 0.28
-  } else if (seg.id === 'cultural-explorers' || seg.id === 'young-professionals') {
-    modifier += identityFit * 0.18
-  } else {
-    modifier += identityFit * 0.12
-  }
+  const identityWeight =
+    seg.id === 'classical-core' || seg.id === 'seasoned-supporters' || seg.id === 'donors-patrons'
+      ? 0.28
+      : seg.id === 'new-music-public' || seg.id === 'cultural-omnivores' || seg.id === 'cultural-explorers'
+        ? 0.2
+        : 0.14
+  modifier += identityFit * identityWeight
 
   return clamp(modifier, -18, 22)
 }
 
+function awarenessLiftForSegment(seg: CityAudienceSegment | AudienceSegment, program: ConcertProgram): number {
+  const spendLift = marketingEffect(program.marketingSpend)
+  const style = program.marketingStyle ?? 'digital'
+  const weights: Record<string, number> = {
+    'classical-core': style === 'prestige' || style === 'critical' ? 1.2 : style === 'education' ? 0.55 : 0.75,
+    'new-music-public': style === 'critical' ? 1.3 : style === 'digital' ? 1.05 : 0.75,
+    'cultural-omnivores': style === 'digital' ? 1.25 : style === 'critical' ? 1.0 : 0.85,
+    'students-emerging-artists': style === 'education' || style === 'grassroots' ? 1.35 : style === 'digital' ? 1.15 : 0.65,
+    'civic-tech-professionals': style === 'prestige' ? 1.35 : style === 'digital' ? 1.0 : 0.7,
+    'community-neighborhood-public': style === 'grassroots' ? 1.45 : style === 'education' ? 1.2 : 0.55,
+  }
+  return spendLift * (weights[seg.id] ?? 1)
+}
+
 function computeAttendance(
-  segments: AudienceSegment[],
+  segments: Array<CityAudienceSegment | AudienceSegment>,
+  audienceState: AudienceState | undefined,
   institution: InstitutionState,
   adjustedDraw: number,
   prestige: number,
@@ -156,31 +204,37 @@ function computeAttendance(
   )
 
   const breakdown = segments.map(seg => {
+    const rel = relationshipForSegment(seg, audienceState)
     const effectiveTicketPrice =
-      seg.id === 'students-educators' && program.studentTicketsEnabled
+      studentSegment(seg.id) && program.studentTicketsEnabled
         ? program.studentTicketPrice
         : program.ticketPrice
     const canonScore = 100 - novelty
     const contemporaryScore = novelty
     const tasteMatch =
       (seg.canonAffinity * (canonScore / 100) +
-        seg.contemporaryAffinity * (contemporaryScore / 100) +
-        seg.prestigeAffinity * (prestige / 100)) /
-      3
+        noveltyAffinity(seg) * (contemporaryScore / 100) +
+        seg.prestigeAffinity * (prestige / 100) +
+        seg.orchestralLiteracy * 0.25) /
+      3.25
     const priceAccessibilityScore = priceAccessibilityForSegment(seg, effectiveTicketPrice)
     const prestigeLift = donorPrestigeLiftForSegment(seg.id, donorPrestigeLift)
     const institutionalModifier = institutionalModifierForSegment(
       seg,
+      rel,
       institution,
       prestige,
       novelty,
       program,
       identityFit,
     )
-    const interestRate =
-      clamp((tasteMatch + adjustedDraw) / 2 + prestigeLift + institutionalModifier, 0, 100) / 100
+    const motivationScore = clamp((tasteMatch + adjustedDraw) / 2 + prestigeLift + institutionalModifier, 0, 100)
+    const effectiveAwareness = clamp(rel.awareness + awarenessLiftForSegment(seg, program), 0, 100)
+    // First-time curiosity gives a new orchestra some demand before durable habit exists;
+    // trust and habit then become the long-term attendance engine.
+    const relationshipFactor = clamp(18 + rel.habit * 0.45 + rel.trust * 0.22 + rel.alignmentMemory * 0.06, 8, 100) / 100
     const attendance =
-      seg.size * (seg.loyalty / 100) * interestRate * (priceAccessibilityScore / 100)
+      seg.size * (effectiveAwareness / 100) * (motivationScore / 100) * relationshipFactor * (priceAccessibilityScore / 100)
 
     return {
       segmentId: seg.id,
@@ -190,29 +244,33 @@ function computeAttendance(
       effectiveTicketPrice,
       ticketRevenue: Math.round(attendance) * effectiveTicketPrice,
       priceAccessibilityScore: Math.round(priceAccessibilityScore),
+      awarenessScore: Math.round(effectiveAwareness),
+      trustScore: Math.round(rel.trust),
+      habitScore: Math.round(rel.habit),
+      motivationScore: Math.round(motivationScore),
     }
   })
 
   return withHouseShares(breakdown)
 }
 
-function priceAccessibilityForSegment(segment: AudienceSegment, ticketPrice: number): number {
+function priceAccessibilityForSegment(segment: CityAudienceSegment | AudienceSegment, ticketPrice: number): number {
   let penalty = 0
 
-  if (segment.id === 'students-educators') {
+  if (studentSegment(segment.id)) {
     penalty = ticketPrice <= 25 ? 0 : Math.pow((ticketPrice - 25) / 45, 1.35) * 55
-  } else if (segment.id === 'young-professionals') {
-    penalty = ticketPrice <= 45 ? 0 : Math.pow((ticketPrice - 45) / 55, 1.25) * 38
-  } else if (segment.id === 'cultural-explorers') {
+  } else if (segment.id === 'young-professionals' || segment.id === 'civic-tech-professionals') {
+    penalty = ticketPrice <= 45 ? 0 : Math.pow((ticketPrice - 45) / 70, 1.15) * 28
+  } else if (segment.id === 'cultural-explorers' || segment.id === 'cultural-omnivores' || segment.id === 'new-music-public') {
     penalty = ticketPrice <= 60 ? 0 : Math.pow((ticketPrice - 60) / 70, 1.1) * 24
-  } else if (segment.id === 'seasoned-supporters') {
+  } else if (segment.id === 'seasoned-supporters' || segment.id === 'classical-core') {
     penalty = ticketPrice <= 65 ? 0 : ((ticketPrice - 65) / 90) * 18
   } else if (segment.id === 'donors-patrons') {
     penalty = ticketPrice <= 95 ? 0 : ((ticketPrice - 95) / 120) * 8
   } else {
     penalty =
-      ticketPrice > 60
-        ? ((ticketPrice - 60) / 120) * (segment.priceSensitivity / 100) * 30
+      ticketPrice > 45
+        ? ((ticketPrice - 45) / 90) * (segment.priceSensitivity / 100) * 42
         : 0
   }
 
@@ -220,8 +278,8 @@ function priceAccessibilityForSegment(segment: AudienceSegment, ticketPrice: num
 }
 
 function donorPrestigeLiftForSegment(segmentId: string, lift: number): number {
-  if (segmentId === 'donors-patrons') return lift
-  if (segmentId === 'seasoned-supporters') return lift * 0.45
+  if (segmentId === 'donors-patrons' || segmentId === 'civic-tech-professionals') return lift
+  if (segmentId === 'seasoned-supporters' || segmentId === 'classical-core') return lift * 0.45
   return 0
 }
 
@@ -337,7 +395,8 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   }
 
   const slotWorks = resolveSlotWorks(input)
-  const { institution, principals, audienceSegments, program } = input
+  const { institution, principals, program } = input
+  const segments = input.cityAudienceSegments ?? input.audienceSegments ?? []
   const displaySlotWorks = slotWorks.map((work, i) =>
     i < program.workCount ? work : null,
   ) as SlotTuple<Work | null>
@@ -444,7 +503,8 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   }) as SlotTuple<number | null>
 
   const projectedAudienceBreakdown = computeAttendance(
-    audienceSegments,
+    segments,
+    input.audienceState,
     institution,
     adjustedDraw,
     programPrestige,

@@ -100,6 +100,9 @@ function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
             <span className="audience-segment-share">
               {Math.round(row.shareOfHouse * 100)}%
             </span>
+            {row.awarenessScore !== undefined && (
+              <span className="text-muted text-mono">A{row.awarenessScore} T{row.trustScore} H{row.habitScore}</span>
+            )}
           </div>
         ))}
       </div>

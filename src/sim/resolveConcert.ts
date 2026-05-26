@@ -195,10 +195,11 @@ function buildFinancialNotes(
     notes.push(`The concert returned a surplus of ${fmt$(net)} — ${driver} drove the result.`)
   }
 
-  const seasonedRow = audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
-  if (seasonedRow && seasonedRow.shareOfHouse > 0.45 && net >= 0) {
-    const pct = Math.round(seasonedRow.shareOfHouse * 100)
-    notes.push(`Seasoned Supporters made up ${pct}% of the house — their loyalty carried the evening financially.`)
+  const coreRow = audienceBreakdown.find(r => r.segmentId === 'classical-core')
+    ?? audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
+  if (coreRow && coreRow.shareOfHouse > 0.45 && net >= 0) {
+    const pct = Math.round(coreRow.shareOfHouse * 100)
+    notes.push(`${coreRow.segmentName} made up ${pct}% of the house — their early commitment carried the evening financially.`)
   }
 
   return notes.slice(0, 2)
@@ -318,9 +319,10 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const reputationDelta = Math.round(
     clamp((performanceQuality - 50) * 0.3 + (criticResponse - 50) * 0.2, -15, 15),
   )
-  const seasonedRow = audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
-  const seasonedShare = seasonedRow?.shareOfHouse ?? 0.2
-  const trustDelta = Math.round(clamp((audienceResponse - 50) * 0.2 + (seasonedShare - 0.25) * 10 + identityFit * 0.08, -10, 10))
+  const coreRow = audienceBreakdown.find(r => r.segmentId === 'classical-core')
+    ?? audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
+  const coreShare = coreRow?.shareOfHouse ?? 0.2
+  const trustDelta = Math.round(clamp((audienceResponse - 50) * 0.2 + (coreShare - 0.25) * 10 + identityFit * 0.08, -10, 10))
   const attendanceRate = attendance / HALL_CAPACITY
   const donorDelta = Math.round(clamp(
     (forecast.donorResponse - 50) * 0.25

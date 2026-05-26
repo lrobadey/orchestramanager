@@ -1856,7 +1856,46 @@
   letter-spacing: 0.08em;
 }
 
+/* ── Audience Relations ───────────────────────────────────── */
+.home-console .audience-page .donor-canopy {
+  background:
+    radial-gradient(80% 120% at 100% 0%, rgba(128, 164, 132, 0.13), transparent 62%),
+    linear-gradient(135deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012));
+}
+.home-console .audience-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+.home-console .audience-metric {
+  border: 1px solid var(--hairline-soft);
+  background: rgba(0,0,0,0.14);
+  padding: 14px;
+}
+.home-console .audience-metric strong {
+  display: block;
+  margin-top: 10px;
+  font-family: var(--display);
+  font-size: 34px;
+  line-height: 0.9;
+  font-weight: 500;
+}
+.home-console .audience-posture-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+.home-console .audience-posture-panel p {
+  margin: 0 0 10px;
+  color: var(--birch-dim);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.4;
+}
+
 @media (max-width: 1100px) {
   .home-console .donor-radar-grid,
-  .home-console .donor-influence-panel { grid-template-columns: 1fr; }
+  .home-console .donor-influence-panel,
+  .home-console .audience-metric-grid { grid-template-columns: 1fr; }
 }

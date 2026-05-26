@@ -124,18 +124,41 @@ export interface RepertoireFit {
   note: string
 }
 
-export interface AudienceSegment {
+export interface CityAudienceSegment {
   id: string
   name: string
   size: number
-  loyalty: number
-  priceSensitivity: number
+  orchestralLiteracy: number
   canonAffinity: number
-  contemporaryAffinity: number
-  crossoverAffinity: number
+  noveltyAffinity: number
   prestigeAffinity: number
   communityAffinity: number
+  priceSensitivity: number
+  socialSpread: number
 }
+
+// Legacy-compatible static segment shape. Prefer CityAudienceSegment + AudienceState.
+export interface AudienceSegment extends CityAudienceSegment {
+  loyalty: number
+  contemporaryAffinity: number
+  crossoverAffinity: number
+}
+
+export interface AudienceRelationship {
+  segmentId: string
+  awareness: number
+  trust: number
+  habit: number
+  alignmentMemory: number
+  recentReaction: string
+  lastDelta: number
+}
+
+export interface AudienceState {
+  relationships: AudienceRelationship[]
+}
+
+export type MarketingStyle = 'prestige' | 'grassroots' | 'digital' | 'critical' | 'education'
 
 export interface IdentityProfile {
   adventurous: number
@@ -164,6 +187,7 @@ export interface ConcertProgram {
   intermissionAfter: 0 | 1 | null
   rehearsalAllocation: SlotTuple<number>
   marketingSpend: number
+  marketingStyle?: MarketingStyle
   ticketPrice: number
   studentTicketsEnabled: boolean
   studentTicketPrice: number
@@ -264,6 +288,10 @@ export interface AudienceBreakdown {
   effectiveTicketPrice: number
   ticketRevenue: number
   priceAccessibilityScore: number
+  awarenessScore?: number
+  trustScore?: number
+  habitScore?: number
+  motivationScore?: number
 }
 
 export interface ExpenseBreakdown {
@@ -330,6 +358,7 @@ export interface SeasonState {
   institution: InstitutionState
   roster: RosterState
   donors: DonorState
+  audience: AudienceState
 }
 
 export interface SeasonSummary {

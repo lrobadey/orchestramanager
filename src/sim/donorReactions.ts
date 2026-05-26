@@ -245,7 +245,9 @@ export function buildConcertInstitutionalProfile(
   works: Work[],
 ): DonorInstitutionalPriorities {
   const attendanceRate = report.attendance / HALL_CAPACITY
-  const studentRow = report.audienceBreakdown.find(row => row.segmentId === 'students-educators')
+  const studentRow = report.audienceBreakdown.find(row =>
+    row.segmentId === 'students-emerging-artists' || row.segmentId === 'students-educators',
+  )
   const studentAccess = program.studentTicketsEnabled
     ? clamp(100 - program.studentTicketPrice * 2.4, 20, 100)
     : 20
