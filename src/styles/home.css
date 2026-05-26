@@ -89,7 +89,7 @@
   position: relative;
   border-bottom: 1px solid var(--hairline);
 }
-.home-stratum.canopy { background: linear-gradient(180deg, #0c1814 0%, #0a1612 100%); padding: 22px 56px 18px; }
+.home-stratum.canopy { background: linear-gradient(180deg, #0c1814 0%, #0a1612 100%); padding: 4px 56px 18px; }
 .home-stratum.understory {
   background: linear-gradient(180deg, #0a1612 0%, #08130f 100%);
   padding: 14px 56px 16px;
@@ -1639,7 +1639,7 @@
 }
 
 @media (max-width: 760px) {
-  .home-stratum.canopy { padding: 18px 18px 14px; }
+  .home-stratum.canopy { padding: 6px 18px 14px; }
   .home-stratum.understory { padding: 12px 18px 14px; }
   .home-stratum.understory.collapsed { padding: 8px 18px 10px; }
   .home-stratum.floor { padding: 16px 18px; }
