@@ -200,6 +200,25 @@
   line-height: 1;
   letter-spacing: -0.04em;
 }
+.canopy-countdown-days {
+  display: inline-block;
+  color: var(--birch);
+  background: linear-gradient(
+    105deg,
+    var(--birch) 0%,
+    var(--birch) 36%,
+    #f3f6f2 46%,
+    var(--silver) 52%,
+    var(--birch) 62%,
+    var(--birch) 100%
+  );
+  background-size: 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 18px rgba(190, 200, 194, 0.08);
+  animation: canopy-day-shimmer 7.5s ease-in-out infinite;
+}
 .canopy-countdown-unit {
   color: var(--silver);
   font-style: italic;
@@ -207,6 +226,15 @@
   margin-left: 6px;
 }
 .canopy-countdown-caption { margin-top: 4px; }
+
+@keyframes canopy-day-shimmer {
+  0%, 58% { background-position: 140% 0; }
+  74%, 100% { background-position: -80% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .canopy-countdown-days { animation: none; }
+}
 
 /* ── Understory ───────────────────────────────────────────── */
 .understory-grid {

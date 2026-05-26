@@ -100,7 +100,7 @@ export default function CanopyHeader({
         </div>
         <div className="canopy-countdown">
           <div className="canopy-countdown-num hc-display">
-            {days}
+            <span className="canopy-countdown-days">{days}</span>
             <span className="canopy-countdown-unit">d</span>
           </div>
           <div className="hc-eyebrow canopy-countdown-caption">
