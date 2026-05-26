@@ -256,8 +256,6 @@ export function RosterStrengthHeader({ roster, forecast }: Pick<RosterOverviewPr
   const rosterDiagnosis = strongestSection && weakestSection
     ? `${strongestSection.label} carries the institution; ${weakestSection.label.toLowerCase()} is the section on watch. ${stableCount} section${stableCount === 1 ? '' : 's'} stable, ${watchCount} on watch.`
     : 'The orchestra is still settling into its first readable shape.'
-  const headline = splitStrengthHeadline(compositeStrength)
-
   return (
     <section className="roster-command-header" aria-label="Roster strength summary">
       <div className="roster-command-copy">
@@ -265,9 +263,6 @@ export function RosterStrengthHeader({ roster, forecast }: Pick<RosterOverviewPr
         <div className="roster-command-sublabels">
           <span>{roster.principals.length} principals</span>
           <span>{totalChairs} chairs</span>
-        </div>
-        <div className="roster-command-status">
-          Composite strength · {headline.article} {headline.phrase}.
         </div>
         <p className="roster-command-diagnosis">{rosterDiagnosis}</p>
       </div>
