@@ -153,9 +153,9 @@ button { font-family: inherit; }
 
 .shell-logo {
   display: block;
-  height: 2.4rem;
+  height: 4.5rem;
   width: auto;
-  max-width: 8rem;
+  max-width: 10rem;
   object-fit: contain;
   flex: 0 0 auto;
 }
