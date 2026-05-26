@@ -17,6 +17,15 @@ import { updateDonorsAfterConcert } from './donorReactions'
 import { buildConcertFinanceTransactions } from './finance'
 import { createInitialRoster, updateRosterAfterConcert } from './roster'
 import { average, HALL_CAPACITY } from './scoring'
+import { createInitialCalendar, dateToDayIndex, setCalendarDay } from './calendar'
+import type { ISODateString } from '../types/calendar'
+
+export const SEASON_CONCERT_DATES: ISODateString[] = [
+  '2026-09-14',
+  '2026-10-26',
+  '2027-01-11',
+  '2027-03-22',
+]
 
 const SLOT_NAMES = [
   'Opening Night',
@@ -25,10 +34,13 @@ const SLOT_NAMES = [
   'Season Finale',
 ]
 
-function makeSlot(index: number): SeasonConcertSlot {
+function makeSlot(index: number, startDate: ISODateString): SeasonConcertSlot {
+  const scheduledDate = SEASON_CONCERT_DATES[index]
   return {
     index,
     name: SLOT_NAMES[index],
+    scheduledDay: dateToDayIndex(scheduledDate, startDate),
+    scheduledDate,
     program: null,
     report: null,
     financeTransactions: [],
@@ -41,8 +53,15 @@ export function createInitialSeason(
   institution: InstitutionState,
   initialPrincipals: Principal[],
 ): SeasonState {
+  const calendar = createInitialCalendar()
   return {
-    slots: [makeSlot(0), makeSlot(1), makeSlot(2), makeSlot(3)],
+    calendar,
+    slots: [
+      makeSlot(0, calendar.startDate),
+      makeSlot(1, calendar.startDate),
+      makeSlot(2, calendar.startDate),
+      makeSlot(3, calendar.startDate),
+    ],
     currentSlotIndex: 0,
     institution,
     roster: createInitialRoster(initialPrincipals),
@@ -58,16 +77,26 @@ export function resolveSeasonConcert(
   works: Work[],
 ): SeasonState {
   const idx = season.currentSlotIndex
-  if (idx >= 4) return season
+  if (idx >= season.slots.length) return season
 
+  const activeSlot = season.slots[idx]
+  const calendarAtConcert = setCalendarDay(season.calendar, activeSlot.scheduledDay)
   const { slots: settledSlots, cashDelta: settlementCashDelta } = settleDueTransactions(
     season.slots,
-    idx,
+    calendarAtConcert.currentDay,
+    calendarAtConcert.currentDate,
   )
+  const nextSlot = season.slots[idx + 1]
   const financeTransactions = buildConcertFinanceTransactions(
     settledSlots[idx].name,
     idx,
     report,
+    {
+      concertDay: activeSlot.scheduledDay,
+      concertDate: activeSlot.scheduledDate,
+      nextConcertDay: nextSlot?.scheduledDay,
+      nextConcertDate: nextSlot?.scheduledDate,
+    },
   )
   const immediateCashDelta = financeTransactions
     .filter(transaction => transaction.status === 'posted')
@@ -115,6 +144,7 @@ export function resolveSeasonConcert(
   }
 
   return {
+    calendar: calendarAtConcert,
     slots: newSlots,
     currentSlotIndex: idx + 1,
     institution: nextInstitution,
@@ -126,18 +156,24 @@ export function resolveSeasonConcert(
 
 function settleDueTransactions(
   slots: SeasonState['slots'],
-  currentSlotIndex: number,
+  currentDay: number,
+  currentDate: ISODateString,
 ): { slots: SeasonState['slots']; cashDelta: number } {
   let cashDelta = 0
   const nextSlots = slots.map(slot => ({
     ...slot,
     financeTransactions: slot.financeTransactions.map(transaction => {
-      if (transaction.status !== 'scheduled' || transaction.dueSlotIndex > currentSlotIndex) {
+      if (transaction.status !== 'scheduled' || transaction.dueDay > currentDay) {
         return transaction
       }
 
       cashDelta += transaction.amount
-      return { ...transaction, status: 'posted' as const }
+      return {
+        ...transaction,
+        status: 'posted' as const,
+        postedDay: currentDay,
+        postedDate: currentDate,
+      }
     }),
   })) as SeasonState['slots']
 

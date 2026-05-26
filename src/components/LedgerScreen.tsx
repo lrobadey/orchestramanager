@@ -188,7 +188,6 @@ function fullMoney(value: number): string {
 }
 
 function dueLabel(transaction: FinanceTransaction): string {
-  if (transaction.status === 'posted') return 'posted'
-  if (transaction.dueSlotIndex >= 4) return 'due after season'
-  return `due before concert ${transaction.dueSlotIndex + 1}`
+  if (transaction.status === 'posted') return transaction.postedDate ? `posted ${transaction.postedDate}` : 'posted'
+  return `due ${transaction.dueDate}`
 }

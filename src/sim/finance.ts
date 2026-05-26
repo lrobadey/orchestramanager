@@ -1,72 +1,76 @@
 import type { ConcertReport, FinanceTransaction } from '../types/core'
+import type { ISODateString } from '../types/calendar'
+import { dayIndexToDate } from './calendar'
+
+interface FinanceTimingContext {
+  concertDay: number
+  concertDate: ISODateString
+  nextConcertDay?: number
+  nextConcertDate?: ISODateString
+}
 
 export function buildConcertFinanceTransactions(
   concertName: string,
   concertIndex: number,
   report: ConcertReport,
+  timing: FinanceTimingContext = fallbackTiming(concertIndex),
 ): FinanceTransaction[] {
   const nextSlotIndex = concertIndex + 1
+  const nextDueDay = timing.nextConcertDay ?? timing.concertDay + 30
+  const nextDueDate = timing.nextConcertDate ?? dayIndexToDate(nextDueDay)
+
+  const posted = (kind: FinanceTransaction['kind'], label: string, amount: number): FinanceTransaction => ({
+    id: `${concertIndex}-${kind}`,
+    concertIndex,
+    concertName,
+    label,
+    kind,
+    amount,
+    status: 'posted',
+    dueSlotIndex: concertIndex,
+    createdDay: timing.concertDay,
+    createdDate: timing.concertDate,
+    dueDay: timing.concertDay,
+    dueDate: timing.concertDate,
+    postedDay: timing.concertDay,
+    postedDate: timing.concertDate,
+  })
+
+  const scheduled = (kind: FinanceTransaction['kind'], label: string, amount: number): FinanceTransaction => ({
+    id: `${concertIndex}-${kind}`,
+    concertIndex,
+    concertName,
+    label,
+    kind,
+    amount,
+    status: 'scheduled',
+    dueSlotIndex: nextSlotIndex,
+    createdDay: timing.concertDay,
+    createdDate: timing.concertDate,
+    dueDay: nextDueDay,
+    dueDate: nextDueDate,
+    postedDay: null,
+    postedDate: null,
+  })
 
   return [
-    {
-      id: `${concertIndex}-ticket-revenue`,
-      concertIndex,
-      concertName,
-      label: 'Ticket revenue',
-      kind: 'ticket-revenue',
-      amount: report.revenue,
-      status: 'posted',
-      dueSlotIndex: concertIndex,
-    },
-    {
-      id: `${concertIndex}-donor-support`,
-      concertIndex,
-      concertName,
-      label: 'Donor support',
-      kind: 'donor-support',
-      amount: report.donorUplift,
-      status: 'scheduled',
-      dueSlotIndex: nextSlotIndex,
-    },
-    {
-      id: `${concertIndex}-base-cost`,
-      concertIndex,
-      concertName,
-      label: 'Hall and fixed concert costs',
-      kind: 'base-cost',
-      amount: -report.expenseBreakdown.baseConcert,
-      status: 'scheduled',
-      dueSlotIndex: nextSlotIndex,
-    },
-    {
-      id: `${concertIndex}-rehearsal-cost`,
-      concertIndex,
-      concertName,
-      label: 'Rehearsal costs',
-      kind: 'rehearsal-cost',
-      amount: -report.expenseBreakdown.rehearsal,
-      status: 'posted',
-      dueSlotIndex: concertIndex,
-    },
-    {
-      id: `${concertIndex}-marketing-cost`,
-      concertIndex,
-      concertName,
-      label: 'Marketing spend',
-      kind: 'marketing-cost',
-      amount: -report.expenseBreakdown.marketing,
-      status: 'posted',
-      dueSlotIndex: concertIndex,
-    },
-    {
-      id: `${concertIndex}-production-cost`,
-      concertIndex,
-      concertName,
-      label: 'Production costs',
-      kind: 'production-cost',
-      amount: -report.expenseBreakdown.production,
-      status: 'scheduled',
-      dueSlotIndex: nextSlotIndex,
-    }
+    posted('ticket-revenue', 'Ticket revenue', report.revenue),
+    scheduled('donor-support', 'Donor support', report.donorUplift),
+    scheduled('base-cost', 'Hall and fixed concert costs', -report.expenseBreakdown.baseConcert),
+    posted('rehearsal-cost', 'Rehearsal costs', -report.expenseBreakdown.rehearsal),
+    posted('marketing-cost', 'Marketing spend', -report.expenseBreakdown.marketing),
+    scheduled('production-cost', 'Production costs', -report.expenseBreakdown.production),
   ]
+}
+
+function fallbackTiming(concertIndex: number): FinanceTimingContext {
+  const concertDay = concertIndex
+  const concertDate = dayIndexToDate(concertDay)
+  const nextConcertDay = concertDay + 30
+  return {
+    concertDay,
+    concertDate,
+    nextConcertDay,
+    nextConcertDate: dayIndexToDate(nextConcertDay),
+  }
 }

@@ -1,5 +1,5 @@
 import type { InstitutionState, SeasonState } from '../../types/core'
-import { daysToCurtain, concertDate, seasonWeekLabel } from '../../data/homeStubs'
+import { formatShortDate, getSeasonWeekLabel } from '../../sim/calendar'
 import { CONCERT_ROMAN } from '../../data/numerals'
 import logo from '../../assets/logo.png'
 
@@ -44,8 +44,8 @@ export default function CanopyHeader({
   const seasonComplete = season.currentSlotIndex >= 4
   const currentSlot = seasonComplete ? season.slots[3] : season.slots[idx]
   const roman = CONCERT_ROMAN[idx]
-  const days = daysToCurtain(idx)
-  const date = concertDate(idx)
+  const days = Math.max(0, currentSlot.scheduledDay - season.calendar.currentDay)
+  const date = formatShortDate(currentSlot.scheduledDate, season.calendar.startDate)
 
   // Slot names are full phrases like "Opening Night" or "Spring Identity Concert"
   // — turn them into "I. Opening Night is taking shape."
@@ -65,7 +65,7 @@ export default function CanopyHeader({
           </span>
         </div>
         <div className="canopy-nav">
-          <span className="canopy-nav-week">{seasonWeekLabel(idx)}</span>
+          <span className="canopy-nav-week">{getSeasonWeekLabel(season.calendar.currentDay, season.calendar.startDate)}</span>
           {NAV_KEYS.map(k => {
             const isActive = activeNav === k
             const enabled = ENABLED[k]

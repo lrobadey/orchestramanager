@@ -1,3 +1,5 @@
+import type { GameCalendar, ISODateString } from './calendar'
+
 export type Era = 'classical' | 'romantic' | 'late-romantic' | 'contemporary'
 
 export interface Work {
@@ -339,12 +341,21 @@ export interface FinanceTransaction {
   kind: FinanceTransactionKind
   amount: number
   status: FinanceTransactionStatus
+  /** Transitional concert-order due marker, kept until all finance screens are date-native. */
   dueSlotIndex: number
+  createdDay: number
+  createdDate: ISODateString
+  dueDay: number
+  dueDate: ISODateString
+  postedDay: number | null
+  postedDate: ISODateString | null
 }
 
 export interface SeasonConcertSlot {
   index: number
   name: string
+  scheduledDay: number
+  scheduledDate: ISODateString
   program: ConcertProgram | null
   report: ConcertReport | null
   financeTransactions: FinanceTransaction[]
@@ -353,6 +364,7 @@ export interface SeasonConcertSlot {
 }
 
 export interface SeasonState {
+  calendar: GameCalendar
   slots: [SeasonConcertSlot, SeasonConcertSlot, SeasonConcertSlot, SeasonConcertSlot]
   currentSlotIndex: number
   institution: InstitutionState

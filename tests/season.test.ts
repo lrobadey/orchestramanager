@@ -56,6 +56,8 @@ function resolveAll(programs: ConcertProgram[]): SeasonState {
 describe('createInitialSeason', () => {
   it('initializes with four unresolved slots', () => {
     const season = createInitialSeason(startingInstitution, principals)
+    expect(season.calendar.currentDate).toBe('2026-05-01')
+    expect(season.calendar.currentDay).toBe(0)
     expect(season.slots).toHaveLength(4)
     for (const slot of season.slots) {
       expect(slot.status).toBe('pending')
@@ -84,9 +86,13 @@ describe('createInitialSeason', () => {
   it('slots have the correct names in order', () => {
     const season = createInitialSeason(startingInstitution, principals)
     expect(season.slots[0].name).toBe('Opening Night')
+    expect(season.slots[0].scheduledDate).toBe('2026-09-14')
     expect(season.slots[1].name).toBe('Winter Program')
+    expect(season.slots[1].scheduledDate).toBe('2026-10-26')
     expect(season.slots[2].name).toBe('Spring Identity Concert')
+    expect(season.slots[2].scheduledDate).toBe('2027-01-11')
     expect(season.slots[3].name).toBe('Season Finale')
+    expect(season.slots[3].scheduledDate).toBe('2027-03-22')
   })
 })
 
@@ -103,6 +109,7 @@ describe('resolveSeasonConcert', () => {
     expect(next.slots[1].status).toBe('pending')
     expect(next.slots[2].status).toBe('pending')
     expect(next.slots[3].status).toBe('pending')
+    expect(next.calendar.currentDate).toBe('2026-09-14')
     expect(next.donors.donors.find(donor => donor.id === 'aster-foundation')!.lastDelta).toBeLessThan(0)
     expect(next.donors).not.toEqual(season.donors)
   })
@@ -132,10 +139,11 @@ describe('resolveSeasonConcert', () => {
 
     // slot[1] will receive the updated institution as institutionBefore when resolved
     const scheduledFromFirstConcert = season1.slots[0].financeTransactions
-      .filter(tx => tx.status === 'scheduled' && tx.dueSlotIndex === 1)
+      .filter(tx => tx.status === 'scheduled' && tx.dueDate === '2026-10-26')
       .reduce((sum, tx) => sum + tx.amount, 0)
     const report1 = makeReport(safeProgram, season1.institution, season1.roster.principals)
     const season2 = resolveSeasonConcert(season1, safeProgram, report1, works)
+    expect(season2.calendar.currentDate).toBe('2026-10-26')
     expect(season2.slots[1].institutionBefore).toEqual(season1.institution)
     expect(season2.slots[0].financeTransactions.every(tx => tx.status === 'posted')).toBe(true)
     expect(season2.institution.cash).toBeGreaterThanOrEqual(

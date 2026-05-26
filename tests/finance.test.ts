@@ -37,6 +37,10 @@ describe('finance transactions', () => {
     expect(transactions.find(tx => tx.kind === 'ticket-revenue')!.status).toBe('posted')
     expect(transactions.find(tx => tx.kind === 'marketing-cost')!.status).toBe('posted')
     expect(transactions.find(tx => tx.kind === 'donor-support')!.status).toBe('scheduled')
-    expect(transactions.find(tx => tx.kind === 'base-cost')!.dueSlotIndex).toBe(1)
+    const baseCost = transactions.find(tx => tx.kind === 'base-cost')!
+    expect(baseCost.dueSlotIndex).toBe(1)
+    expect(baseCost.createdDate).toBe('2026-05-01')
+    expect(baseCost.dueDate).toBe('2026-05-31')
+    expect(baseCost.postedDate).toBeNull()
   })
 })

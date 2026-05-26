@@ -1,5 +1,6 @@
 import type { SeasonState } from '../../types/core'
-import { TRAIL_ANNOTATIONS, concertDate, slotHeadlineFallback } from '../../data/homeStubs'
+import { TRAIL_ANNOTATIONS, slotHeadlineFallback } from '../../data/homeStubs'
+import { formatShortDate } from '../../sim/calendar'
 import { CONCERT_ROMAN } from '../../data/numerals'
 
 interface SeasonTrailProps {
@@ -128,7 +129,7 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
             <div className="trail-diamond">
               <span className="roman">{CONCERT_ROMAN[i]}</span>
             </div>
-            <div className="lm-date">{concertDate(i).toUpperCase()}</div>
+            <div className="lm-date">{formatShortDate(slot.scheduledDate, season.calendar.startDate).toUpperCase()}</div>
             <div className="lm-name">{slot.name}</div>
             {isResolved && slot.report && (
               <div className="lm-status">
