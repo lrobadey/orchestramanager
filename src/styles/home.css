@@ -108,12 +108,12 @@
 .canopy-topbar {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   margin-bottom: 14px;
 }
 .canopy-brand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 18px;
 }
 .canopy-mark {
