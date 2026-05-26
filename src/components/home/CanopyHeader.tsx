@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { InstitutionState, SeasonState } from '../../types/core'
 import { formatShortDate, getSeasonWeekLabel } from '../../sim/calendar'
 import logo from '../../assets/logo.png'
@@ -9,6 +10,7 @@ interface CanopyHeaderProps {
   season: SeasonState
   activeNav: HomeNavKey
   onNavigate: (key: HomeNavKey) => void
+  children?: ReactNode
 }
 
 const NAV_KEYS: HomeNavKey[] = ['home', 'roster', 'programme', 'library', 'ledger', 'donors', 'audience']
@@ -38,6 +40,7 @@ export default function CanopyHeader({
   season,
   activeNav,
   onNavigate,
+  children,
 }: CanopyHeaderProps) {
   const idx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
@@ -85,27 +88,29 @@ export default function CanopyHeader({
           })}
         </div>
       </div>
-      <div className="canopy-headline-row">
-        <div>
-          <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>
-            {seasonComplete ? 'The hour · the season closed' : 'The hour · prologue'}
-          </span>
-          <h1 className="canopy-headline hc-display">
-            {headlineSlot}{' '}
-            {seasonComplete ? 'is in the books' : 'is taking shape'}
-            <span className="punct">.</span>
-          </h1>
-        </div>
-        <div className="canopy-countdown">
-          <div className="canopy-countdown-num hc-display">
-            <span className="canopy-countdown-days">{days}</span>
-            <span className="canopy-countdown-unit">d</span>
+      {children ?? (
+        <div className="canopy-headline-row">
+          <div>
+            <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>
+              {seasonComplete ? 'The hour · the season closed' : 'The hour · prologue'}
+            </span>
+            <h1 className="canopy-headline hc-display">
+              {headlineSlot}{' '}
+              {seasonComplete ? 'is in the books' : 'is taking shape'}
+              <span className="punct">.</span>
+            </h1>
           </div>
-          <div className="hc-eyebrow canopy-countdown-caption">
-            {seasonComplete ? 'season closed' : `until curtain · ${date}`}
+          <div className="canopy-countdown">
+            <div className="canopy-countdown-num hc-display">
+              <span className="canopy-countdown-days">{days}</span>
+              <span className="canopy-countdown-unit">d</span>
+            </div>
+            <div className="hc-eyebrow canopy-countdown-caption">
+              {seasonComplete ? 'season closed' : `until curtain · ${date}`}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

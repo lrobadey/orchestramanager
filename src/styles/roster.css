@@ -2,10 +2,14 @@
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 1.25rem 1.5rem 1.5rem;
+  padding: 0.35rem 1.5rem 1.5rem;
   display: grid;
   gap: 1rem;
   min-height: 0;
+}
+
+.roster-console-floor {
+  padding-top: 10px;
 }
 
 .roster-kicker,
@@ -21,6 +25,56 @@
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--silver-dim);
+}
+
+.roster-command-header {
+  display: grid;
+  grid-template-columns: minmax(24rem, 1fr) minmax(32rem, 0.95fr);
+  gap: clamp(1.5rem, 3vw, 3.2rem);
+  align-items: end;
+  padding: 0.45rem 0 0.1rem 48px;
+  border-top: 1px solid rgba(184, 192, 188, 0.08);
+}
+
+.roster-command-copy {
+  min-width: 0;
+}
+
+.roster-command-status {
+  margin-top: 0.45rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  font-style: italic;
+  font-weight: 500;
+  color: var(--birch-dim);
+}
+
+.roster-command-diagnosis {
+  margin: 0.45rem 0 0;
+  max-width: 70ch;
+  color: var(--birch-dim);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.roster-command-score {
+  display: grid;
+  grid-template-columns: auto minmax(18rem, 1fr);
+  gap: 1.25rem;
+  align-items: end;
+  min-width: 0;
+}
+
+.roster-command-strength-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: clamp(4.2rem, 6vw, 6.2rem);
+  line-height: 0.82;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.06em;
 }
 
 .roster-canopy {
@@ -456,9 +510,15 @@
 }
 
 @media (max-width: 1180px) {
+  .roster-command-header,
+  .roster-command-score,
   .roster-canopy,
   .roster-floor {
     grid-template-columns: 1fr;
+  }
+
+  .roster-command-header {
+    padding-left: 0;
   }
 
   .roster-canopy-strength-block {
@@ -481,6 +541,7 @@
     padding: 1rem;
   }
 
+  .roster-command-strength-value,
   .roster-canopy-strength-value {
     font-size: 5.4rem;
   }

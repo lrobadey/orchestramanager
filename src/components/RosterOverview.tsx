@@ -239,7 +239,59 @@ function PrincipalCard({ principal }: { principal: Principal }) {
   )
 }
 
-export default function RosterOverview({ roster, forecast, currentSlotName }: RosterOverviewProps) {
+export function RosterStrengthHeader({ roster, forecast }: Pick<RosterOverviewProps, 'roster' | 'forecast'>) {
+  const sectionStrengths =
+    forecast.sectionStrengths.length > 0 ? forecast.sectionStrengths : calculateSectionStrengths(roster.principals)
+  const compositeStrength =
+    sectionStrengths.length > 0
+      ? Math.round(sectionStrengths.reduce((sum, row) => sum + row.strength, 0) / sectionStrengths.length)
+      : 0
+  const chairCounts = sectionChairCounts()
+  const totalChairs = Object.values(chairCounts).reduce((sum, count) => sum + count, 0)
+  const sortedSections = [...sectionStrengths].sort((a, b) => b.strength - a.strength)
+  const strongestSection = sortedSections[0]
+  const weakestSection = sortedSections[sortedSections.length - 1]
+  const watchCount = sectionStrengths.filter(row => row.strength < 55).length
+  const stableCount = sectionStrengths.length - watchCount
+  const rosterDiagnosis = strongestSection && weakestSection
+    ? `${strongestSection.label} carries the institution; ${weakestSection.label.toLowerCase()} is the section on watch. ${stableCount} section${stableCount === 1 ? '' : 's'} stable, ${watchCount} on watch.`
+    : 'The orchestra is still settling into its first readable shape.'
+  const headline = splitStrengthHeadline(compositeStrength)
+
+  return (
+    <section className="roster-command-header" aria-label="Roster strength summary">
+      <div className="roster-command-copy">
+        <div className="roster-kicker">
+          The Orchestra · {roster.principals.length} principals · {totalChairs} chairs
+        </div>
+        <div className="roster-command-status">
+          Composite strength · {headline.article} {headline.phrase}.
+        </div>
+        <p className="roster-command-diagnosis">{rosterDiagnosis}</p>
+      </div>
+
+      <div className="roster-command-score">
+        <h1 className={`roster-command-strength-value ${toneClass(compositeStrength)}`}>
+          {compositeStrength}
+          <span className="roster-canopy-strength-suffix">/100</span>
+        </h1>
+        <div className="roster-canopy-strength-block">
+          <div className="roster-canopy-strength-label">Strength range</div>
+          <div className="roster-strength-scale">
+            <span className="roster-strength-scale-end">fragile 0</span>
+            <div className="roster-strength-scale-track">
+              <span className={`roster-strength-scale-fill ${toneClass(compositeStrength)}`} style={{ width: `${compositeStrength}%` }} />
+              <span className="roster-strength-scale-marker" aria-label="Stable threshold" />
+            </div>
+            <span className="roster-strength-scale-end right">commanding 100</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default function RosterOverview({ roster, forecast, currentSlotName, showCanopy = true }: RosterOverviewProps & { showCanopy?: boolean }) {
   const sectionStrengths =
     forecast.sectionStrengths.length > 0 ? forecast.sectionStrengths : calculateSectionStrengths(roster.principals)
   const repertoireFit = forecast.repertoireFit
@@ -267,33 +319,35 @@ export default function RosterOverview({ roster, forecast, currentSlotName }: Ro
 
   return (
     <div className="roster-page">
-      <section className="roster-canopy">
-        <div className="roster-canopy-copy-block">
-          <div className="roster-kicker">
-            The Orchestra · {roster.principals.length} principals · {totalChairs} chairs
-          </div>
-          <h1 className={`roster-canopy-strength-value ${toneClass(compositeStrength)}`}>
-            {compositeStrength}
-            <span className="roster-canopy-strength-suffix">/100</span>
-          </h1>
-          <div className="roster-canopy-status">
-            Composite strength · {headline.article} {headline.phrase}.
-          </div>
-          <p className="roster-canopy-copy">{rosterDiagnosis}</p>
-        </div>
-
-        <div className="roster-canopy-strength-block">
-          <div className="roster-canopy-strength-label">Strength range</div>
-          <div className="roster-strength-scale">
-            <span className="roster-strength-scale-end">fragile 0</span>
-            <div className="roster-strength-scale-track">
-              <span className={`roster-strength-scale-fill ${toneClass(compositeStrength)}`} style={{ width: `${compositeStrength}%` }} />
-              <span className="roster-strength-scale-marker" aria-label="Stable threshold" />
+      {showCanopy && (
+        <section className="roster-canopy">
+          <div className="roster-canopy-copy-block">
+            <div className="roster-kicker">
+              The Orchestra · {roster.principals.length} principals · {totalChairs} chairs
             </div>
-            <span className="roster-strength-scale-end right">commanding 100</span>
+            <h1 className={`roster-canopy-strength-value ${toneClass(compositeStrength)}`}>
+              {compositeStrength}
+              <span className="roster-canopy-strength-suffix">/100</span>
+            </h1>
+            <div className="roster-canopy-status">
+              Composite strength · {headline.article} {headline.phrase}.
+            </div>
+            <p className="roster-canopy-copy">{rosterDiagnosis}</p>
           </div>
-        </div>
-      </section>
+
+          <div className="roster-canopy-strength-block">
+            <div className="roster-canopy-strength-label">Strength range</div>
+            <div className="roster-strength-scale">
+              <span className="roster-strength-scale-end">fragile 0</span>
+              <div className="roster-strength-scale-track">
+                <span className={`roster-strength-scale-fill ${toneClass(compositeStrength)}`} style={{ width: `${compositeStrength}%` }} />
+                <span className="roster-strength-scale-marker" aria-label="Stable threshold" />
+              </div>
+              <span className="roster-strength-scale-end right">commanding 100</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="roster-floor">
         <div className="roster-side-stack">

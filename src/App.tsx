@@ -17,7 +17,7 @@ import AppShell from './components/AppShell'
 import ProgramBuilder from './components/ProgramBuilder'
 import ConcertReportView from './components/ConcertReport'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
-import RosterOverview from './components/RosterOverview'
+import RosterOverview, { RosterStrengthHeader } from './components/RosterOverview'
 import HomeConsole, { type HomeNavKey } from './components/HomeConsole'
 import CanopyHeader from './components/home/CanopyHeader'
 import UnderstoryVitals from './components/home/UnderstoryVitals'
@@ -204,13 +204,16 @@ export default function App() {
               season={season}
               activeNav="roster"
               onNavigate={handleHomeNavigate}
-            />
+            >
+              <RosterStrengthHeader roster={season.roster} forecast={forecast} />
+            </CanopyHeader>
             <UnderstoryVitals institution={institution} />
-            <div className="home-stratum floor console-screen-floor">
+            <div className="home-stratum floor console-screen-floor roster-console-floor">
               <RosterOverview
                 roster={season.roster}
                 forecast={forecast}
                 currentSlotName={currentSlotName}
+                showCanopy={false}
               />
             </div>
           </div>
