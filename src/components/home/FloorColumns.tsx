@@ -83,7 +83,13 @@ export default function FloorColumns({
       </div>
       <div className={gridClass}>
         {collapsed.roster ? (
-          <CollapsedRail label="Roster" value={`${compositeStrength}`} detail="composite" onExpand={() => setPanelCollapsed('roster', false)} />
+          <CollapsedRail
+            label="Orchestra"
+            value={`${compositeStrength}`}
+            detail={conditionLabel(compositeStrength)}
+            tone={conditionTone(compositeStrength)}
+            onExpand={() => setPanelCollapsed('roster', false)}
+          />
         ) : (
           <RosterColumn sections={sectionStrengths} composite={compositeStrength} watch={watchPrincipals} onCollapse={() => setPanelCollapsed('roster', true)} />
         )}
@@ -102,9 +108,24 @@ export default function FloorColumns({
   )
 }
 
-function CollapsedRail({ label, value, detail, onExpand }: { label: string; value: string; detail: string; onExpand: () => void }) {
+function CollapsedRail({
+  label,
+  value,
+  detail,
+  tone,
+  onExpand,
+}: {
+  label: string
+  value: string
+  detail: string
+  tone?: 'pine' | 'bark' | 'ember'
+  onExpand: () => void
+}) {
+  const classes = ['floor-collapsed-rail']
+  if (tone) classes.push(`tone-${tone}`)
+
   return (
-    <button type="button" className="floor-collapsed-rail" onClick={onExpand} aria-label={`Expand ${label}`}>
+    <button type="button" className={classes.join(' ')} onClick={onExpand} aria-label={`Expand ${label}`}>
       <span>{label}</span>
       <strong>{value}</strong>
       <em>{detail}</em>
@@ -120,39 +141,61 @@ interface RosterColumnProps {
 }
 
 function RosterColumn({ sections, composite, watch, onCollapse }: RosterColumnProps) {
+  const weakest = [...sections].sort((a, b) => a.strength - b.strength)[0]
+  const highestStress = [...sections].sort((a, b) => stressFromStrength(b.strength) - stressFromStrength(a.strength))[0]
+  const headline = orchestraDiagnosis(composite, weakest?.label)
+
   return (
-    <section className="floor-panel floor-panel-roster">
-      <div className="floor-col-head">
-        <span className="hc-eyebrow">Roster · sections</span>
-        <span className="hc-num" style={{ fontSize: 9.5, color: 'var(--silver-dim)' }}>
-          {composite}/100 composite
-        </span>
+    <section className="floor-panel floor-panel-roster roster-condition-card">
+      <div className="floor-col-head roster-condition-head">
+        <span className="hc-eyebrow">Orchestra condition</span>
+        <span className="roster-condition-score hc-num">{composite} / 100</span>
         <button type="button" className="floor-collapse-btn" onClick={onCollapse} aria-label="Collapse roster panel">−</button>
       </div>
-      <div className="floor-panel-body">
-        <div className="hc-rule-silver" style={{ marginBottom: 12, opacity: 0.5 }} />
-        {sections.map(s => {
-          const stress = stressFromStrength(s.strength)
-          const tone = stress > 50 ? 'ember' : stress > 30 ? 'bark' : 'pine'
-          return (
-            <div key={s.section} className="roster-section-row">
-              <div className="roster-section-grid">
-                <span className="roster-section-label">{s.label}</span>
-                <span className="roster-section-strength hc-display">{s.strength}</span>
-                <span className={`roster-section-stress ${tone}`}>STR {stress}</span>
+      <div className="floor-panel-body roster-condition-body">
+        <div className="roster-overall-read">
+          <div>
+            <div className="roster-overall-number hc-display">{composite}</div>
+            <div className={`roster-overall-state ${conditionTone(composite)}`}>{conditionLabel(composite)}</div>
+          </div>
+          <p>{headline}</p>
+        </div>
+
+        <div className="roster-pressure-pair" aria-label="Orchestra pressure summary">
+          <div>
+            <span>Weakest desk</span>
+            <strong>{weakest?.label ?? '—'}</strong>
+          </div>
+          <div>
+            <span>Highest stress</span>
+            <strong>{highestStress?.label ?? '—'}</strong>
+          </div>
+        </div>
+
+        <div className="roster-ledger-list">
+          {sections.map(s => {
+            const status = sectionStatus(s.strength)
+            return (
+              <div key={s.section} className="roster-ledger-row">
+                <span className="roster-ledger-section">{s.label}</span>
+                <span className="roster-ledger-note">{s.note}</span>
+                <strong>{s.strength}</strong>
+                <em className={status.tone}>{status.label}</em>
               </div>
-              <div className="roster-section-note">{s.note}</div>
-            </div>
-          )
-        })}
-        <div className="roster-watch">
-          <span className="hc-eyebrow">Watch · principals</span>
-          <div className="hc-rule-silver" style={{ margin: '6px 0 8px', opacity: 0.4 }} />
+            )
+          })}
+        </div>
+
+        <div className="roster-watch roster-watch-ledger">
+          <div className="roster-watch-head">
+            <span className="hc-eyebrow">Watch list</span>
+            <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>{watch.length} principals</span>
+          </div>
           {watch.map(p => (
             <div key={p.id} className="roster-watch-row">
               <span><span className="roster-watch-name">{p.name}</span><span className="roster-watch-position">{p.position}</span></span>
-              <span className={`roster-watch-stat ${p.form < 60 ? 'low' : 'ok'}`}>F{p.form}</span>
-              <span className={`roster-watch-stat ${p.morale < 60 ? 'low' : 'ok'}`}>M{p.morale}</span>
+              <span className={`roster-watch-stat ${p.form < 60 ? 'low' : 'ok'}`}>form {p.form}</span>
+              <span className={`roster-watch-stat ${p.morale < 60 ? 'low' : 'ok'}`}>morale {p.morale}</span>
             </div>
           ))}
         </div>
@@ -248,6 +291,34 @@ function InboxFinanceColumn({ institution, onCollapse }: { institution: Institut
       </div>
     </section>
   )
+}
+
+function conditionTone(score: number): 'pine' | 'bark' | 'ember' {
+  if (score >= 78) return 'pine'
+  if (score >= 62) return 'bark'
+  return 'ember'
+}
+
+function conditionLabel(score: number): string {
+  if (score >= 82) return 'strong'
+  if (score >= 70) return 'steady'
+  if (score >= 58) return 'strained'
+  return 'fragile'
+}
+
+function orchestraDiagnosis(score: number, weakest?: string): string {
+  const weakPoint = weakest ? ` Watch ${weakest.toLowerCase()} before choosing heavy repertoire.` : ''
+  if (score >= 82) return `The orchestra can carry an ambitious programme.${weakPoint}`
+  if (score >= 70) return `The orchestra can carry a normal programme.${weakPoint}`
+  if (score >= 58) return `A normal programme is possible, but the margin is thin.${weakPoint}`
+  return `The orchestra is exposed. Keep the next programme playable.${weakPoint}`
+}
+
+function sectionStatus(strength: number): { label: string; tone: 'pine' | 'bark' | 'ember' } {
+  if (strength >= 78) return { label: 'strong', tone: 'pine' }
+  if (strength >= 66) return { label: 'steady', tone: 'bark' }
+  if (strength >= 56) return { label: 'tense', tone: 'bark' }
+  return { label: 'fragile', tone: 'ember' }
 }
 
 function stressFromStrength(strength: number): number {
