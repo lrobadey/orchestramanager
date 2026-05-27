@@ -180,19 +180,19 @@
   right: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, rgba(184, 255, 92, 0.2), var(--aurora), rgba(240, 235, 224, 0.72));
-  box-shadow: 0 0 10px rgba(184, 255, 92, 0.28);
-  transform-origin: left center;
-  animation: active-nav-underline 2.8s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--silver-dim), var(--birch), var(--silver-dim));
+  background-size: 220% 100%;
+  box-shadow: 0 0 8px rgba(184, 192, 188, 0.24);
+  animation: active-nav-underline 2.4s linear infinite;
 }
 .canopy-nav-link.active:not(.disabled):hover { color: #fffaf0; }
 .canopy-nav-link:not(.disabled):active { transform: translateY(1px) scale(0.985); }
 .canopy-nav-link.disabled { color: var(--bark-dim); cursor: not-allowed; opacity: 0.6; }
 
 @keyframes active-nav-underline {
-  0%, 100% { opacity: 0.72; transform: scaleX(0.72); }
-  45% { opacity: 1; transform: scaleX(1); }
-  68% { opacity: 0.86; transform: scaleX(0.9); }
+  from { background-position: 120% 0; opacity: 0.76; }
+  50% { opacity: 1; }
+  to { background-position: -120% 0; opacity: 0.76; }
 }
 
 .canopy-headline-row {

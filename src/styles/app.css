@@ -210,10 +210,16 @@ button { font-family: inherit; }
   right: 0;
   bottom: -4px;
   height: 1px;
-  background: linear-gradient(90deg, rgba(184, 255, 92, 0.2), var(--aurora), rgba(240, 235, 224, 0.72));
-  box-shadow: 0 0 10px rgba(184, 255, 92, 0.28);
-  transform-origin: left center;
-  animation: active-nav-underline 2.8s ease-in-out infinite;
+  background: linear-gradient(90deg, var(--lichen), var(--birch), var(--lichen));
+  background-size: 220% 100%;
+  box-shadow: 0 0 8px rgba(240, 235, 224, 0.22);
+  animation: active-nav-underline 2.4s linear infinite;
+}
+
+@keyframes active-nav-underline {
+  from { background-position: 120% 0; opacity: 0.76; }
+  50% { opacity: 1; }
+  to { background-position: -120% 0; opacity: 0.76; }
 }
 
 .season-dots {
