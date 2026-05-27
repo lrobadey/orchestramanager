@@ -293,21 +293,46 @@ function NextConcertColumn({ slotName, idx, workCount, selectedWorks, suggested,
 function InboxFinanceColumn({ institution, onCollapse }: { institution: InstitutionState; onCollapse: () => void }) {
   const netK = FINANCE_SPARKLINE.reduce((a, b) => a + b, 0)
   const donor = institution.donorConfidence
+  const trust = institution.audienceTrust
+  const cashWeeks = Math.max(0, Math.round(institution.cash / 125_000))
+  const institutionalRead = inboxInstitutionRead(donor, trust, netK)
   const financeNote = donor < 35 ? { tone: 'ember' as const, text: 'Donor confidence is sliding — the next concert needs a steadying result.' } : donor < 55 ? { tone: 'ember' as const, text: 'Donor confidence is soft — keep an eye on the next report.' } : { tone: 'pine' as const, text: 'Donors are holding — the institution has room to take a risk.' }
+
   return (
-    <section className="floor-panel floor-panel-inbox">
-      <div className="floor-col-head">
-        <span className="hc-eyebrow">Inbox</span>
-        <span className="hc-num" style={{ fontSize: 9, color: 'var(--bark)' }}>{INBOX_MESSAGES.length} STUB</span>
+    <section className="floor-panel floor-panel-inbox inbox-pressure-card">
+      <div className="floor-col-head inbox-pressure-head">
+        <span className="hc-eyebrow">Institution pressure</span>
+        <span className="hc-num" style={{ fontSize: 9, color: 'var(--bark-dim)' }}>{INBOX_MESSAGES.length} messages</span>
         <button type="button" className="floor-collapse-btn" onClick={onCollapse} aria-label="Collapse inbox panel">−</button>
       </div>
-      <div className="floor-panel-body">
-        <div className="hc-rule-silver" style={{ marginBottom: 8, opacity: 0.5 }} />
-        {INBOX_MESSAGES.map((m, i) => <div key={i} className="inbox-msg"><div className="inbox-meta"><span className="inbox-kind">{m.kind}</span><span className="inbox-time">{m.time}</span></div><div className="inbox-text">{m.text}</div></div>)}
-        <div className="inbox-stub-flag">— stub messages, no event sim yet —</div>
-        <div className="finance-trace">
-          <div className="finance-trace-head"><span className="hc-eyebrow">Finance · 14 wk trace (stub)</span><span className="hc-num" style={{ fontSize: 9.5, color: 'var(--pine)' }}>+${netK}K net</span></div>
-          <div className="hc-rule-silver" style={{ marginBottom: 8, opacity: 0.5 }} />
+      <div className="floor-panel-body inbox-pressure-body">
+        <div className="inbox-pressure-hero">
+          <div>
+            <div className={`inbox-pressure-state ${institutionalRead.tone}`}>{institutionalRead.label}</div>
+            <p>{institutionalRead.text}</p>
+          </div>
+          <div className="inbox-cash-block">
+            <strong>{cashWeeks}</strong>
+            <span>wks runway</span>
+          </div>
+        </div>
+
+        <div className="inbox-pressure-strip" aria-label="Institution pressure summary">
+          <div><span>Donors</span><strong className={donorTone(donor)}>{donorRead(donor)}</strong></div>
+          <div><span>Audience</span><strong className={trustTone(trust)}>{trustRead(trust)}</strong></div>
+          <div><span>Cash</span><strong className={netK >= 0 ? 'pine' : 'ember'}>{netK >= 0 ? '+' : ''}${netK}K</strong></div>
+        </div>
+
+        <div className="inbox-message-ledger">
+          <div className="inbox-message-head">
+            <span className="hc-eyebrow">Signals</span>
+            <span className="hc-eyebrow" style={{ color: 'var(--bark-dim)' }}>stub feed</span>
+          </div>
+          {INBOX_MESSAGES.map((m, i) => <div key={i} className="inbox-msg"><div className="inbox-meta"><span className="inbox-kind">{m.kind}</span><span className="inbox-time">{m.time}</span></div><div className="inbox-text">{m.text}</div></div>)}
+        </div>
+
+        <div className="finance-trace finance-pressure-trace">
+          <div className="finance-trace-head"><span className="hc-eyebrow">Finance trace</span><span className="hc-num" style={{ fontSize: 9.5, color: netK >= 0 ? 'var(--pine)' : 'var(--ember)' }}>{netK >= 0 ? '+' : ''}${netK}K net</span></div>
           <svg className="finance-spark" viewBox="0 0 300 44" preserveAspectRatio="none" role="img" aria-label="Finance sparkline (stub)">
             <line x1="0" y1="34" x2="300" y2="34" stroke="var(--hairline)" strokeWidth="0.5" />
             <polyline points={FINANCE_SPARKLINE.map((v, i) => `${(i / (FINANCE_SPARKLINE.length - 1)) * 300},${42 - v * 1.4}`).join(' ')} fill="none" stroke="var(--silver)" strokeWidth="1.2" />
@@ -318,6 +343,38 @@ function InboxFinanceColumn({ institution, onCollapse }: { institution: Institut
       </div>
     </section>
   )
+}
+
+function donorTone(score: number): 'pine' | 'bark' | 'ember' {
+  if (score >= 62) return 'pine'
+  if (score >= 42) return 'bark'
+  return 'ember'
+}
+
+function donorRead(score: number): string {
+  if (score >= 62) return 'holding'
+  if (score >= 42) return 'soft'
+  return 'nervous'
+}
+
+function trustTone(score: number): 'pine' | 'bark' | 'ember' {
+  if (score >= 62) return 'pine'
+  if (score >= 44) return 'bark'
+  return 'ember'
+}
+
+function trustRead(score: number): string {
+  if (score >= 62) return 'warm'
+  if (score >= 44) return 'uncertain'
+  return 'thin'
+}
+
+function inboxInstitutionRead(donor: number, trust: number, netK: number): { label: string; tone: 'pine' | 'bark' | 'ember'; text: string } {
+  if (donor < 40 && trust < 45) return { label: 'exposed', tone: 'ember', text: 'Both money and public confidence are asking for a steadier next result.' }
+  if (donor < 45) return { label: 'donor pressure', tone: 'ember', text: 'The board room is more fragile than the hall. Avoid making the institution look reckless.' }
+  if (trust < 45) return { label: 'public uncertainty', tone: 'bark', text: 'The audience read is unsettled. The next programme needs a clearer invitation.' }
+  if (netK < 0) return { label: 'cash drag', tone: 'bark', text: 'The institution is stable enough to choose, but the ledger is beginning to pull downward.' }
+  return { label: 'room to move', tone: 'pine', text: 'External pressure is contained. The next concert can afford a measured risk.' }
 }
 
 function averageMetric(works: Work[], key: 'audienceDraw' | 'rehearsalLoad'): number | null {
