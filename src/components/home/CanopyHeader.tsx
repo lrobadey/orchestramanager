@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import type { InstitutionState, SeasonState } from '../../types/core'
 import { formatShortDate, getSeasonWeekLabel } from '../../sim/calendar'
 import logo from '../../assets/logo.png'
@@ -36,6 +36,8 @@ const ENABLED: Record<HomeNavKey, boolean> = {
   audience: true,
 }
 
+let lastNavIndicator: { left: number; width: number } | null = null
+
 export default function CanopyHeader({
   institution,
   season,
@@ -44,6 +46,33 @@ export default function CanopyHeader({
   children,
   compact = false,
 }: CanopyHeaderProps) {
+  const navRef = useRef<HTMLDivElement>(null)
+  const buttonRefs = useRef<Partial<Record<HomeNavKey, HTMLButtonElement | null>>>({})
+  const [indicator, setIndicator] = useState<{ left: number; width: number; ready: boolean } | null>(null)
+
+  useLayoutEffect(() => {
+    const nav = navRef.current
+    const activeButton = buttonRefs.current[activeNav]
+    if (!nav || !activeButton) return
+
+    const navRect = nav.getBoundingClientRect()
+    const activeRect = activeButton.getBoundingClientRect()
+    const next = {
+      left: activeRect.left - navRect.left,
+      width: activeRect.width,
+    }
+
+    if (lastNavIndicator) {
+      setIndicator({ ...lastNavIndicator, ready: false })
+      requestAnimationFrame(() => setIndicator({ ...next, ready: true }))
+    } else {
+      setIndicator({ ...next, ready: false })
+      requestAnimationFrame(() => setIndicator({ ...next, ready: true }))
+    }
+
+    lastNavIndicator = next
+  }, [activeNav])
+
   const idx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
   const currentSlot = seasonComplete ? season.slots[3] : season.slots[idx]
@@ -67,8 +96,15 @@ export default function CanopyHeader({
             {institution.seasonLabel}
           </span>
         </div>
-        <div className="canopy-nav">
+        <div className="canopy-nav" ref={navRef}>
           <span className="canopy-nav-week">{getSeasonWeekLabel(season.calendar.currentDay, season.calendar.startDate)}</span>
+          {indicator && (
+            <span
+              className={`canopy-nav-indicator${indicator.ready ? ' ready' : ''}`}
+              style={{ left: indicator.left, width: indicator.width }}
+              aria-hidden="true"
+            />
+          )}
           {NAV_KEYS.map(k => {
             const isActive = activeNav === k
             const enabled = ENABLED[k]
@@ -80,6 +116,7 @@ export default function CanopyHeader({
                 key={k}
                 type="button"
                 className={classes.join(' ')}
+                ref={el => { buttonRefs.current[k] = el }}
                 onClick={() => enabled && onNavigate(k)}
                 disabled={!enabled}
                 title={enabled ? undefined : 'Coming in a later systems pass'}
