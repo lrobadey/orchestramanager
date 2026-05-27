@@ -344,6 +344,31 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
 
       <section className="roster-floor">
         <section className="roster-stage-shell" aria-label="Roster stage schematic">
+          <div className="roster-stage-command" aria-label="Roster strength summary">
+            <div className="roster-stage-command-copy">
+              <div className="roster-stage-command-title">The Orchestra</div>
+              <div className="roster-stage-command-meta">
+                {roster.principals.length} principals · {totalChairs} chairs · {slotLabel}
+              </div>
+            </div>
+
+            <div className="roster-stage-command-score">
+              <h1 className={`roster-stage-strength-value ${toneClass(compositeStrength)}`}>
+                {compositeStrength}
+                <span className="roster-canopy-strength-suffix">/100</span>
+              </h1>
+              <div className="roster-stage-strength-label">Strength range</div>
+              <div className="roster-strength-scale roster-stage-strength-scale">
+                <span className="roster-strength-scale-end">fragile 0</span>
+                <div className="roster-strength-scale-track">
+                  <span className={`roster-strength-scale-fill ${toneClass(compositeStrength)}`} style={{ width: `${compositeStrength}%` }} />
+                  <span className="roster-strength-scale-marker" aria-label="Stable threshold" />
+                </div>
+                <span className="roster-strength-scale-end right">commanding 100</span>
+              </div>
+            </div>
+          </div>
+
           <svg
             className="roster-stage-svg"
             viewBox={`0 0 ${STAGE_VIEWBOX.w} ${STAGE_VIEWBOX.h}`}

@@ -11,6 +11,7 @@ interface CanopyHeaderProps {
   activeNav: HomeNavKey
   onNavigate: (key: HomeNavKey) => void
   children?: ReactNode
+  compact?: boolean
 }
 
 const NAV_KEYS: HomeNavKey[] = ['home', 'roster', 'programme', 'library', 'ledger', 'donors', 'audience']
@@ -41,6 +42,7 @@ export default function CanopyHeader({
   activeNav,
   onNavigate,
   children,
+  compact = false,
 }: CanopyHeaderProps) {
   const idx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
@@ -88,7 +90,7 @@ export default function CanopyHeader({
           })}
         </div>
       </div>
-      {children ?? (
+      {!compact && (children ?? (
         <div className="canopy-headline-row">
           <div>
             <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>
@@ -110,7 +112,7 @@ export default function CanopyHeader({
             </div>
           </div>
         </div>
-      )}
+      ))}
     </div>
   )
 }
