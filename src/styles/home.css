@@ -180,8 +180,8 @@
   right: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, var(--silver-dim), var(--birch), var(--silver-dim));
-  background-size: 220% 100%;
+  background: repeating-linear-gradient(90deg, var(--silver-dim) 0%, var(--birch) 25%, var(--silver-dim) 50%);
+  background-size: 200% 100%;
   box-shadow: 0 0 8px rgba(184, 192, 188, 0.24);
   animation: active-nav-underline 2.4s linear infinite;
 }
@@ -190,9 +190,8 @@
 .canopy-nav-link.disabled { color: var(--bark-dim); cursor: not-allowed; opacity: 0.6; }
 
 @keyframes active-nav-underline {
-  from { background-position: 120% 0; opacity: 0.76; }
-  50% { opacity: 1; }
-  to { background-position: -120% 0; opacity: 0.76; }
+  from { background-position: 0% 0; }
+  to { background-position: -200% 0; }
 }
 
 .canopy-headline-row {
