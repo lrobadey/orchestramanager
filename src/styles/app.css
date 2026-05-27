@@ -1945,7 +1945,7 @@ input[type="checkbox"] {
 
 .enter-play-btn {
   padding: 0.6rem 2rem;
-  border-radius: 2px;
+  border-radius: 999px;
   border: 1.5px solid var(--silver);
   background: transparent;
   color: var(--silver);
