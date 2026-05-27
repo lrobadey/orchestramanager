@@ -25,9 +25,10 @@ import LibraryScreen from './components/LibraryScreen'
 import LedgerScreen from './components/LedgerScreen'
 import DonorRelationsScreen from './components/DonorRelationsScreen'
 import AudienceRelationsScreen from './components/AudienceRelationsScreen'
+import EnterScreen from './components/EnterScreen'
 
 type Phase = 'planning' | 'report'
-type MainView = 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors' | 'audience'
+type MainView = 'enter' | 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors' | 'audience'
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -49,7 +50,7 @@ export default function App() {
   )
   const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
   const [phase, setPhase] = useState<Phase>('planning')
-  const [mainView, setMainView] = useState<MainView>('home')
+  const [mainView, setMainView] = useState<MainView>('enter')
   const [report, setReport] = useState<ConcertReport | null>(null)
 
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
@@ -154,6 +155,10 @@ export default function App() {
     next[sourceIdx] = next[target]
     next[target] = a
     setProgram({ ...program, workIds: next })
+  }
+
+  if (mainView === 'enter') {
+    return <EnterScreen onEnter={() => setMainView('home')} />
   }
 
   if (seasonComplete) {
