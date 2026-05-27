@@ -1,4 +1,5 @@
 import { type KeyboardEvent, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { type ConcertForecast, type Principal, type RosterState, type SectionKey } from '../types/core'
 import { calculateSectionStrengths } from '../sim/roster'
 import '../styles/roster.css'
@@ -24,6 +25,17 @@ const SECTION_COLORS: Record<SectionKey, string> = {
   brass: 'var(--ember)',
   percussion: 'var(--pine)',
 }
+
+const ROSTER_REVEAL_TRANSITION = {
+  duration: 0.82,
+  ease: [0.32, 0.72, 0, 1] as const,
+}
+
+const rosterReveal = (delay = 0) => ({
+  initial: { opacity: 0, y: 28 },
+  animate: { opacity: 1, y: 0 },
+  transition: { ...ROSTER_REVEAL_TRANSITION, delay },
+})
 
 const STAGE_VIEWBOX = { w: 600, h: 385, cx: 300, cy: 326 }
 
@@ -313,7 +325,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
   return (
     <div className="roster-page">
       {showCanopy && (
-        <section className="roster-canopy">
+        <motion.section className="roster-canopy" {...rosterReveal(0)}>
           <div className="roster-canopy-copy-block">
             <div className="roster-kicker">
               The Orchestra · {roster.principals.length} principals · {totalChairs} chairs
@@ -339,11 +351,15 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
               <span className="roster-strength-scale-end right">commanding 100</span>
             </div>
           </div>
-        </section>
+        </motion.section>
       )}
 
       <section className="roster-floor">
-        <section className="roster-stage-shell" aria-label="Roster stage schematic">
+        <motion.section
+          className="roster-stage-shell"
+          aria-label="Roster stage schematic"
+          {...rosterReveal(showCanopy ? 0.08 : 0)}
+        >
           <div className="roster-stage-command" aria-label="Roster strength summary">
             <div className="roster-stage-command-copy">
               <div className="roster-stage-command-title">The Orchestra</div>
@@ -586,10 +602,14 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
               AUDIENCE
             </text>
           </svg>
-        </section>
+        </motion.section>
       </section>
 
-      <section className="roster-ledger" aria-live="polite">
+      <motion.section
+        className="roster-ledger"
+        aria-live="polite"
+        {...rosterReveal(showCanopy ? 0.16 : 0.08)}
+      >
         <div className="roster-ledger-head">
           <div>
             <div className="roster-ledger-kicker">Section inspection</div>
@@ -654,7 +674,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
             <PrincipalCard key={principal.id} principal={principal} />
           ))}
         </div>
-      </section>
+      </motion.section>
     </div>
   )
 }
