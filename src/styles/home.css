@@ -165,8 +165,14 @@
   padding: 0;
   cursor: pointer;
   font-style: normal;
+  transition: color 0.16s ease, text-shadow 0.16s ease, opacity 0.16s ease;
+}
+.canopy-nav-link:not(.disabled):hover {
+  color: #fffaf0;
+  text-shadow: 0 0 10px rgba(240, 235, 224, 0.34), 0 0 18px rgba(184, 255, 92, 0.16);
 }
 .canopy-nav-link.active { color: var(--birch); font-style: italic; }
+.canopy-nav-link.active:not(.disabled):hover { color: #fffaf0; }
 .canopy-nav-link.disabled { color: var(--bark-dim); cursor: not-allowed; opacity: 0.6; }
 
 .canopy-headline-row {

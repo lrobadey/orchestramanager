@@ -194,10 +194,14 @@ button { font-family: inherit; }
   padding: 0.5rem 0;
   cursor: pointer;
   position: relative;
-  transition: color 0.15s;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
 }
-.shell-nav-button:hover { color: var(--birch); }
+.shell-nav-button:hover {
+  color: #fffaf0;
+  text-shadow: 0 0 10px rgba(240, 235, 224, 0.34), 0 0 18px rgba(184, 255, 92, 0.16);
+}
 .shell-nav-button.active { color: var(--birch); }
+.shell-nav-button.active:hover { color: #fffaf0; }
 .shell-nav-button.active::after {
   content: '';
   position: absolute;
