@@ -355,11 +355,21 @@
 
 .roster-stage-focus-band {
   opacity: 0;
-  transition: opacity 160ms ease;
+  transition: opacity 160ms ease, stroke-width 160ms ease;
 }
 
-.roster-stage-focus-band.is-focused {
-  opacity: 0.085;
+.roster-stage-focus-band.is-selected {
+  opacity: 0.075;
+}
+
+.roster-stage-focus-band.is-hovered {
+  opacity: 0.16;
+  stroke-width: 46px;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.roster-stage-focus-band.is-clicked {
+  animation: roster-section-pulse 240ms ease-out;
 }
 
 .roster-stage-hit-zone,
@@ -374,14 +384,27 @@
 .roster-stage-label-focus-ring {
   fill: rgba(184, 192, 188, 0.035);
   stroke: transparent;
+  stroke-width: 0.8;
   opacity: 0;
-  transition: opacity 160ms ease, stroke 160ms ease;
+  transition: opacity 160ms ease, fill 160ms ease, stroke 160ms ease, stroke-dasharray 160ms ease;
 }
 
-.roster-stage-section-label.is-hovered .roster-stage-label-focus-ring,
 .roster-stage-section-label.is-active .roster-stage-label-focus-ring,
 .roster-stage-section-label:focus-visible .roster-stage-label-focus-ring {
   opacity: 1;
+  fill: rgba(184, 192, 188, 0.055);
+  stroke: rgba(184, 192, 188, 0.38);
+}
+
+.roster-stage-section-label.is-hovered .roster-stage-label-focus-ring {
+  opacity: 1;
+  fill: transparent;
+  stroke: var(--silver);
+  stroke-dasharray: 3 3;
+}
+
+.roster-stage-section-label.is-clicked .roster-stage-label-focus-ring {
+  animation: roster-label-pop 240ms ease-out;
 }
 
 .roster-stage-section-label:focus-visible .roster-stage-label-focus-ring {
@@ -393,9 +416,22 @@
   transition: fill 160ms ease;
 }
 
-.roster-stage-section-label.is-active .roster-stage-label-text,
-.roster-stage-section-label.is-hovered .roster-stage-label-text {
+.roster-stage-section-label.is-active .roster-stage-label-text {
   fill: var(--birch);
+}
+
+.roster-stage-section-label.is-hovered .roster-stage-label-text {
+  fill: var(--silver);
+}
+
+@keyframes roster-section-pulse {
+  0% { opacity: 0.24; }
+  100% { opacity: 0.075; }
+}
+
+@keyframes roster-label-pop {
+  0% { stroke-width: 2.2; }
+  100% { stroke-width: 0.8; }
 }
 
 .roster-stage-mini-track {

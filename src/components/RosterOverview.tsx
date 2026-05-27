@@ -261,6 +261,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
       : 0
   const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
   const [hoveredSection, setHoveredSection] = useState<SectionKey | null>(null)
+  const [pulseSection, setPulseSection] = useState<SectionKey | null>(null)
   const focusedSection = hoveredSection ?? activeSection
   const activePrincipals = activeSection ? roster.principals.filter(principal => principal.section === activeSection) : []
   const activeSectionStrength = activeSection ? sectionStrengths.find(row => row.section === activeSection) : undefined
@@ -312,6 +313,10 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
   }
 
   const selectSection = (section: SectionKey) => {
+    setPulseSection(section)
+    window.setTimeout(() => {
+      setPulseSection(current => (current === section ? null : current))
+    }, 240)
     setActiveSection(current => (current === section ? null : section))
   }
 
@@ -399,11 +404,13 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
           >
             <g className="roster-stage-focus-bands" aria-hidden="true">
               {STAGE_ARCS.map((arc, index) => {
-                const sectionFocused = arc.section === focusedSection
+                const sectionHovered = arc.section === hoveredSection
+                const sectionSelected = arc.section === activeSection
+                const sectionClicked = arc.section === pulseSection
                 return (
                   <path
                     key={`${arc.section}-focus-${index}`}
-                    className={`roster-stage-focus-band ${sectionFocused ? 'is-focused' : ''}`}
+                    className={`roster-stage-focus-band ${sectionHovered ? 'is-hovered' : ''} ${sectionSelected ? 'is-selected' : ''} ${sectionClicked ? 'is-clicked' : ''}`}
                     d={stageArcPath(arc.radius, arc.from, arc.to)}
                     fill="none"
                     stroke={SECTION_COLORS[arc.section]}
@@ -504,6 +511,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
               const summary = sectionSummary(label.section)
               const sectionActive = label.section === activeSection
               const sectionHovered = label.section === hoveredSection
+              const sectionClicked = label.section === pulseSection
               const sectionFocused = label.section === focusedSection
               const tooltipX = x + 72
               const tooltipY = Math.max(18, y - 36)
@@ -511,7 +519,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
               return (
                 <g
                   key={`${label.section}-${index}`}
-                  className={`roster-stage-section-label ${sectionActive ? 'is-active' : ''} ${sectionHovered ? 'is-hovered' : ''}`}
+                  className={`roster-stage-section-label ${sectionActive ? 'is-active' : ''} ${sectionHovered ? 'is-hovered' : ''} ${sectionClicked ? 'is-clicked' : ''}`}
                   role="button"
                   tabIndex={0}
                   aria-label={`${summary.label}: ${summary.strength} composite, ${summary.chairCount} chairs, ${summary.principalCount} principals`}
