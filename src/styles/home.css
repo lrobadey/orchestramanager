@@ -304,8 +304,8 @@
   transition: width 180ms ease, min-width 180ms ease;
 }
 .understory-rail.collapsed {
-  width: 38px;
-  min-width: 38px;
+  width: 46px;
+  min-width: 46px;
   padding: 0;
 }
 .understory-rail-collapsed-button {
@@ -318,12 +318,12 @@
     transparent;
   color: var(--silver-dim);
   cursor: pointer;
-  display: grid;
-  grid-template-rows: 1fr auto auto 1fr;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-items: center;
-  gap: 10px;
-  padding: 10px 0;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 4px;
 }
 .understory-rail-collapsed-button:hover {
   color: var(--birch);
@@ -336,6 +336,43 @@
   font-size: 8px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
+}
+.understory-rail-collapsed-vitals {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+}
+.understory-rail-collapsed-stat {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 5px 0 6px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.understory-rail-collapsed-stat:last-child {
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.understory-rail-collapsed-stat b {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: clip;
+  font-family: var(--display);
+  font-size: 12.5px;
+  line-height: 1;
+  font-weight: 500;
+  color: var(--birch);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+}
+.understory-rail-collapsed-stat i {
+  font-family: var(--hc-mono);
+  font-size: 6.8px;
+  line-height: 1;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bark);
 }
 .understory-rail-collapsed-mark {
   font-family: var(--hc-mono);

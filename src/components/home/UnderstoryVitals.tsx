@@ -92,6 +92,14 @@ export default function UnderstoryVitals({ institution, deltas, variant = 'bar' 
             aria-expanded="false"
           >
             <span className="understory-rail-collapsed-title">State</span>
+            <span className="understory-rail-collapsed-vitals" aria-hidden="true">
+              {compactVitals.map((vital) => (
+                <span className="understory-rail-collapsed-stat" key={vital.label}>
+                  <b>{vital.value}</b>
+                  <i>{vital.label === 'Morale' ? 'Mor' : vital.label}</i>
+                </span>
+              ))}
+            </span>
             <span className="understory-rail-collapsed-mark">⌄</span>
           </button>
         ) : (
