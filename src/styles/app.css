@@ -1946,9 +1946,9 @@ input[type="checkbox"] {
 .enter-play-btn {
   padding: 0.6rem 2rem;
   border-radius: 2px;
-  border: 1.5px solid var(--aurora);
+  border: 1.5px solid var(--silver);
   background: transparent;
-  color: var(--aurora);
+  color: var(--silver);
   font-family: var(--font-sans);
   font-size: 13px;
   letter-spacing: 0.12em;
@@ -1958,6 +1958,6 @@ input[type="checkbox"] {
 }
 
 .enter-play-btn:hover {
-  background: var(--aurora);
+  background: var(--silver);
   color: var(--ink);
 }
