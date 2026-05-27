@@ -263,8 +263,8 @@
 .roster-stage-command {
   position: absolute;
   top: 0.1rem;
-  left: clamp(-2.5rem, -3vw, -1rem);
-  right: clamp(-2.5rem, -3vw, -1rem);
+  left: clamp(-5.5rem, -6vw, -3rem);
+  right: clamp(-5.5rem, -6vw, -3rem);
   z-index: 2;
   display: grid;
   grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 0.8fr);
