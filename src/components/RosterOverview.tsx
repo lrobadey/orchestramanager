@@ -174,86 +174,6 @@ function buildPrincipalChairIndexes(
   )
 }
 
-function SectionCard({
-  summary,
-  active,
-  onSelect,
-}: {
-  summary: ReturnType<typeof createSectionSummary>
-  active: boolean
-  onSelect: () => void
-}) {
-  const fit = summary.fit
-
-  return (
-    <button
-      type="button"
-      className={`roster-section-card ${active ? 'active' : ''}`}
-      onClick={onSelect}
-      aria-pressed={active}
-      aria-label={`Inspect ${summary.label}: ${summary.strength} strength, bottleneck ${summary.bottleneck}`}
-    >
-      <div className="roster-section-card-head">
-        <div>
-          <div className="roster-section-label">{summary.label}</div>
-          <div className="roster-section-meta">{summary.chairCount} chairs · {summary.principalCount} principals</div>
-        </div>
-        <div className="roster-section-strength-stack">
-          {active && <span className="roster-section-active">Inspecting</span>}
-          <div className={`roster-section-strength ${toneClass(summary.strength)}`}>{summary.strength}</div>
-        </div>
-      </div>
-
-      <div className="roster-section-strength-block">
-        <div className="roster-section-strength-caption">{summary.status}</div>
-        <div className="roster-track">
-          <span className={`roster-track-fill ${toneClass(summary.strength)}`} style={{ width: `${summary.strength}%` }} />
-        </div>
-      </div>
-
-      <p className="roster-section-note">{summary.note}</p>
-
-      <div className="roster-section-metrics">
-        <div className="roster-section-metric">
-          <div className="roster-section-metric-head">
-            <span className="roster-section-metric-label">Bottleneck</span>
-            <span className="roster-section-metric-value">{summary.bottleneck}</span>
-          </div>
-        </div>
-        {fit && (
-          <div className="roster-section-metric roster-section-metric-split">
-            <span><span className="roster-section-metric-label">Demand</span> {fit.demand}</span>
-            <span><span className="roster-section-metric-label">Stress</span> {fit.stress}</span>
-          </div>
-        )}
-      </div>
-    </button>
-  )
-}
-
-function createSectionSummary(
-  section: SectionKey,
-  sectionStrengths: ReturnType<typeof calculateSectionStrengths>,
-  repertoireFit: ConcertForecast['repertoireFit'],
-  chairCounts: Record<SectionKey, number>,
-  principalCounts: Record<SectionKey, number>,
-) {
-  const row = sectionStrengths.find(item => item.section === section)
-  const fit = repertoireFit.find(item => item.section === section)
-  const strength = row?.strength ?? fit?.strength ?? 50
-  return {
-    section,
-    label: row?.label ?? fit?.label ?? SECTION_LABELS[section],
-    strength,
-    note: fit?.note ?? row?.note ?? 'Section detail stays anchored to the live roster.',
-    bottleneck: row?.bottleneck ?? 'coverage',
-    status: sectionStatusLabel(strength),
-    chairCount: chairCounts[section],
-    principalCount: principalCounts[section],
-    fit,
-  }
-}
-
 function PrincipalCard({ principal }: { principal: Principal }) {
   const overallTone = strengthTone(principal.overall)
   const { best, watch } = summarizePrincipal(principal)
@@ -375,8 +295,22 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
     : 'The orchestra is still settling into its first readable shape.'
   const headline = splitStrengthHeadline(compositeStrength)
 
-  const sectionSummary = (section: SectionKey) =>
-    createSectionSummary(section, sectionStrengths, repertoireFit, chairCounts, principalCounts)
+  const sectionSummary = (section: SectionKey) => {
+    const row = sectionStrengths.find(item => item.section === section)
+    const fit = repertoireFit.find(item => item.section === section)
+    const strength = row?.strength ?? fit?.strength ?? 50
+    return {
+      section,
+      label: row?.label ?? fit?.label ?? SECTION_LABELS[section],
+      strength,
+      note: fit?.note ?? row?.note ?? 'Section detail stays anchored to the live roster.',
+      bottleneck: row?.bottleneck ?? 'coverage',
+      status: sectionStatusLabel(strength),
+      chairCount: chairCounts[section],
+      principalCount: principalCounts[section],
+      fit,
+    }
+  }
 
   const selectSection = (section: SectionKey) => {
     setPulseSection(section)
@@ -430,21 +364,6 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
       )}
 
       <section className="roster-floor">
-        <motion.aside className="roster-side-stack" aria-label="Section index" {...rosterReveal(showCanopy ? 0.06 : 0)}>
-          <div className="roster-index-head">
-            <div className="roster-ledger-kicker">Section index</div>
-            <p>Pick a desk family to connect the stage shape to its operational pressure.</p>
-          </div>
-          {SECTION_ORDER.map(section => (
-            <SectionCard
-              key={section}
-              summary={sectionSummary(section)}
-              active={activeSection === section}
-              onSelect={() => selectSection(section)}
-            />
-          ))}
-        </motion.aside>
-
         <motion.section
           className="roster-stage-shell"
           aria-label="Roster stage schematic"

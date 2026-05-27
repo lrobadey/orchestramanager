@@ -1583,13 +1583,9 @@
 }
 
 .home-console .roster-floor {
-  grid-template-columns: minmax(280px, 0.34fr) minmax(0, 1fr);
-  justify-items: stretch;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
   gap: 18px;
-}
-
-.home-console .roster-index-head p {
-  font-family: var(--serif);
 }
 
 .home-console .roster-section-card,
@@ -1615,7 +1611,6 @@
 .home-console .roster-stage-shell {
   width: min(100%, 980px);
   min-height: 0;
-  justify-self: center;
 }
 
 .home-console .roster-ledger {
@@ -2640,7 +2635,6 @@
 }
 
 @media (max-width: 1100px) {
-  .home-console .roster-floor,
   .home-console .donor-radar-grid,
   .home-console .donor-influence-panel,
   .home-console .audience-metric-grid { grid-template-columns: 1fr; }
