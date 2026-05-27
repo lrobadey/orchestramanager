@@ -259,12 +259,12 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
     sectionStrengths.length > 0
       ? Math.round(sectionStrengths.reduce((sum, row) => sum + row.strength, 0) / sectionStrengths.length)
       : 0
-  const [activeSection, setActiveSection] = useState<SectionKey>('strings')
+  const [activeSection, setActiveSection] = useState<SectionKey | null>(null)
   const [hoveredSection, setHoveredSection] = useState<SectionKey | null>(null)
   const focusedSection = hoveredSection ?? activeSection
-  const activePrincipals = roster.principals.filter(principal => principal.section === activeSection)
-  const activeSectionStrength = sectionStrengths.find(row => row.section === activeSection)
-  const activeSectionFit = repertoireFit.find(row => row.section === activeSection)
+  const activePrincipals = activeSection ? roster.principals.filter(principal => principal.section === activeSection) : []
+  const activeSectionStrength = activeSection ? sectionStrengths.find(row => row.section === activeSection) : undefined
+  const activeSectionFit = activeSection ? repertoireFit.find(row => row.section === activeSection) : undefined
   const stageChairs = useMemo(() => buildStageChairs(), [])
   const chairCounts = useMemo(() => sectionChairCounts(), [])
   const principalCounts = useMemo(
@@ -313,6 +313,10 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
 
   const selectSection = (section: SectionKey) => {
     setActiveSection(section)
+  }
+
+  const clearSectionSelection = () => {
+    setActiveSection(null)
   }
 
   const handleStageSectionKeyDown = (event: KeyboardEvent<SVGGElement>, section: SectionKey) => {
@@ -391,6 +395,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
             preserveAspectRatio="xMidYMid meet"
             role="img"
             aria-label="Interactive semicircular roster stage schematic"
+            onClick={clearSectionSelection}
           >
             <g className="roster-stage-focus-bands" aria-hidden="true">
               {STAGE_ARCS.map((arc, index) => {
@@ -423,7 +428,10 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
                   pointerEvents="stroke"
                   onMouseEnter={() => setHoveredSection(arc.section)}
                   onMouseLeave={() => setHoveredSection(null)}
-                  onClick={() => selectSection(arc.section)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    selectSection(arc.section)
+                  }}
                 />
               ))}
             </g>
@@ -509,7 +517,10 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
                   aria-label={`${summary.label}: ${summary.strength} composite, ${summary.chairCount} chairs, ${summary.principalCount} principals`}
                   onMouseEnter={() => setHoveredSection(label.section)}
                   onMouseLeave={() => setHoveredSection(null)}
-                  onClick={() => selectSection(label.section)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    selectSection(label.section)
+                  }}
                   onKeyDown={event => handleStageSectionKeyDown(event, label.section)}
                 >
                   <rect
@@ -614,20 +625,25 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
           <div>
             <div className="roster-ledger-kicker">Section inspection</div>
             <h2 className="roster-ledger-title">
-              {SECTION_LABELS[activeSection]} <span>{activeSectionStrength?.strength ?? activeSectionFit?.strength ?? 50}</span>
+              {activeSection ? SECTION_LABELS[activeSection] : 'No section selected'}{' '}
+              {activeSection && <span>{activeSectionStrength?.strength ?? activeSectionFit?.strength ?? 50}</span>}
             </h2>
             <p className="roster-ledger-copy">
-              {activeSectionStrength?.note ?? 'Section detail stays anchored to the live roster.'}
+              {activeSection
+                ? activeSectionStrength?.note ?? 'Section detail stays anchored to the live roster.'
+                : 'Select a section in the orchestra arc to inspect it. Click the empty stage space to clear the selection.'}
             </p>
           </div>
 
           <div className="roster-ledger-meta">
-            <span>{activePrincipals.length} principals</span>
-            <span>{chairCounts[activeSection]} chairs</span>
+            <span>{activeSection ? `${activePrincipals.length} principals` : `${roster.principals.length} principals`}</span>
+            <span>{activeSection ? `${chairCounts[activeSection]} chairs` : `${totalChairs} chairs`}</span>
             <span>{slotLabel}</span>
           </div>
         </div>
 
+        {activeSection && (
+          <>
         <div className="roster-ledger-diagnostics">
           <div className="roster-ledger-diagnostic-card">
             <div className="roster-ledger-diagnostic-label">Composite</div>
@@ -674,6 +690,8 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
             <PrincipalCard key={principal.id} principal={principal} />
           ))}
         </div>
+          </>
+        )}
       </motion.section>
     </div>
   )
