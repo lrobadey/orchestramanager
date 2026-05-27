@@ -1,16 +1,36 @@
+.roster-strata {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.roster-body-with-vitals {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.roster-strata .home-stratum.canopy {
+  padding-bottom: 10px;
+}
+
 .roster-page {
   width: 100%;
   max-width: 1440px;
   margin: 0 auto;
-  padding: 0.35rem 1.5rem 1.5rem;
+  padding: 0.15rem 1.25rem 1.5rem;
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
   min-height: 0;
 }
 
-.roster-console-floor {
-  padding-top: 10px;
+.home-stratum.floor.roster-console-floor {
+  padding-top: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
+
+.home-stratum.floor.roster-console-floor::-webkit-scrollbar { width: 4px; }
+.home-stratum.floor.roster-console-floor::-webkit-scrollbar-thumb { background: var(--hairline-soft); }
 
 .roster-kicker,
 .roster-ledger-kicker,
@@ -32,7 +52,7 @@
   grid-template-columns: minmax(24rem, 1fr) minmax(32rem, 0.95fr);
   gap: clamp(1.5rem, 3vw, 3.2rem);
   align-items: end;
-  padding: 0.95rem 0 0.1rem 48px;
+  padding: 0.55rem 0 0 48px;
   border-top: 1px solid rgba(184, 192, 188, 0.08);
 }
 
@@ -42,7 +62,7 @@
 
 .roster-command-title {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(2.2rem, 3.6vw, 4.2rem);
+  font-size: clamp(2.2rem, 3.35vw, 3.95rem);
   font-style: italic;
   line-height: 0.95;
   color: var(--birch);
@@ -90,7 +110,7 @@
 .roster-command-strength-value {
   margin: 0;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(4.2rem, 6vw, 6.2rem);
+  font-size: clamp(4rem, 5.5vw, 5.85rem);
   line-height: 0.82;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -235,7 +255,7 @@
 }
 
 .roster-stage-shell {
-  width: min(100%, 980px);
+  width: min(100%, 1020px);
   min-width: 0;
 }
 

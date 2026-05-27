@@ -198,7 +198,7 @@ export default function App() {
     return (
       <AppShell chromeless>
         <div className="home-console">
-          <div className="home-strata">
+          <div className="home-strata roster-strata">
             <CanopyHeader
               institution={institution}
               season={season}
@@ -207,14 +207,16 @@ export default function App() {
             >
               <RosterStrengthHeader roster={season.roster} forecast={forecast} />
             </CanopyHeader>
-            <UnderstoryVitals institution={institution} />
-            <div className="home-stratum floor console-screen-floor roster-console-floor">
-              <RosterOverview
-                roster={season.roster}
-                forecast={forecast}
-                currentSlotName={currentSlotName}
-                showCanopy={false}
-              />
+            <div className="roster-body-with-vitals">
+              <UnderstoryVitals institution={institution} variant="rail" />
+              <div className="home-stratum floor console-screen-floor roster-console-floor">
+                <RosterOverview
+                  roster={season.roster}
+                  forecast={forecast}
+                  currentSlotName={currentSlotName}
+                  showCanopy={false}
+                />
+              </div>
             </div>
           </div>
         </div>

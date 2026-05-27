@@ -4,6 +4,7 @@ import type { InstitutionState, InstitutionalDeltas } from '../../types/core'
 interface UnderstoryVitalsProps {
   institution: InstitutionState
   deltas?: InstitutionalDeltas
+  variant?: 'bar' | 'rail'
 }
 
 function fmtCash(n: number): string {
@@ -48,7 +49,7 @@ function VitalCell({ label, value, delta, isCash, pct, pctTone, cashClass }: Vit
   )
 }
 
-export default function UnderstoryVitals({ institution, deltas }: UnderstoryVitalsProps) {
+export default function UnderstoryVitals({ institution, deltas, variant = 'bar' }: UnderstoryVitalsProps) {
   const [collapsed, setCollapsed] = useState(true)
   const id = institution.identity
   const dominantKey = (['adventurous', 'communityFocused', 'scholarly'] as const).reduce(
@@ -78,6 +79,80 @@ export default function UnderstoryVitals({ institution, deltas }: UnderstoryVita
     { label: 'Trust', value: institution.audienceTrust },
     { label: 'Donors', value: institution.donorConfidence },
   ]
+
+  if (variant === 'rail') {
+    return (
+      <aside className={`home-stratum understory understory-rail${collapsed ? ' collapsed' : ''}`} aria-label="Institutional state of play">
+        {collapsed ? (
+          <button
+            className="understory-rail-collapsed-button"
+            type="button"
+            onClick={() => setCollapsed(false)}
+            aria-label="Expand institutional state of play"
+            aria-expanded="false"
+          >
+            <span className="understory-rail-collapsed-title">State</span>
+            <span className="understory-rail-collapsed-mark">⌄</span>
+          </button>
+        ) : (
+          <div className="understory-rail-panel">
+            <div className="understory-rail-head">
+              <span className="hc-eyebrow">Institutional state of play</span>
+              <button
+                className="understory-collapse-toggle"
+                type="button"
+                onClick={() => setCollapsed(true)}
+                aria-label="Collapse institutional state of play"
+                aria-expanded="true"
+              >
+                ⌃
+              </button>
+            </div>
+
+            <div className="understory-rail-vitals">
+              <VitalCell label="Cash" value={fmtCash(institution.cash)} delta={deltas?.cash} isCash cashClass />
+              <VitalCell
+                label="Reputation"
+                value={institution.artisticReputation}
+                delta={deltas?.artisticReputation}
+                pct={institution.artisticReputation}
+              />
+              <VitalCell
+                label="Morale"
+                value={institution.musicianMorale}
+                delta={deltas?.musicianMorale}
+                pct={institution.musicianMorale}
+                pctTone="pine"
+              />
+              <VitalCell
+                label="Trust"
+                value={institution.audienceTrust}
+                delta={deltas?.audienceTrust}
+                pct={institution.audienceTrust}
+              />
+              <VitalCell
+                label="Donors"
+                value={institution.donorConfidence}
+                delta={deltas?.donorConfidence}
+                pct={institution.donorConfidence}
+                pctTone={(deltas?.donorConfidence ?? 0) < 0 ? 'ember' : undefined}
+              />
+            </div>
+
+            <div className="understory-rail-identity">
+              <div className="hc-eyebrow">Identity</div>
+              <div className="understory-identity-sentence">{identitySentence}</div>
+              <div className="understory-identity-rows">
+                <IdentityRow label="Adventure" value={id.adventurous} tone="silver" />
+                <IdentityRow label="Community" value={id.communityFocused} tone="bark" />
+                <IdentityRow label="Scholarly" value={id.scholarly} tone="pine" />
+              </div>
+            </div>
+          </div>
+        )}
+      </aside>
+    )
+  }
 
   return (
     <div className={`home-stratum understory${collapsed ? ' collapsed' : ''}`}>

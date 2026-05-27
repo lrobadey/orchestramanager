@@ -292,6 +292,105 @@
   border-color: var(--silver-dim);
   color: var(--birch);
 }
+.understory-rail {
+  width: 248px;
+  min-width: 248px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--hairline);
+  border-bottom: none;
+  padding: 0;
+  transition: width 180ms ease, min-width 180ms ease;
+}
+.understory-rail.collapsed {
+  width: 38px;
+  min-width: 38px;
+  padding: 0;
+}
+.understory-rail-collapsed-button {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background:
+    linear-gradient(180deg, rgba(184, 192, 188, 0.025), rgba(0, 0, 0, 0.08)),
+    transparent;
+  color: var(--silver-dim);
+  cursor: pointer;
+  display: grid;
+  grid-template-rows: 1fr auto auto 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 10px 0;
+}
+.understory-rail-collapsed-button:hover {
+  color: var(--birch);
+  background: rgba(184, 192, 188, 0.05);
+}
+.understory-rail-collapsed-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-family: var(--hc-mono);
+  font-size: 8px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.understory-rail-collapsed-mark {
+  font-family: var(--hc-mono);
+  font-size: 13px;
+  line-height: 1;
+}
+.understory-rail-panel {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 18px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+.understory-rail-panel::-webkit-scrollbar { width: 4px; }
+.understory-rail-panel::-webkit-scrollbar-thumb { background: var(--hairline-soft); }
+.understory-rail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.understory-rail-vitals {
+  display: grid;
+  gap: 0;
+}
+.understory-rail-vitals .understory-vital {
+  padding: 11px 0 12px;
+  border-left: none;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.understory-rail-vitals .understory-vital + .understory-vital {
+  border-left: none;
+}
+.understory-rail-vitals .understory-vital .v-big {
+  font-size: 23px;
+}
+.understory-rail-identity {
+  display: grid;
+  gap: 8px;
+}
+.understory-rail-identity .understory-identity-sentence {
+  font-size: 13.5px;
+  margin: 0;
+}
+.understory-rail-identity .understory-identity-row {
+  grid-template-columns: 72px 1fr 24px;
+  gap: 8px;
+}
+.understory-rail-identity .understory-identity-row .k {
+  font-size: 11.5px;
+}
 .understory-compact-strip {
   display: grid;
   grid-template-columns: auto 1fr auto;
