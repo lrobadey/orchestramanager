@@ -312,7 +312,7 @@ export default function RosterOverview({ roster, forecast, currentSlotName, show
   }
 
   const selectSection = (section: SectionKey) => {
-    setActiveSection(section)
+    setActiveSection(current => (current === section ? null : section))
   }
 
   const clearSectionSelection = () => {
