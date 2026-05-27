@@ -166,7 +166,7 @@
   cursor: pointer;
   font-style: normal;
   position: relative;
-  transition: color 0.16s ease, text-shadow 0.16s ease, opacity 0.16s ease;
+  transition: color 0.16s ease, text-shadow 0.16s ease, opacity 0.16s ease, transform 0.08s ease;
 }
 .canopy-nav-link:not(.disabled):hover {
   color: #fffaf0;
@@ -186,6 +186,7 @@
   animation: active-nav-underline 2.8s ease-in-out infinite;
 }
 .canopy-nav-link.active:not(.disabled):hover { color: #fffaf0; }
+.canopy-nav-link:not(.disabled):active { transform: translateY(1px) scale(0.985); }
 .canopy-nav-link.disabled { color: var(--bark-dim); cursor: not-allowed; opacity: 0.6; }
 
 @keyframes active-nav-underline {

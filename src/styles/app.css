@@ -194,7 +194,7 @@ button { font-family: inherit; }
   padding: 0.5rem 0;
   cursor: pointer;
   position: relative;
-  transition: color 0.15s ease, text-shadow 0.15s ease;
+  transition: color 0.15s ease, text-shadow 0.15s ease, transform 0.08s ease;
 }
 .shell-nav-button:hover {
   color: #fffaf0;
@@ -202,6 +202,7 @@ button { font-family: inherit; }
 }
 .shell-nav-button.active { color: var(--birch); }
 .shell-nav-button.active:hover { color: #fffaf0; }
+.shell-nav-button:active { transform: translateY(1px) scale(0.985); }
 .shell-nav-button.active::after {
   content: '';
   position: absolute;
@@ -209,7 +210,10 @@ button { font-family: inherit; }
   right: 0;
   bottom: -4px;
   height: 1px;
-  background: var(--aurora);
+  background: linear-gradient(90deg, rgba(184, 255, 92, 0.2), var(--aurora), rgba(240, 235, 224, 0.72));
+  box-shadow: 0 0 10px rgba(184, 255, 92, 0.28);
+  transform-origin: left center;
+  animation: active-nav-underline 2.8s ease-in-out infinite;
 }
 
 .season-dots {
