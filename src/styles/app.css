@@ -1938,7 +1938,7 @@ input[type="checkbox"] {
 }
 
 .enter-logo {
-  width: min(720px, 88vw);
+  width: min(1100px, 96vw);
   height: auto;
   display: block;
 }
