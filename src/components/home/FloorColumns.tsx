@@ -219,30 +219,57 @@ function NextConcertColumn({ slotName, idx, workCount, selectedWorks, suggested,
   const days = daysToCurtain(idx)
   const date = concertDate(idx)
   const followUpDate = concertDate(Math.min(idx + 1, 3))
+  const visibleWorks = selectedWorks.slice(0, workCount)
+  const openSlots = visibleWorks.filter(w => !w).length
+  const assignedWorks = visibleWorks.filter((w): w is Work => Boolean(w))
+  const avgDraw = averageMetric(assignedWorks, 'audienceDraw')
+  const avgLoad = averageMetric(assignedWorks, 'rehearsalLoad')
+  const stakes = concertStakes(openSlots, avgDraw, avgLoad, seasonComplete)
 
   return (
-    <section className="floor-panel floor-panel-programme">
-      <div className="floor-col-head">
-        <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>The next concert</span>
+    <section className="floor-panel floor-panel-programme next-decision-card">
+      <div className="floor-col-head next-decision-head">
+        <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>Next decision</span>
         <span className="hc-eyebrow">{seasonComplete ? 'Season closed' : idx < 3 ? `Concert ${CONCERT_ROMAN[idx + 1]} follows on ${followUpDate}` : 'Final concert of the season'}</span>
         <button type="button" className="floor-collapse-btn" onClick={onCollapse} aria-label="Collapse programme panel">−</button>
       </div>
-      <div className="floor-panel-body">
-        <div className="hc-rule-brown" style={{ marginBottom: 12 }} />
-        <div className="next-title-line"><span className="accent">{slotName}</span></div>
-        <div className="next-meta">{VENUE_NAME} · {seasonComplete ? '—' : date}</div>
-        <div className="next-slots">
-          {selectedWorks.slice(0, workCount).map((w, i) => (
-            <div key={i} className="next-slot-row">
+      <div className="floor-panel-body next-decision-body">
+        <div className="next-decision-hero">
+          <div>
+            <div className="next-decision-kicker">Program {CONCERT_ROMAN[idx]}</div>
+            <div className="next-title-line"><span className="accent">{slotName}</span></div>
+            <div className="next-meta">{VENUE_NAME} · {seasonComplete ? '—' : date}</div>
+          </div>
+          <div className="next-days-block" aria-label={`${days} days until curtain`}>
+            <strong>{days}</strong>
+            <span>{seasonComplete ? 'closed' : 'days'}</span>
+          </div>
+        </div>
+
+        <div className="next-stakes-strip" aria-label="Concert state of play">
+          <div><span>Shape</span><strong>{openSlots} open</strong></div>
+          <div><span>Audience</span><strong className={stakes.audienceTone}>{stakes.audience}</strong></div>
+          <div><span>Load</span><strong className={stakes.loadTone}>{stakes.load}</strong></div>
+          <div><span>Pressure</span><strong className={stakes.pressureTone}>{stakes.pressure}</strong></div>
+        </div>
+
+        <p className="next-decision-read">{stakes.read}</p>
+
+        <div className="next-slots next-slot-ledger">
+          {visibleWorks.map((w, i) => (
+            <div key={i} className={`next-slot-row${w ? ' assigned' : ' open'}`}>
               <span className="next-slot-roman">{SLOT_ROMAN[i] ?? `${i + 1}`}.</span>
-              <div>{w ? <><span className="next-slot-title"><span className="next-slot-composer">{w.composer},</span> <span style={{ fontStyle: 'italic' }}>{w.title}</span></span><div className="next-slot-hint">{w.durationMinutes}m · P{w.artisticPrestige} · D{w.audienceDraw} · L{w.rehearsalLoad}</div></> : <><span className="next-slot-title empty">— open —</span><div className="next-slot-hint">{SLOT_HINTS[i] ?? 'Open slot'}</div></>}</div>
-              <span className="next-slot-assign">{w ? 'ASSIGNED' : '＋ ASSIGN'}</span>
+              <div>{w ? <><span className="next-slot-title"><span className="next-slot-composer">{w.composer},</span> <span style={{ fontStyle: 'italic' }}>{w.title}</span></span><div className="next-slot-hint">{w.durationMinutes}m · prestige {w.artisticPrestige} · draw {w.audienceDraw} · load {w.rehearsalLoad}</div></> : <><span className="next-slot-title empty">Open slot</span><div className="next-slot-hint">{SLOT_HINTS[i] ?? 'Open slot'}</div></>}</div>
+              <span className="next-slot-assign">{w ? 'set' : 'needs choice'}</span>
             </div>
           ))}
         </div>
-        <div className="next-suggested">
-          <span className="hc-eyebrow">From the library · suggested</span>
-          <div className="hc-rule-silver" style={{ margin: '6px 0 8px', opacity: 0.4 }} />
+
+        <div className="next-suggested next-suggestion-ledger">
+          <div className="next-suggestion-head">
+            <span className="hc-eyebrow">Useful library pulls</span>
+            <span className="hc-eyebrow" style={{ color: 'var(--bark)' }}>not assigned</span>
+          </div>
           {suggested.map(w => (
             <div key={w.id} className="next-suggested-row">
               <span><span className="next-suggested-name">{w.composer},</span> <span className="next-suggested-title">{w.title}</span></span>
@@ -253,9 +280,9 @@ function NextConcertColumn({ slotName, idx, workCount, selectedWorks, suggested,
             </div>
           ))}
         </div>
-        <button type="button" className="next-cta" onClick={onOpenProgramme}>
+        <button type="button" className="next-cta next-decision-cta" onClick={onOpenProgramme}>
           <span className="next-cta-arrow">▸</span>
-          <span className="next-cta-label">{seasonComplete ? 'Open Season Summary' : `Open Programme Builder for ${CONCERT_ROMAN[idx]}`}</span>
+          <span className="next-cta-label">{seasonComplete ? 'Open Season Summary' : `Open Programme Builder`}</span>
           <span className="next-cta-trail">{seasonComplete ? 'IV / IV' : `T−${days}d`}</span>
         </button>
       </div>
@@ -291,6 +318,48 @@ function InboxFinanceColumn({ institution, onCollapse }: { institution: Institut
       </div>
     </section>
   )
+}
+
+function averageMetric(works: Work[], key: 'audienceDraw' | 'rehearsalLoad'): number | null {
+  if (!works.length) return null
+  return Math.round(works.reduce((sum, work) => sum + work[key], 0) / works.length)
+}
+
+function concertStakes(openSlots: number, avgDraw: number | null, avgLoad: number | null, seasonComplete: boolean): {
+  audience: string
+  audienceTone: 'pine' | 'bark' | 'ember'
+  load: string
+  loadTone: 'pine' | 'bark' | 'ember'
+  pressure: string
+  pressureTone: 'pine' | 'bark' | 'ember'
+  read: string
+} {
+  if (seasonComplete) {
+    return {
+      audience: 'settled',
+      audienceTone: 'pine',
+      load: 'past',
+      loadTone: 'bark',
+      pressure: 'closed',
+      pressureTone: 'bark',
+      read: 'The season is complete. Review the pattern before moving into the next cycle.',
+    }
+  }
+
+  const audience = avgDraw == null ? 'unknown' : avgDraw >= 68 ? 'promising' : avgDraw >= 52 ? 'uncertain' : 'thin'
+  const audienceTone = avgDraw == null ? 'bark' : avgDraw >= 68 ? 'pine' : avgDraw >= 52 ? 'bark' : 'ember'
+  const load = avgLoad == null ? 'unknown' : avgLoad >= 72 ? 'heavy' : avgLoad >= 55 ? 'workable' : 'light'
+  const loadTone = avgLoad == null ? 'bark' : avgLoad >= 72 ? 'ember' : avgLoad >= 55 ? 'bark' : 'pine'
+  const pressure = openSlots >= 3 ? 'unformed' : openSlots >= 1 ? 'active' : 'set'
+  const pressureTone = openSlots >= 3 ? 'ember' : openSlots >= 1 ? 'bark' : 'pine'
+
+  const read = openSlots >= 3
+    ? 'The concert has no public argument yet. Choose an anchor before polishing the edges.'
+    : openSlots > 0
+      ? 'The concert has a shape, but its remaining gaps still decide the evening.'
+      : 'The programme is set. The question now shifts to rehearsal risk and public appetite.'
+
+  return { audience, audienceTone, load, loadTone, pressure, pressureTone, read }
 }
 
 function conditionTone(score: number): 'pine' | 'bark' | 'ember' {
