@@ -52,9 +52,9 @@ export default function AudienceRelationsScreen({
   return (
     <div className="home-console">
       <div className="home-strata">
-        <CanopyHeader institution={institution} season={season} activeNav="audience" onNavigate={onNavigate} />
+        <CanopyHeader institution={institution} season={season} activeNav="audience" onNavigate={onNavigate} compact />
         <UnderstoryVitals institution={institution} />
-        <div className="home-stratum floor console-screen-floor">
+        <div className="home-stratum floor console-screen-floor donor-screen-floor">
           <section className="donor-page audience-page">
             <section className="donor-canopy">
               <div>
