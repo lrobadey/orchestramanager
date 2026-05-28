@@ -1941,36 +1941,61 @@ input[type="checkbox"] {
   position: relative;
   width: min(1100px, 96vw);
   isolation: isolate;
+  overflow: hidden;
 }
 
 .enter-logo {
+  position: relative;
+  z-index: 0;
   width: 100%;
   height: auto;
   display: block;
 }
 
-.enter-logo-wrap::before {
+.enter-logo-wrap::before,
+.enter-logo-wrap::after {
   content: '';
   position: absolute;
   inset: 0;
-  z-index: 1;
   pointer-events: none;
+  mask-image: url('/open.png');
+  mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url('/open.png');
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+}
+
+.enter-logo-wrap::before {
+  z-index: 1;
   background:
-    linear-gradient(112deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0) 28%,
-      rgba(218, 224, 221, 0.16) 42%,
-      rgba(255, 255, 255, 0.42) 50%,
-      rgba(164, 172, 168, 0.12) 59%,
-      rgba(255, 255, 255, 0) 72%,
-      transparent 100%);
-  background-size: 230% 100%;
-  background-position: 140% 50%;
+    linear-gradient(108deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(146, 154, 151, 0.08) 18%,
+      rgba(255, 255, 255, 0.18) 34%,
+      rgba(112, 122, 119, 0.06) 48%,
+      rgba(255, 255, 255, 0.15) 66%,
+      rgba(150, 160, 156, 0.07) 82%,
+      rgba(255, 255, 255, 0.04) 100%);
+  background-size: 180% 100%;
   mix-blend-mode: screen;
-  opacity: 0.72;
-  mask: url('/open.png') center / contain no-repeat;
-  -webkit-mask: url('/open.png') center / contain no-repeat;
-  animation: enter-logo-silver-shine 19s ease-in-out infinite;
+  opacity: 0.42;
+  animation: enter-logo-silver-shift 24s ease-in-out infinite alternate;
+}
+
+.enter-logo-wrap::after {
+  z-index: 2;
+  background:
+    radial-gradient(ellipse at 22% 42%, rgba(255, 255, 255, 0.10), transparent 34%),
+    radial-gradient(ellipse at 72% 58%, rgba(196, 204, 200, 0.08), transparent 38%),
+    linear-gradient(82deg, rgba(255, 255, 255, 0.04), transparent 28%, rgba(255, 255, 255, 0.07) 52%, transparent 76%);
+  background-size: 150% 120%, 160% 130%, 210% 100%;
+  filter: blur(0.6px);
+  mix-blend-mode: screen;
+  opacity: 0.32;
+  animation: enter-logo-silver-texture 31s ease-in-out infinite alternate;
 }
 
 .enter-play-btn {
@@ -2020,15 +2045,21 @@ input[type="checkbox"] {
   62%, 100% { left: 118%; }
 }
 
-@keyframes enter-logo-silver-shine {
-  0% { background-position: 140% 50%; opacity: 0.5; }
-  38% { opacity: 0.74; }
-  58% { background-position: -45% 50%; opacity: 0.62; }
-  100% { background-position: -45% 50%; opacity: 0.5; }
+@keyframes enter-logo-silver-shift {
+  0% { background-position: 92% 50%; opacity: 0.34; }
+  50% { opacity: 0.46; }
+  100% { background-position: 8% 50%; opacity: 0.38; }
+}
+
+@keyframes enter-logo-silver-texture {
+  0% { background-position: 18% 42%, 78% 56%, 92% 50%; opacity: 0.24; }
+  50% { opacity: 0.34; }
+  100% { background-position: 30% 45%, 64% 52%, 16% 50%; opacity: 0.28; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .enter-logo-wrap::before,
+  .enter-logo-wrap::after,
   .enter-play-btn::before {
     animation: none;
   }
