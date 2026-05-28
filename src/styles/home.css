@@ -1039,7 +1039,8 @@
   width: 100%;
   padding: 14px 18px;
   background:
-    linear-gradient(90deg, rgba(184, 192, 188, 0.035), transparent 46%, rgba(184, 192, 188, 0.02)),
+    radial-gradient(120% 190% at 0% 50%, rgba(184, 192, 188, 0.10), transparent 44%),
+    linear-gradient(90deg, rgba(184, 192, 188, 0.055), transparent 46%, rgba(184, 192, 188, 0.025)),
     transparent;
   border: 1px solid var(--silver-dim);
   color: var(--birch);
@@ -1049,27 +1050,43 @@
   gap: 14px;
   align-items: baseline;
   text-align: left;
-  transition: border-color 120ms ease, background 120ms ease;
+  box-shadow: inset 0 0 0 1px rgba(255, 250, 240, 0.025);
+  transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
 }
 .next-cta::before {
   content: '';
   position: absolute;
-  inset: -45% auto -45% -62%;
+  inset: -60% auto -60% -74%;
   z-index: -1;
-  width: 48%;
+  width: 62%;
   transform: skewX(-18deg);
   background:
     linear-gradient(90deg,
       transparent 0%,
-      rgba(184, 192, 188, 0.00) 15%,
-      rgba(184, 192, 188, 0.12) 45%,
-      rgba(255, 250, 240, 0.28) 52%,
-      rgba(184, 192, 188, 0.10) 60%,
+      rgba(184, 192, 188, 0.00) 10%,
+      rgba(184, 192, 188, 0.18) 34%,
+      rgba(255, 250, 240, 0.70) 49%,
+      rgba(184, 192, 188, 0.22) 62%,
       transparent 100%);
-  filter: blur(0.2px);
-  animation: next-cta-shimmer 5.8s ease-in-out infinite;
+  filter: blur(0.4px);
+  animation: next-cta-shimmer 4.2s cubic-bezier(0.65, 0, 0.28, 1) infinite;
 }
-.next-cta:hover { border-color: var(--silver); background: rgba(184, 192, 188, 0.04); }
+.next-cta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 250, 240, 0.14), transparent),
+    radial-gradient(70% 150% at 50% 50%, rgba(184, 192, 188, 0.12), transparent 65%);
+  opacity: 0;
+  animation: next-cta-flare 4.2s cubic-bezier(0.65, 0, 0.28, 1) infinite;
+}
+.next-cta:hover {
+  border-color: var(--silver);
+  background: rgba(184, 192, 188, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 250, 240, 0.08), 0 0 22px rgba(184, 192, 188, 0.08);
+}
 .next-decision-cta { margin-top: 14px; }
 .next-cta-arrow,
 .next-cta-label,
@@ -1078,12 +1095,17 @@
 .next-cta-label { font-family: var(--display); font-size: 18px; color: var(--birch); font-weight: 500; letter-spacing: 0.01em; }
 .next-cta-trail { font-family: var(--hc-mono); font-size: 9.5px; color: var(--silver-dim); letter-spacing: 0.18em; }
 @keyframes next-cta-shimmer {
-  0%, 42% { transform: translateX(0) skewX(-18deg); opacity: 0; }
-  50% { opacity: 0.9; }
-  68%, 100% { transform: translateX(355%) skewX(-18deg); opacity: 0; }
+  0%, 34% { transform: translateX(0) skewX(-18deg); opacity: 0; }
+  42% { opacity: 1; }
+  58%, 100% { transform: translateX(335%) skewX(-18deg); opacity: 0; }
+}
+@keyframes next-cta-flare {
+  0%, 38%, 62%, 100% { opacity: 0; }
+  49% { opacity: 0.55; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .next-cta::before { animation: none; opacity: 0; }
+  .next-cta::before,
+  .next-cta::after { animation: none; opacity: 0; }
 }
 
 .inbox-pressure-card {
