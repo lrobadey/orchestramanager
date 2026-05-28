@@ -1,134 +1,45 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef } from 'react'
 import { works } from './data/works'
-import { principals } from './data/principals'
-import { cityAudienceSegments } from './data/audienceSegments'
-import { startingInstitution } from './data/institution'
-import { forecastProgram } from './sim/forecastProgram'
-import { resolveConcert } from './sim/resolveConcert'
-import { createInitialSeason, resolveSeasonConcert, summarizeSeason } from './sim/season'
-import {
-  ConcertProgram,
-  ConcertReport,
-  SeasonState,
-  SlotTuple,
-  TOTAL_REHEARSAL_HOURS,
-} from './types/core'
-import AppShell from './components/AppShell'
+import { SlotTuple } from './types/core'
 import ProgramBuilder from './components/ProgramBuilder'
 import ConcertReportView from './components/ConcertReport'
 import SeasonSummaryPanel from './components/SeasonSummaryPanel'
 import RosterOverview from './components/RosterOverview'
-import HomeConsole, { type HomeNavKey } from './components/HomeConsole'
-import CanopyHeader from './components/home/CanopyHeader'
-import UnderstoryVitals from './components/home/UnderstoryVitals'
+import HomeConsole from './components/HomeConsole'
 import LibraryScreen from './components/LibraryScreen'
 import LedgerScreen from './components/LedgerScreen'
 import DonorRelationsScreen from './components/DonorRelationsScreen'
 import AudienceRelationsScreen from './components/AudienceRelationsScreen'
 import EnterScreen from './components/EnterScreen'
-
-type Phase = 'planning' | 'report'
-type MainView = 'enter' | 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors' | 'audience'
-
-const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
-
-const emptyProgram = (): ConcertProgram => ({
-  workCount: 3,
-  workIds: [null, null, null],
-  intermissionAfter: 1,
-  rehearsalAllocation: evenAllocation(),
-  marketingSpend: 15_000,
-  marketingStyle: 'digital',
-  ticketPrice: 70,
-  studentTicketsEnabled: false,
-  studentTicketPrice: 25,
-})
+import AppShell from './components/AppShell'
+import ConsoleScreen from './components/ConsoleScreen'
+import { useSeasonGame } from './sim/useSeasonGame'
+import { summarizeSeason } from './sim/season'
 
 export default function App() {
-  const [season, setSeason] = useState<SeasonState>(() =>
-    createInitialSeason(startingInstitution, principals),
-  )
-  const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
-  const [phase, setPhase] = useState<Phase>('planning')
-  const [mainView, setMainView] = useState<MainView>('enter')
-  const [report, setReport] = useState<ConcertReport | null>(null)
+  const game = useSeasonGame()
+  const {
+    season,
+    program,
+    setProgram,
+    setMainView,
+    phase,
+    mainView,
+    report,
+    institution,
+    seasonComplete,
+    forecast,
+    filledSlotWorks,
+    currentSlotName,
+    handleRunConcert,
+    handleDone,
+    navigateTo,
+    handleNewSeason,
+    handleHomeNavigate,
+  } = game
 
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
 
-  const institution = season.institution
-  const livePrincipals = season.roster.principals
-  const seasonComplete = season.currentSlotIndex >= 4
-
-  const forecast = useMemo(
-    () =>
-      forecastProgram({
-        works,
-        institution,
-        principals: livePrincipals,
-        cityAudienceSegments,
-        audienceState: season.audience,
-        program,
-        donorState: season.donors,
-      }),
-    [institution, livePrincipals, program, season.donors],
-  )
-
-  function handleRunConcert() {
-    if (!forecast.isComplete) return
-    const result = resolveConcert({
-      works,
-      institution,
-      principals: livePrincipals,
-      cityAudienceSegments,
-      audienceState: season.audience,
-      program,
-      donorState: season.donors,
-      roll: Math.random() * 100,
-    })
-    setReport(result)
-    setPhase('report')
-  }
-
-  function applyPendingReport() {
-    if (!report) return
-    setSeason(prev => resolveSeasonConcert(prev, program, report, works))
-    setProgram(emptyProgram())
-    setReport(null)
-    setPhase('planning')
-  }
-
-  function handleDone() {
-    applyPendingReport()
-    setMainView('home')
-  }
-
-  function navigateTo(view: MainView) {
-    if (phase === 'report') applyPendingReport()
-    setMainView(view)
-  }
-
-  function handleNewSeason() {
-    setSeason(createInitialSeason(startingInstitution, principals))
-    setProgram(emptyProgram())
-    setReport(null)
-    setPhase('planning')
-    setMainView('home')
-  }
-
-  function handleHomeNavigate(key: HomeNavKey) {
-    navigateTo(key)
-  }
-
-  const slotWorks: SlotTuple<ReturnType<typeof works.find>> = [
-    program.workIds[0] ? works.find(w => w.id === program.workIds[0]) : undefined,
-    program.workIds[1] ? works.find(w => w.id === program.workIds[1]) : undefined,
-    program.workIds[2] ? works.find(w => w.id === program.workIds[2]) : undefined,
-  ]
-  const filledSlotWorks = slotWorks
-    .slice(0, program.workCount)
-    .filter((w): w is NonNullable<typeof w> => w !== undefined)
-
-  const currentSlotName = !seasonComplete ? season.slots[season.currentSlotIndex].name : null
   function pointInRect(point: { x: number; y: number }, el: HTMLElement | null): boolean {
     if (!el) return false
     const r = el.getBoundingClientRect()
@@ -163,25 +74,16 @@ export default function App() {
 
   if (seasonComplete) {
     return (
-      <AppShell chromeless>
-        <div className="home-console">
-          <div className="home-strata release-result-strata">
-            <CanopyHeader
-              institution={institution}
-              season={season}
-              activeNav="home"
-              onNavigate={handleHomeNavigate}
-            />
-            <UnderstoryVitals institution={institution} />
-            <div className="home-stratum floor console-screen-floor release-screen-floor">
-              <SeasonSummaryPanel
-                summary={summarizeSeason(season)!}
-                onNewSeason={handleNewSeason}
-              />
-            </div>
-          </div>
-        </div>
-      </AppShell>
+      <ConsoleScreen
+        institution={institution}
+        season={season}
+        activeNav="home"
+        onNavigate={handleHomeNavigate}
+        strataClass="release-result-strata"
+        floorClass="release-screen-floor"
+      >
+        <SeasonSummaryPanel summary={summarizeSeason(season)!} onNewSeason={handleNewSeason} />
+      </ConsoleScreen>
     )
   }
 
@@ -201,74 +103,57 @@ export default function App() {
 
   if (mainView === 'roster' && phase === 'planning') {
     return (
-      <AppShell chromeless>
-        <div className="home-console">
-          <div className="home-strata roster-strata">
-            <CanopyHeader
-              institution={institution}
-              season={season}
-              activeNav="roster"
-              onNavigate={handleHomeNavigate}
-              compact
-            />
-            <div className="roster-body-with-vitals">
-              <UnderstoryVitals institution={institution} variant="rail" />
-              <div className="home-stratum floor console-screen-floor roster-console-floor">
-                <RosterOverview
-                  roster={season.roster}
-                  forecast={forecast}
-                  currentSlotName={currentSlotName}
-                  showCanopy={false}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </AppShell>
+      <ConsoleScreen
+        institution={institution}
+        season={season}
+        activeNav="roster"
+        onNavigate={handleHomeNavigate}
+        compact
+        strataClass="roster-strata"
+        floorClass="roster-console-floor"
+        vitalsVariant="rail"
+      >
+        <RosterOverview
+          roster={season.roster}
+          forecast={forecast}
+          currentSlotName={currentSlotName}
+          showCanopy={false}
+        />
+      </ConsoleScreen>
     )
   }
 
   if (mainView === 'programme' && phase === 'planning' && !seasonComplete) {
     return (
-      <AppShell chromeless>
-        <div className="home-console">
-          <div className="home-strata">
-            <CanopyHeader
-              institution={institution}
-              season={season}
-              activeNav="programme"
-              onNavigate={handleHomeNavigate}
-            />
-            <UnderstoryVitals institution={institution} />
-            <div className="home-stratum floor console-screen-floor programme-console-floor">
-              <ProgramBuilder
-                works={works}
-                program={program}
-                forecast={forecast}
-                slotName={currentSlotName ?? ''}
-                registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
-                isDragging={false}
-                onToggleRepertoire={() => undefined}
-                onSlotDragEnd={handleSlotDrop}
-                onProgramChange={setProgram}
-                onRunConcert={handleRunConcert}
-                rightRail={null}
-              />
-            </div>
-          </div>
-        </div>
-      </AppShell>
+      <ConsoleScreen
+        institution={institution}
+        season={season}
+        activeNav="programme"
+        onNavigate={handleHomeNavigate}
+        compact
+        floorClass="programme-console-floor"
+      >
+        <ProgramBuilder
+          works={works}
+          program={program}
+          forecast={forecast}
+          slotName={currentSlotName ?? ''}
+          registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
+          isDragging={false}
+          onToggleRepertoire={() => undefined}
+          onSlotDragEnd={handleSlotDrop}
+          onProgramChange={setProgram}
+          onRunConcert={handleRunConcert}
+          rightRail={null}
+        />
+      </ConsoleScreen>
     )
   }
 
   if (mainView === 'library' && phase === 'planning') {
     return (
       <AppShell chromeless>
-        <LibraryScreen
-          season={season}
-          works={works}
-          onNavigate={handleHomeNavigate}
-        />
+        <LibraryScreen season={season} works={works} onNavigate={handleHomeNavigate} />
       </AppShell>
     )
   }
@@ -311,29 +196,23 @@ export default function App() {
   }
 
   return (
-    <AppShell chromeless>
-      <div className="home-console">
-        <div className="home-strata release-result-strata">
-          <CanopyHeader
-            institution={institution}
-            season={season}
-            activeNav="home"
-            onNavigate={handleHomeNavigate}
-          />
-          <UnderstoryVitals institution={institution} />
-          <div className="home-stratum floor console-screen-floor release-screen-floor">
-            {report ? (
-              <ConcertReportView
-                report={report}
-                selectedWorks={filledSlotWorks}
-                onDone={handleDone}
-                concertNumber={season.currentSlotIndex + 1}
-                totalConcerts={4}
-              />
-            ) : null}
-          </div>
-        </div>
-      </div>
-    </AppShell>
+    <ConsoleScreen
+      institution={institution}
+      season={season}
+      activeNav="home"
+      onNavigate={handleHomeNavigate}
+      strataClass="release-result-strata"
+      floorClass="release-screen-floor"
+    >
+      {report ? (
+        <ConcertReportView
+          report={report}
+          selectedWorks={filledSlotWorks}
+          onDone={handleDone}
+          concertNumber={season.currentSlotIndex + 1}
+          totalConcerts={4}
+        />
+      ) : null}
+    </ConsoleScreen>
   )
 }
