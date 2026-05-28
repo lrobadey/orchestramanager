@@ -1,7 +1,6 @@
 import { type DragEvent, type ReactNode, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion, PanInfo, useMotionValue } from 'framer-motion'
 import ConcertForecastView from './ConcertForecast'
-import logo from '../assets/logo.png'
 import {
   ConcertForecast,
   ConcertProgram,
@@ -422,7 +421,7 @@ export default function ProgramBuilder({
   works,
   program,
   forecast,
-  slotName,
+  slotName: _slotName,
   rightRail: _rightRail,
   registerSlotRef,
   isDragging,
@@ -539,19 +538,13 @@ export default function ProgramBuilder({
 
   return (
     <div className={`programme-shell ${isDragging ? 'dragging-mode' : ''}`}>
-      <header className="programme-canopy">
-        <div className="programme-canopy-brand">
-          <img src={logo} alt="Orchestra Manager" className="programme-mark" />
-          <div className="programme-canopy-copy">
-            <span className="eyebrow programme-canopy-kicker">Programme</span>
-            <h1 className="programme-canopy-title">The programme room.</h1>
-          </div>
-        </div>
-
-        <div className="programme-canopy-meta">
-          <div className="programme-canopy-slot">
-            <span className="programme-canopy-slot-label">Slot</span>
-            <span className="programme-canopy-slot-value">{slotName || '—'}</span>
+      <div className="programme-floor">
+        <section className="programme-column programme-column-left">
+          <div className="programme-section-head">
+            <span className="eyebrow">Programme</span>
+            <span className="programme-section-meta">
+              {program.workIds.slice(0, program.workCount).filter(Boolean).length}/{program.workCount} filled
+            </span>
           </div>
 
           <div className="programme-size-toggle" role="group" aria-label="Program size">
@@ -569,17 +562,6 @@ export default function ProgramBuilder({
             >
               3 Works
             </button>
-          </div>
-        </div>
-      </header>
-
-      <div className="programme-floor">
-        <section className="programme-column programme-column-left">
-          <div className="programme-section-head">
-            <span className="eyebrow">Programme</span>
-            <span className="programme-section-meta">
-              {program.workIds.slice(0, program.workCount).filter(Boolean).length}/{program.workCount} filled
-            </span>
           </div>
 
           <div className="programme-slot-stack">

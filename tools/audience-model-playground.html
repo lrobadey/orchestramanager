@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Audience Ecosystem Formula X-Ray</title>
+  <style>
+    :root { --paper:#f7f4ef; --card:#fff; --ink:#172033; --muted:#667085; --line:#ded7cc; --accent:#9a6a3a; --red:#a33b2f; --green:#287a4b; --calc:#f8efe4; --out:#f2e1ca; --blue:#2f5f8f; }
+    * { box-sizing: border-box; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; margin: 28px; color: var(--ink); background: var(--paper); }
+    h1 { margin: 0 0 4px; }
+    h2 { margin: 0 0 12px; }
+    .sub { color: #5f6673; margin: 0 0 18px; }
+    .layout { display: grid; grid-template-columns: 390px 1fr; gap: 18px; align-items: start; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+    .buttonRow { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    button { padding: 9px 10px; border-radius: 10px; border: 1px solid #b99a74; background: var(--accent); color: white; font-weight: 800; cursor: pointer; }
+    button.secondary { background: #fffaf3; color: var(--accent); }
+    label { display:grid; grid-template-columns: 1fr 58px; gap: 8px; align-items:center; margin: 12px 0; font-weight: 800; }
+    input[type="range"] { grid-column: 1 / -1; width: 100%; }
+    input[type="number"], select { border: 1px solid #d8cab8; border-radius: 8px; padding: 6px; font-weight: 900; color: var(--accent); background: #fffaf3; }
+    code { background: #f1ece4; padding: 2px 5px; border-radius: 5px; }
+    .formulaBoard { background:#fffaf3; border:1px solid #eee2d3; border-radius:16px; padding:14px; margin-bottom:14px; }
+    .formulaTitle { font-weight:950; margin-bottom:10px; color:var(--accent); }
+    .megaEquation { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-size:17px; line-height:1.8; }
+    .equationStep { display:flex; flex-wrap:wrap; align-items:center; gap:7px; width:100%; padding:7px 0; border-top:1px solid #efe4d7; }
+    .equationStep:first-of-type { border-top:0; }
+    .varBox { display:inline-grid; grid-template-columns:auto auto; gap:3px 7px; align-items:baseline; min-width:72px; padding:6px 8px; border:1.5px solid #d8cab8; border-radius:10px; background:white; }
+    .varBox .v { font-weight:950; color:var(--accent); }
+    .varBox .n { font-size:12px; color:var(--muted); }
+    .varBox.calc { background:var(--calc); }
+    .varBox.output { background:var(--out); border-color:var(--accent); }
+    .op { color:#7a6b5e; font-weight:900; }
+    .clamp { color:var(--muted); font-size:15px; }
+    .models { display:grid; grid-template-columns: repeat(3, minmax(190px, 1fr)); gap: 12px; margin-bottom: 14px; }
+    .big { font-size: 36px; font-weight: 950; margin: 4px 0; color: var(--accent); }
+    .bar { height: 12px; background: #efe6d9; border-radius: 99px; overflow: hidden; }
+    .fill { height: 100%; background: var(--accent); }
+    table { width:100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { text-align:left; border-bottom: 1px solid #eee8de; padding: 7px; vertical-align: top; }
+    .tiny { color: var(--muted); font-size: 12px; }
+    .ok { color: var(--green); font-weight: 900; }
+    .danger { color: var(--red); font-weight: 900; }
+    @media (max-width: 1050px) { .layout { grid-template-columns: 1fr; } .models { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <h1>Audience Ecosystem Formula X-Ray</h1>
+  <p class="sub">Explore the new two-layer audience model: Seattle segment size × awareness × motivation × access × relationship.</p>
+
+  <div class="layout">
+    <aside class="card">
+      <div class="buttonRow">
+        <button id="opening" type="button">Opening</button>
+        <button id="prestige" type="button" class="secondary">Prestige play</button>
+        <button id="access" type="button" class="secondary">Access play</button>
+      </div>
+
+      <h2>Segment</h2>
+      <label style="display:block">City segment
+        <select id="segment" style="width:100%; margin-top:6px"></select>
+      </label>
+      <label>Size <input id="size" type="number" min="100" max="10000" value="3200" /></label>
+      <label>Awareness <input id="awareness" type="number" min="0" max="100" value="7" /><input id="awarenessR" type="range" min="0" max="100" value="7" /></label>
+      <label>Trust <input id="trust" type="number" min="0" max="100" value="6" /><input id="trustR" type="range" min="0" max="100" value="6" /></label>
+      <label>Habit <input id="habit" type="number" min="0" max="100" value="0" /><input id="habitR" type="range" min="0" max="100" value="0" /></label>
+      <label>Memory <input id="memory" type="number" min="-100" max="100" value="0" /><input id="memoryR" type="range" min="-100" max="100" value="0" /></label>
+
+      <h2>Program</h2>
+      <label>Draw <input id="draw" type="number" min="0" max="100" value="62" /><input id="drawR" type="range" min="0" max="100" value="62" /></label>
+      <label>Prestige <input id="prestigeScore" type="number" min="0" max="100" value="70" /><input id="prestigeScoreR" type="range" min="0" max="100" value="70" /></label>
+      <label>Novelty <input id="novelty" type="number" min="0" max="100" value="45" /><input id="noveltyR" type="range" min="0" max="100" value="45" /></label>
+      <label>Ticket $ <input id="ticket" type="number" min="10" max="150" value="70" /><input id="ticketR" type="range" min="10" max="150" value="70" /></label>
+      <label>Marketing $K <input id="marketing" type="number" min="0" max="80" value="15" /><input id="marketingR" type="range" min="0" max="80" value="15" /></label>
+      <label style="display:block">Style
+        <select id="style" style="width:100%; margin-top:6px">
+          <option value="digital">Digital/social</option>
+          <option value="prestige">Prestige</option>
+          <option value="critical">Critical/artistic</option>
+          <option value="grassroots">Grassroots</option>
+          <option value="education">Education</option>
+        </select>
+      </label>
+    </aside>
+
+    <main>
+      <div class="formulaBoard">
+        <div class="formulaTitle">Current Forecast Equation</div>
+        <div class="megaEquation">
+          <div class="equationStep">
+            <span class="varBox calc"><span class="v">EA</span><span id="bigEA" class="n"></span></span>
+            <span class="op">= clamp(</span><span class="varBox"><span class="v">A</span><span id="bigA" class="n"></span></span><span class="op">+</span><span class="varBox"><span class="v">Mkt</span><span id="bigM" class="n"></span></span><span class="op">, 0, 100)</span>
+          </div>
+          <div class="equationStep">
+            <span class="varBox calc"><span class="v">Mot</span><span id="bigMot" class="n"></span></span>
+            <span class="op">= clamp((</span><span class="varBox"><span class="v">Taste</span><span id="bigTaste" class="n"></span></span><span class="op">+</span><span class="varBox"><span class="v">AdjDraw</span><span id="bigDraw" class="n"></span></span><span class="op">)/2, 0, 100)</span>
+          </div>
+          <div class="equationStep">
+            <span class="varBox calc"><span class="v">Rel</span><span id="bigRel" class="n"></span></span>
+            <span class="op">= clamp(18 +</span><span class="varBox"><span class="v">H</span><span id="bigH" class="n"></span></span><span class="op">×.45 +</span><span class="varBox"><span class="v">T</span><span id="bigT" class="n"></span></span><span class="op">×.22 +</span><span class="varBox"><span class="v">Mem</span><span id="bigMem" class="n"></span></span><span class="op">×.06, 8, 100)</span>
+          </div>
+          <div class="equationStep">
+            <span class="varBox output"><span class="v">Att</span><span id="bigAtt" class="n"></span></span>
+            <span class="op">=</span><span class="varBox"><span class="v">Size</span><span id="bigSize" class="n"></span></span><span class="op">× EA% × Mot% × Access% × Rel%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="models">
+        <section class="card"><h2>Attendance</h2><div class="big" id="attendance"></div><div class="bar"><div class="fill" id="attendanceBar"></div></div><p class="tiny">Against a 1,200-seat hall.</p></section>
+        <section class="card"><h2>Motivation</h2><div class="big" id="motivation"></div><div class="bar"><div class="fill" id="motivationBar"></div></div><p class="tiny">Taste match + adjusted draw.</p></section>
+        <section class="card"><h2>Relationship</h2><div class="big" id="relationship"></div><div class="bar"><div class="fill" id="relationshipBar"></div></div><p class="tiny">Curiosity floor + trust/habit/memory.</p></section>
+      </div>
+
+      <section class="card">
+        <h2>Breakdown</h2>
+        <table>
+          <tr><th>Taste match</th><td id="tasteOut"></td></tr>
+          <tr><th>Marketing awareness lift</th><td id="mktOut"></td></tr>
+          <tr><th>Effective awareness</th><td id="eaOut"></td></tr>
+          <tr><th>Price accessibility</th><td id="accessOut"></td></tr>
+          <tr><th>Interpretation</th><td id="interp"></td></tr>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v))
+    const fmt = n => Number(n).toFixed(2)
+    const $ = id => document.getElementById(id)
+
+    const segments = {
+      'classical-core': ['Classical Core', 2200, 88, 88, 35, 80, 45, 28, 35, 18, 10, 2],
+      'new-music-public': ['New Music / Experimental Arts Public', 1400, 58, 38, 90, 62, 58, 52, 70, 9, 8, 0],
+      'cultural-omnivores': ['Cultural Omnivores', 3200, 45, 55, 68, 66, 60, 45, 68, 7, 6, 0],
+      'students-emerging-artists': ['Students / Emerging Artists', 1800, 48, 55, 78, 62, 72, 92, 82, 6, 7, 0],
+      'civic-tech-professionals': ['Civic / Tech Professionals', 4200, 28, 58, 55, 82, 52, 20, 56, 4, 5, 0],
+      'community-neighborhood-public': ['Community / Neighborhood Public', 5200, 18, 52, 48, 35, 88, 78, 58, 2, 5, 0],
+    }
+    for (const [id, data] of Object.entries(segments)) $('segment').append(new Option(data[0], id))
+
+    function sync(a, b) { $(a).addEventListener('input', () => { $(b).value = $(a).value; render() }); $(b).addEventListener('input', () => { $(a).value = $(b).value; render() }) }
+    for (const id of ['awareness','trust','habit','memory','draw','prestigeScore','novelty','ticket','marketing']) sync(id, id+'R')
+    for (const id of ['size','style','segment']) $(id).addEventListener('input', render)
+    $('segment').addEventListener('change', () => { const d = segments[$('segment').value]; $('size').value=d[1]; $('awareness').value=$('awarenessR').value=d[9]; $('trust').value=$('trustR').value=d[10]; $('habit').value=$('habitR').value=d[11]; render() })
+
+    function marketingEffect(k) { return k <= 0 ? 0 : clamp(Math.log(k + 1) * 7, 0, 20) }
+    function pricePenalty(ticket) { return ticket <= 60 ? 0 : clamp((ticket - 60) / 4, 0, 30) }
+    function styleWeight(id, style) {
+      const w = {
+        'classical-core': style === 'prestige' || style === 'critical' ? 1.2 : style === 'education' ? 0.55 : 0.75,
+        'new-music-public': style === 'critical' ? 1.3 : style === 'digital' ? 1.05 : 0.75,
+        'cultural-omnivores': style === 'digital' ? 1.25 : style === 'critical' ? 1.0 : 0.85,
+        'students-emerging-artists': style === 'education' || style === 'grassroots' ? 1.35 : style === 'digital' ? 1.15 : 0.65,
+        'civic-tech-professionals': style === 'prestige' ? 1.35 : style === 'digital' ? 1.0 : 0.7,
+        'community-neighborhood-public': style === 'grassroots' ? 1.45 : style === 'education' ? 1.2 : 0.55,
+      }
+      return w[id] ?? 1
+    }
+    function priceAccess(id, ticket, sens) {
+      let p = 0
+      if (id.includes('students')) p = ticket <= 25 ? 0 : Math.pow((ticket - 25) / 45, 1.35) * 55
+      else if (id.includes('civic-tech')) p = ticket <= 45 ? 0 : Math.pow((ticket - 45) / 70, 1.15) * 28
+      else if (id.includes('omnivores') || id.includes('new-music')) p = ticket <= 60 ? 0 : Math.pow((ticket - 60) / 70, 1.1) * 24
+      else if (id.includes('classical')) p = ticket <= 65 ? 0 : ((ticket - 65) / 90) * 18
+      else p = ticket > 45 ? ((ticket - 45) / 90) * (sens / 100) * 42 : 0
+      return clamp(100 - p, 20, 100)
+    }
+
+    function render() {
+      const id = $('segment').value, d = segments[id]
+      const [name, defSize, lit, canon, noveltyAff, prestigeAff, communityAff, sens, spread] = d
+      const size = Number($('size').value), A = Number($('awareness').value), T = Number($('trust').value), H = Number($('habit').value), Mem = Number($('memory').value)
+      const draw = Number($('draw').value), prestige = Number($('prestigeScore').value), novelty = Number($('novelty').value), ticket = Number($('ticket').value), k = Number($('marketing').value), style = $('style').value
+      const mkt = marketingEffect(k) * styleWeight(id, style)
+      const adjDraw = clamp(draw + marketingEffect(k) - pricePenalty(ticket), 0, 100)
+      const taste = (canon * ((100 - novelty) / 100) + noveltyAff * (novelty / 100) + prestigeAff * (prestige / 100) + lit * 0.25) / 3.25
+      const mot = clamp((taste + adjDraw) / 2, 0, 100)
+      const EA = clamp(A + mkt, 0, 100)
+      const access = priceAccess(id, ticket, sens)
+      const rel = clamp(18 + H * 0.45 + T * 0.22 + Mem * 0.06, 8, 100)
+      const att = Math.round(size * EA/100 * mot/100 * access/100 * rel/100)
+
+      $('attendance').textContent = att.toLocaleString()
+      $('attendanceBar').style.width = `${clamp(att / 1200 * 100, 0, 100)}%`
+      $('motivation').textContent = Math.round(mot)
+      $('motivationBar').style.width = `${mot}%`
+      $('relationship').textContent = Math.round(rel)
+      $('relationshipBar').style.width = `${rel}%`
+      $('tasteOut').textContent = fmt(taste)
+      $('mktOut').textContent = `+${fmt(mkt)} awareness (${style})`
+      $('eaOut').textContent = fmt(EA)
+      $('accessOut').textContent = fmt(access)
+      $('interp').innerHTML = att > 300 ? '<span class="ok">Major early constituency.</span>' : att > 100 ? 'Meaningful but still fragile.' : '<span class="danger">Barely reached yet.</span>'
+
+      $('bigEA').textContent = fmt(EA); $('bigA').textContent = A; $('bigM').textContent = fmt(mkt)
+      $('bigMot').textContent = fmt(mot); $('bigTaste').textContent = fmt(taste); $('bigDraw').textContent = fmt(adjDraw)
+      $('bigRel').textContent = fmt(rel); $('bigH').textContent = H; $('bigT').textContent = T; $('bigMem').textContent = Mem
+      $('bigAtt').textContent = att.toLocaleString(); $('bigSize').textContent = size.toLocaleString()
+    }
+
+    $('opening').onclick = () => { $('segment').value='cultural-omnivores'; $('segment').dispatchEvent(new Event('change')); $('style').value='digital'; $('draw').value=$('drawR').value=62; $('novelty').value=$('noveltyR').value=45; $('ticket').value=$('ticketR').value=70; $('marketing').value=$('marketingR').value=15; render() }
+    $('prestige').onclick = () => { $('segment').value='civic-tech-professionals'; $('segment').dispatchEvent(new Event('change')); $('style').value='prestige'; $('draw').value=$('drawR').value=82; $('prestigeScore').value=$('prestigeScoreR').value=88; $('novelty').value=$('noveltyR').value=24; $('ticket').value=$('ticketR').value=90; $('marketing').value=$('marketingR').value=30; render() }
+    $('access').onclick = () => { $('segment').value='students-emerging-artists'; $('segment').dispatchEvent(new Event('change')); $('style').value='education'; $('draw').value=$('drawR').value=55; $('prestigeScore').value=$('prestigeScoreR').value=68; $('novelty').value=$('noveltyR').value=70; $('ticket').value=$('ticketR').value=25; $('marketing').value=$('marketingR').value=18; render() }
+    render()
+  </script>
+</body>
+</html>

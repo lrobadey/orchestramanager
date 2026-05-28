@@ -5,7 +5,7 @@ import { createInitialSeason, resolveSeasonConcert, summarizeSeason } from '../s
 import { computeDonorUplift, DONOR_UPLIFT_THRESHOLD } from '../src/sim/scoring'
 import { works } from '../src/data/works'
 import { principals } from '../src/data/principals'
-import { audienceSegments } from '../src/data/audienceSegments'
+import { audienceSegments, cityAudienceSegments, createInitialAudience } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
 import { createInitialDonors } from '../src/data/donors'
 import { ConcertProgram } from '../src/types/core'
@@ -51,6 +51,24 @@ describe('audience & finance systems', () => {
     const extreme = forecastProgram(makeInput({ ...safeProgram, marketingSpend: 200_000 }))
     expect(extreme.projectedAttendance).toBeGreaterThan(minimal.projectedAttendance)
     expect(extreme.projectedAttendance).toBeLessThan(minimal.projectedAttendance * 2)
+  })
+
+  it('projects city-segment awareness as current awareness plus campaign lift', () => {
+    const audienceState = createInitialAudience()
+    const forecast = forecastProgram({
+      works,
+      institution: startingInstitution,
+      principals,
+      cityAudienceSegments,
+      audienceState,
+      program: { ...safeProgram, marketingSpend: 20_000, marketingStyle: 'grassroots' },
+    })
+    const segmentId = 'community-neighborhood-public'
+    const relationship = audienceState.relationships.find(row => row.segmentId === segmentId)!
+    const impact = forecast.marketingImpact.bySegment.find(row => row.segmentId === segmentId)!
+    const projected = forecast.projectedAudienceBreakdown.find(row => row.segmentId === segmentId)!
+
+    expect(projected.awarenessScore).toBe(Math.round(Math.min(100, relationship.awareness + impact.awarenessLift)))
   })
 
   it('contemporary program gives Cultural Explorers higher share than Seasoned Supporters', () => {

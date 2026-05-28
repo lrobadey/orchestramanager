@@ -13,6 +13,7 @@ import {
   SlotTuple,
   TOTAL_REHEARSAL_HOURS,
   ProgramArcSalienceResult,
+  MarketingImpact,
 } from '../types/core'
 import {
   calculateRepertoireFit,
@@ -23,7 +24,6 @@ import {
   clamp,
   average,
   computeRehearsalDivisor,
-  marketingEffect,
   pricePenalty,
   rehearsalHoursNeeded,
   pressureFromHoursGap,
@@ -32,6 +32,7 @@ import {
 } from './scoring'
 import { computeProgramArcSalience } from './programArcSalience'
 import { estimateDonorUpliftFromDonors } from './donorReactions'
+import { computeMarketingImpact } from './marketing'
 
 const EMPTY_ARC_SALIENCE: ProgramArcSalienceResult = {
   perWork: [],
@@ -166,20 +167,6 @@ function institutionalModifierForSegment(
   return clamp(modifier, -18, 22)
 }
 
-function awarenessLiftForSegment(seg: CityAudienceSegment | AudienceSegment, program: ConcertProgram): number {
-  const spendLift = marketingEffect(program.marketingSpend)
-  const style = program.marketingStyle ?? 'digital'
-  const weights: Record<string, number> = {
-    'classical-core': style === 'prestige' || style === 'critical' ? 1.2 : style === 'education' ? 0.55 : 0.75,
-    'new-music-public': style === 'critical' ? 1.3 : style === 'digital' ? 1.05 : 0.75,
-    'cultural-omnivores': style === 'digital' ? 1.25 : style === 'critical' ? 1.0 : 0.85,
-    'students-emerging-artists': style === 'education' || style === 'grassroots' ? 1.35 : style === 'digital' ? 1.15 : 0.65,
-    'civic-tech-professionals': style === 'prestige' ? 1.35 : style === 'digital' ? 1.0 : 0.7,
-    'community-neighborhood-public': style === 'grassroots' ? 1.45 : style === 'education' ? 1.2 : 0.55,
-  }
-  return spendLift * (weights[seg.id] ?? 1)
-}
-
 function computeAttendance(
   segments: Array<CityAudienceSegment | AudienceSegment>,
   audienceState: AudienceState | undefined,
@@ -190,10 +177,11 @@ function computeAttendance(
   novelty: number,
   programIdentityValue: number,
   program: ConcertProgram,
+  marketingImpact: MarketingImpact,
 ): AudienceBreakdown[] {
   const prestigeSignal = Math.max(prestige, donorComfort)
   const donorPrestigeLift = program.ticketPrice > 80 && prestigeSignal > 70
-    ? clamp(((program.ticketPrice - 80) / 80) * ((prestigeSignal - 70) / 30) * 8, 0, 6)
+    ? clamp(((program.ticketPrice - 80) / 80) * ((prestigeSignal - 70) / 30) * 9, 0, 6)
     : 0
   const identityFit = computeIdentityProgramFit(
     institution,
@@ -228,8 +216,14 @@ function computeAttendance(
       program,
       identityFit,
     )
-    const motivationScore = clamp((tasteMatch + adjustedDraw) / 2 + prestigeLift + institutionalModifier, 0, 100)
-    const effectiveAwareness = clamp(rel.awareness + awarenessLiftForSegment(seg, program), 0, 100)
+    const segmentMarketing = marketingImpact.bySegment.find(row => row.segmentId === seg.id)
+    const considerationMultiplier = segmentMarketing?.considerationMultiplier ?? 1
+    const motivationScore = clamp(
+      ((tasteMatch + adjustedDraw) / 2 + prestigeLift + institutionalModifier) * considerationMultiplier,
+      0,
+      100,
+    )
+    const effectiveAwareness = clamp(rel.awareness + (segmentMarketing?.awarenessLift ?? 0), 0, 100)
     // First-time curiosity gives a new orchestra some demand before durable habit exists;
     // trust and habit then become the long-term attendance engine.
     const relationshipFactor = clamp(18 + rel.habit * 0.45 + rel.trust * 0.22 + rel.alignmentMemory * 0.06, 8, 100) / 100
@@ -349,6 +343,14 @@ const EMPTY_EXPENSE_BREAKDOWN: ExpenseBreakdown = {
   baseConcert: 0, rehearsal: 0, marketing: 0, production: 0, total: 0,
 }
 
+const EMPTY_MARKETING_IMPACT: MarketingImpact = {
+  totalReach: 0,
+  averageAwarenessLift: 0,
+  averageConsiderationMultiplier: 1,
+  donorSignal: 0,
+  bySegment: [],
+}
+
 function emptyForecast(
   message: string,
   perWorkRehearsalDivisor: SlotTuple<number | null> = [null, null, null],
@@ -360,6 +362,7 @@ function emptyForecast(
     projectedRevenue: 0,
     projectedDonorUplift: 0,
     projectedAudienceBreakdown: [],
+    marketingImpact: EMPTY_MARKETING_IMPACT,
     projectedExpenses: 0,
     projectedExpenseBreakdown: EMPTY_EXPENSE_BREAKDOWN,
     projectedNet: 0,
@@ -436,9 +439,17 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const programDonorComfort = average(works.map(w => w.donorComfort))
   const programIdentityValue = average(works.map(w => w.identityValue))
 
-  const marketingBoost = marketingEffect(program.marketingSpend)
   const pricePen = pricePenalty(program.ticketPrice)
-  const adjustedDraw = clamp(programDraw + marketingBoost - pricePen, 0, 100)
+  const marketingImpact = computeMarketingImpact({
+    segments,
+    audienceState: input.audienceState,
+    institution,
+    program,
+    programPrestige,
+    programNovelty,
+    programIdentityValue,
+  })
+  const adjustedDraw = clamp(programDraw - pricePen, 0, 100)
 
   // Per-piece rehearsal pressure: each slot's piece compared against its own allocation
   const perWorkRehearsalHoursAllocated = displaySlotWorks.map((work, i) =>
@@ -512,6 +523,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     programNovelty,
     programIdentityValue,
     program,
+    marketingImpact,
   )
   const projectedAttendance = projectedAudienceBreakdown.reduce(
     (sum, row) => sum + row.attendance,
@@ -533,6 +545,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
         projectedAttendance,
         projectedRevenue,
         projectedExpenseBreakdown,
+        marketingDonorSignal: marketingImpact.donorSignal,
       })
     : computeDonorUplift(institution.donorConfidence)
   const projectedNet = projectedRevenue + projectedDonorUplift - projectedExpenses
@@ -544,7 +557,11 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     programIdentityValue,
     program,
   )
-  const donorResponse = clamp(programDonorComfort - programNovelty * 0.3 + identityFit * 0.45, 0, 100)
+  const donorResponse = clamp(
+    programDonorComfort - programNovelty * 0.3 + identityFit * 0.45 + marketingImpact.donorSignal * 0.45,
+    0,
+    100,
+  )
 
   const forecastNotes = buildForecastNotes(
     displaySlotWorks,
@@ -562,6 +579,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     projectedRevenue,
     projectedDonorUplift,
     projectedAudienceBreakdown,
+    marketingImpact,
     projectedExpenses,
     projectedExpenseBreakdown,
     projectedNet,

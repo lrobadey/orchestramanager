@@ -76,6 +76,50 @@ function ForecastLine({
   )
 }
 
+function MarketingImpactSummary({ forecast }: { forecast: ConcertForecast }) {
+  const topSegments = [...forecast.marketingImpact.bySegment]
+    .sort((a, b) => b.awarenessLift - a.awarenessLift)
+    .slice(0, 3)
+    .map(impact => forecast.projectedAudienceBreakdown.find(row => row.segmentId === impact.segmentId)?.segmentName ?? impact.segmentId)
+
+  const conversionLift = Math.round((forecast.marketingImpact.averageConsiderationMultiplier - 1) * 100)
+  const donorSignal = forecast.marketingImpact.donorSignal
+
+  return (
+    <div className="forecast-rows">
+      <ForecastLine
+        label="Campaign reach"
+        hint="estimated contacts"
+        value={forecast.marketingImpact.totalReach.toLocaleString()}
+        animKey={`reach-${forecast.marketingImpact.totalReach}`}
+      />
+      <ForecastLine
+        label="Awareness lift"
+        hint="durable segment memory"
+        value={`+${forecast.marketingImpact.averageAwarenessLift.toFixed(1)} avg`}
+        animKey={`aware-${forecast.marketingImpact.averageAwarenessLift.toFixed(2)}`}
+      />
+      <ForecastLine
+        label="Conversion pressure"
+        hint="short-term consideration"
+        value={conversionLift > 0 ? `+${conversionLift}%` : 'flat'}
+        animKey={`conv-${conversionLift}`}
+      />
+      <ForecastLine
+        label="Donor visibility"
+        hint="major-gift conversations"
+        value={donorSignal > 0 ? `+${donorSignal.toFixed(1)}` : 'none'}
+        animKey={`donor-signal-${donorSignal.toFixed(2)}`}
+      />
+      <ForecastLine
+        label="Strongest lift"
+        value={<span className="text-muted">{topSegments.length ? topSegments.join(', ') : '—'}</span>}
+        animKey={topSegments.join('|')}
+      />
+    </div>
+  )
+}
+
 function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
   const total = rows.reduce((sum, row) => sum + row.attendance, 0)
 
@@ -194,6 +238,13 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
                 />
               )}
             </div>
+          </section>
+
+          <section className="forecast-block">
+            <div className="forecast-block-head">
+              <span className="eyebrow">Marketing Impact</span>
+            </div>
+            <MarketingImpactSummary forecast={forecast} />
           </section>
 
           <section className="forecast-block">

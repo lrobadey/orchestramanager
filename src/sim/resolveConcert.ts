@@ -255,6 +255,7 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
         projectedAttendance: attendance,
         projectedRevenue: revenue,
         projectedExpenseBreakdown: expenseBreakdown,
+        marketingDonorSignal: forecast.marketingImpact.donorSignal,
       })
     : computeDonorUplift(input.institution.donorConfidence)
   const net = revenue + donorUplift - expenses
@@ -365,6 +366,7 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     attendance,
     revenue,
     donorUplift,
+    marketingDonorSignal: forecast.marketingImpact.donorSignal,
     audienceBreakdown,
     expenses,
     expenseBreakdown,

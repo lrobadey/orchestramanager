@@ -136,6 +136,7 @@ export function resolveSeasonConcert(
     program,
     report,
     works: selectedWorks,
+    institution: baseInstitution,
     isOpeningNight: idx === 0,
   })
   const nextInstitution = {

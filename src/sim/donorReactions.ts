@@ -7,6 +7,7 @@ import type {
   DonorState,
   ExpenseBreakdown,
   InstitutionState,
+  MarketingStyle,
   Work,
 } from '../types/core'
 import { average, clamp, HALL_CAPACITY } from './scoring'
@@ -26,6 +27,7 @@ interface EstimateDonorUpliftInput {
   projectedAttendance: number
   projectedRevenue: number
   projectedExpenseBreakdown: ExpenseBreakdown
+  marketingDonorSignal?: number
 }
 
 export function estimateDonorUpliftFromDonors({
@@ -36,6 +38,7 @@ export function estimateDonorUpliftFromDonors({
   projectedAttendance,
   projectedRevenue,
   projectedExpenseBreakdown,
+  marketingDonorSignal = 0,
 }: EstimateDonorUpliftInput): number {
   const musicProfile = buildConcertMusicProfile(works)
   const institutionalProfile = buildForecastInstitutionalProfile({
@@ -54,9 +57,15 @@ export function estimateDonorUpliftFromDonors({
       donor.institutionalPriorities,
       institutionalProfile,
     )
+    const marketingFit = scoreMarketingDonorFit(
+      donor,
+      program.marketingStyle ?? 'digital',
+      marketingDonorSignal,
+    )
     const fitScore =
       musicFit * (donor.influenceWeights.music / 100) +
-      institutionalFit * (donor.influenceWeights.institutional / 100)
+      institutionalFit * (donor.influenceWeights.institutional / 100) +
+      marketingFit
     const relationshipFactor = donorRelationshipGivingFactor(donor)
     const adjustedFitScore = fitScore < 0 ? fitScore * (1 - donor.loyalty / 200) : fitScore
     const fitFactor = clamp(1 + adjustedFitScore / 95, 0.25, 1.6)
@@ -85,9 +94,15 @@ export function updateDonorsAfterConcert({
         donor.institutionalPriorities,
         institutionalProfile,
       )
+      const marketingFit = scoreMarketingDonorFit(
+        donor,
+        program.marketingStyle ?? 'digital',
+        report.marketingDonorSignal ?? 0,
+      )
       const finalScore =
         musicFit * (donor.influenceWeights.music / 100) +
-        institutionalFit * (donor.influenceWeights.institutional / 100)
+        institutionalFit * (donor.influenceWeights.institutional / 100) +
+        marketingFit
       const relationshipDelta = scoreToRelationshipDelta(finalScore, donor.volatility)
       const alignmentScore = finalScore * 2
       const alignmentMemory = clamp(donor.alignmentMemory * 0.75 + alignmentScore * 0.25, -100, 100)
@@ -107,7 +122,7 @@ export function updateDonorsAfterConcert({
         commitment: Math.round(clamp(donor.commitment + commitmentDelta, 0, 100)),
         alignmentMemory: Math.round(alignmentMemory),
         lastDelta: relationshipDelta,
-        recentReaction: summarizeReaction(donor, musicFit, institutionalFit, relationshipDelta),
+        recentReaction: summarizeReaction(donor, musicFit, institutionalFit, marketingFit, relationshipDelta),
       }
     }),
   }
@@ -126,6 +141,33 @@ function donorRelationshipGivingFactor(donor: Donor): number {
     100,
   )
   return clamp((effectiveRelationship - 25) / 75, 0, 1)
+}
+
+function marketingDonorInterest(donor: Donor, style: MarketingStyle): number {
+  const p = donor.institutionalPriorities
+
+  switch (style) {
+    case 'prestige':
+      return p.prestige * 0.65 + p.stability * 0.2 + p.revenue * 0.15
+    case 'critical':
+      return p.prestige * 0.45 + p.innovation * 0.45 + p.reach * 0.1
+    case 'education':
+      return p.access * 0.65 + p.innovation * 0.2 + p.reach * 0.15
+    case 'grassroots':
+      return p.access * 0.55 + p.reach * 0.35 + p.stability * 0.1
+    case 'digital':
+    default:
+      return p.reach * 0.55 + p.revenue * 0.25 + p.innovation * 0.2
+  }
+}
+
+function scoreMarketingDonorFit(donor: Donor, style: MarketingStyle, rawSignal: number): number {
+  const signal = clamp(rawSignal, 0, 20)
+  if (signal <= 0) return 0
+
+  const interest = marketingDonorInterest(donor, style) / 100
+  const relationshipAccess = clamp(0.5 + donor.relationship / 160 + donor.commitment / 350, 0.45, 1.25)
+  return clamp(signal * interest * relationshipAccess * 0.85, 0, 10)
 }
 
 function computeLoyaltyDelta(loyalty: number, alignmentMemory: number): number {
@@ -313,6 +355,7 @@ function summarizeReaction(
   donor: Donor,
   musicFit: number,
   institutionalFit: number,
+  marketingFit: number,
   delta: number,
 ): string {
   const musicRead = musicFit >= 12 ? 'music landed' : musicFit <= -12 ? 'music grated' : 'music read as mixed'
@@ -321,12 +364,17 @@ function summarizeReaction(
     : institutionalFit <= -12
       ? 'institutional signals worried them'
       : 'institutional signals were ambiguous'
+  const campaignRead = marketingFit >= 4
+    ? ' Campaign visibility opened donor conversations.'
+    : marketingFit >= 2
+      ? ' Campaign visibility helped at the margins.'
+      : ''
   const direction = delta > 0 ? 'Relationship warmed.' : delta < 0 ? 'Relationship cooled.' : 'Relationship held steady.'
 
   if (donor.influenceWeights.music > donor.influenceWeights.institutional) {
-    return `${direction} The ${musicRead}; ${institutionRead}.`
+    return `${direction} The ${musicRead}; ${institutionRead}.${campaignRead}`
   }
-  return `${direction} The ${institutionRead}; ${musicRead}.`
+  return `${direction} The ${institutionRead}; ${musicRead}.${campaignRead}`
 }
 
 function zeroMusicProfile(): DonorMusicTaste {

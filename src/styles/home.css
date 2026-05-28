@@ -1708,7 +1708,7 @@
   grid-template-columns: minmax(420px, 1.05fr) minmax(360px, 0.95fr) minmax(300px, 0.72fr);
   gap: 24px;
   align-items: stretch;
-  min-height: 720px;
+  min-height: 0;
 }
 
 .home-console .programme-column {
@@ -1721,12 +1721,10 @@
 .home-console .programme-column-right {
   padding: 0;
   gap: 12px;
-  overflow: visible;
-}
-
-.home-console .programme-column-center {
-  max-height: calc(100dvh - 230px);
-  overflow: hidden;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 4px;
 }
 
 .home-console .programme-column-center .programme-library-wall {
@@ -1745,9 +1743,76 @@
   background: rgba(0, 0, 0, 0.18);
 }
 
+.home-console .programme-column-left > * {
+  flex: 0 0 auto;
+}
+
 .home-console .programme-slot {
-  grid-template-columns: 72px minmax(0, 1fr) 220px 30px;
-  min-height: 110px;
+  grid-template-columns: 56px minmax(0, 1fr) 220px 28px;
+  min-height: 64px;
+  padding: 6px 14px;
+}
+
+.home-console .programme-slot-roman {
+  min-height: 40px;
+  font-size: clamp(1.6rem, 2vw, 2.2rem);
+}
+
+.home-console .programme-slot-empty {
+  min-height: 40px;
+}
+
+.home-console .programme-slot-side {
+  gap: 2px;
+}
+
+.home-console .programme-slot-demand {
+  gap: 6px;
+}
+
+.home-console .programme-slot-demand-cell {
+  gap: 3px;
+}
+
+.home-console .programme-slot-metrics {
+  gap: 3px;
+}
+
+.home-console .programme-slot-hours {
+  font-size: 0.95rem;
+}
+
+.home-console .programme-slot-risk-value {
+  font-size: 1rem;
+}
+
+.home-console .programme-column-left {
+  gap: 6px;
+}
+
+.home-console .programme-rehearsal {
+  gap: 6px;
+}
+
+.home-console .programme-rehearsal-bar {
+  height: 22px;
+}
+
+.home-console .programme-production {
+  gap: 6px;
+}
+
+.home-console .programme-production-grid {
+  gap: 8px;
+}
+
+.home-console .programme-launch {
+  padding-top: 0;
+}
+
+.home-console .programme-cta {
+  padding: 11px 16px;
+  font-size: 1.05rem;
 }
 
 .home-console .programme-slot-title {
@@ -1789,11 +1854,21 @@
 }
 
 /* ── Shared console ports: Library + Ledger ──────────────── */
+.home-console .library-screen-floor {
+  overflow: hidden;
+}
+
 .library-screen,
 .ledger-screen {
   display: grid;
   gap: 16px;
   color: var(--birch);
+}
+
+.home-console .library-screen {
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
 }
 
 .library-head,
@@ -1868,13 +1943,15 @@
   display: grid;
   grid-template-columns: minmax(420px, 1.15fr) minmax(320px, 0.85fr);
   gap: 24px;
-  min-height: 580px;
+  min-height: 0;
 }
 
 .library-list {
+  min-height: 0;
   border: 1px solid var(--hairline);
   background: rgba(0, 0, 0, 0.18);
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .library-row {
@@ -1920,12 +1997,15 @@
 }
 
 .library-detail {
+  min-height: 0;
   border: 1px solid var(--hairline);
   background: rgba(0, 0, 0, 0.18);
   padding: 18px;
   display: grid;
   align-content: start;
   gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .library-detail-title {

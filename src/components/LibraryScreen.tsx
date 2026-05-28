@@ -61,9 +61,10 @@ export default function LibraryScreen({ season, works, onNavigate }: LibraryScre
           season={season}
           activeNav="library"
           onNavigate={onNavigate}
+          compact
         />
         <UnderstoryVitals institution={season.institution} />
-        <div className="home-stratum floor console-screen-floor">
+        <div className="home-stratum floor console-screen-floor library-screen-floor">
           <section className="library-screen">
             <div className="library-head">
               <div>

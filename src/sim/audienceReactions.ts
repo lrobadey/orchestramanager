@@ -3,10 +3,11 @@ import {
   CityAudienceSegment,
   ConcertProgram,
   ConcertReport,
-  MarketingStyle,
+  InstitutionState,
   Work,
 } from '../types/core'
 import { average, clamp } from './scoring'
+import { computeMarketingImpact } from './marketing'
 
 function noveltyAffinity(segment: CityAudienceSegment): number {
   return segment.noveltyAffinity
@@ -36,20 +37,6 @@ function segmentProgramFit(segment: CityAudienceSegment, works: Work[], program:
   )
 }
 
-function marketingAwarenessGain(segment: CityAudienceSegment, program: ConcertProgram, openingMultiplier: number): number {
-  const style: MarketingStyle = program.marketingStyle ?? 'digital'
-  const base = Math.log(program.marketingSpend / 1000 + 1) * 1.8
-  const weights: Record<string, number> = {
-    'classical-core': style === 'prestige' || style === 'critical' ? 1.25 : style === 'education' ? 0.55 : 0.75,
-    'new-music-public': style === 'critical' ? 1.35 : style === 'digital' ? 1.1 : 0.75,
-    'cultural-omnivores': style === 'digital' ? 1.3 : style === 'critical' ? 1.05 : 0.85,
-    'students-emerging-artists': style === 'education' || style === 'grassroots' ? 1.4 : style === 'digital' ? 1.15 : 0.65,
-    'civic-tech-professionals': style === 'prestige' ? 1.35 : style === 'digital' ? 1.0 : 0.7,
-    'community-neighborhood-public': style === 'grassroots' ? 1.45 : style === 'education' ? 1.2 : 0.55,
-  }
-  return base * (weights[segment.id] ?? 1) * (0.65 + segment.socialSpread / 180) * openingMultiplier
-}
-
 function reactionText(segment: CityAudienceSegment, delta: number, fit: number): string {
   if (delta >= 4) return `${segment.name} are beginning to see the orchestra as meant for them.`
   if (delta >= 1) return `${segment.name} noticed the signal, but the relationship is still forming.`
@@ -69,6 +56,7 @@ export function updateAudienceAfterConcert({
   program,
   report,
   works,
+  institution,
   isOpeningNight = false,
 }: {
   audienceState: AudienceState
@@ -76,10 +64,31 @@ export function updateAudienceAfterConcert({
   program: ConcertProgram
   report: ConcertReport
   works: Work[]
+  institution?: InstitutionState
   isOpeningNight?: boolean
 }): AudienceState {
   const openingMultiplier = isOpeningNight ? 1.8 : 1
   const attendanceBySegment = new Map(report.audienceBreakdown.map(row => [row.segmentId, row]))
+  const marketingImpact = computeMarketingImpact({
+    segments: cityAudienceSegments,
+    audienceState,
+    institution: institution ?? {
+      name: '',
+      city: '',
+      seasonLabel: '',
+      cash: 0,
+      artisticReputation: 50,
+      audienceTrust: 50,
+      donorConfidence: 50,
+      musicianMorale: 50,
+      technicalQuality: 50,
+      identity: { adventurous: 33, communityFocused: 33, scholarly: 33 },
+    },
+    program,
+    programPrestige: average(works.map(work => work.artisticPrestige)),
+    programNovelty: average(works.map(work => work.novelty)),
+    programIdentityValue: average(works.map(work => work.identityValue)),
+  })
 
   return {
     relationships: cityAudienceSegments.map(segment => {
@@ -99,8 +108,9 @@ export function updateAudienceAfterConcert({
       const score = experience - 50
       const delta = clamp(score / 12 + segmentReach / 18, -8, 8) * openingMultiplier
       const memory = clamp(current.alignmentMemory * 0.72 + score * 0.28 * openingMultiplier, -100, 100)
+      const segmentMarketing = marketingImpact.bySegment.find(impact => impact.segmentId === segment.id)
       const awareness = clamp(
-        current.awareness + marketingAwarenessGain(segment, program, openingMultiplier) + segmentReach * 0.12,
+        current.awareness + (segmentMarketing?.awarenessLift ?? 0) * openingMultiplier + segmentReach * 0.12,
         0,
         100,
       )

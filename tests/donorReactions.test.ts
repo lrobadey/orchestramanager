@@ -424,4 +424,31 @@ describe('updateDonorsAfterConcert', () => {
     expect(next.relationship).toBeGreaterThan(donor.relationship)
     expect(next.recentReaction).toContain('institutional signals reassured them')
   })
+
+  it('lets prestige campaign visibility help prestige-oriented donor conversations', () => {
+    const donor = makeInstitutionalDonor('prestige-signal-donor', {
+      ...zeroPriorities,
+      prestige: 100,
+    })
+    const program: ConcertProgram = {
+      ...programFor(['romantic-prestige']),
+      marketingSpend: 30_000,
+      marketingStyle: 'prestige',
+    }
+    const quiet = react(
+      donor,
+      [romanticPrestigeWork],
+      makeReport({ criticResponse: 55, performanceQuality: 55, marketingDonorSignal: 0 }),
+      program,
+    )
+    const visible = react(
+      donor,
+      [romanticPrestigeWork],
+      makeReport({ criticResponse: 55, performanceQuality: 55, marketingDonorSignal: 10 }),
+      program,
+    )
+
+    expect(visible.lastDelta).toBeGreaterThan(quiet.lastDelta)
+    expect(visible.recentReaction).toContain('Campaign visibility')
+  })
 })

@@ -220,11 +220,29 @@ export interface ProgramArcSalienceResult {
   notes: string[]
 }
 
+export interface MarketingSegmentImpact {
+  segmentId: string
+  reachPercent: number
+  awarenessLift: number
+  awarenessMultiplier: number
+  considerationMultiplier: number
+  donorSignal: number
+}
+
+export interface MarketingImpact {
+  totalReach: number
+  averageAwarenessLift: number
+  averageConsiderationMultiplier: number
+  donorSignal: number
+  bySegment: MarketingSegmentImpact[]
+}
+
 export interface ConcertForecast {
   projectedAttendance: number
   projectedRevenue: number
   projectedDonorUplift: number
   projectedAudienceBreakdown: AudienceBreakdown[]
+  marketingImpact: MarketingImpact
   projectedExpenses: number
   projectedExpenseBreakdown: ExpenseBreakdown
   projectedNet: number
@@ -308,6 +326,7 @@ export interface ConcertReport {
   attendance: number
   revenue: number
   donorUplift: number
+  marketingDonorSignal?: number
   audienceBreakdown: AudienceBreakdown[]
   expenses: number
   expenseBreakdown: ExpenseBreakdown
