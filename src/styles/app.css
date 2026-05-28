@@ -1944,20 +1944,48 @@ input[type="checkbox"] {
 }
 
 .enter-play-btn {
+  position: relative;
+  overflow: hidden;
   padding: 0.6rem 2rem;
   border-radius: 999px;
   border: 1.5px solid var(--silver);
-  background: transparent;
+  background:
+    linear-gradient(135deg, rgba(184, 192, 188, 0.08), rgba(255, 255, 255, 0.02) 42%, rgba(184, 192, 188, 0.12)),
+    transparent;
   color: var(--silver);
   font-family: var(--font-sans);
   font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 18px rgba(184, 192, 188, 0.16);
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.enter-play-btn::before {
+  content: '';
+  position: absolute;
+  inset: -40% auto -40% -65%;
+  width: 48%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.86), transparent);
+  transform: skewX(-18deg);
+  opacity: 0.75;
+  animation: enter-silver-shine 2.35s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .enter-play-btn:hover {
   background: var(--silver);
   color: var(--ink);
+  box-shadow:
+    0 0 24px rgba(184, 192, 188, 0.42),
+    0 0 60px rgba(184, 192, 188, 0.16);
+  transform: translateY(-1px);
+}
+
+@keyframes enter-silver-shine {
+  0%, 38% { left: -65%; }
+  62%, 100% { left: 118%; }
 }
