@@ -1937,10 +1937,40 @@ input[type="checkbox"] {
   gap: 3rem;
 }
 
-.enter-logo {
+.enter-logo-wrap {
+  position: relative;
   width: min(1100px, 96vw);
+  isolation: isolate;
+}
+
+.enter-logo {
+  width: 100%;
   height: auto;
   display: block;
+}
+
+.enter-logo-wrap::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0) 28%,
+      rgba(218, 224, 221, 0.16) 42%,
+      rgba(255, 255, 255, 0.42) 50%,
+      rgba(164, 172, 168, 0.12) 59%,
+      rgba(255, 255, 255, 0) 72%,
+      transparent 100%);
+  background-size: 230% 100%;
+  background-position: 140% 50%;
+  mix-blend-mode: screen;
+  opacity: 0.72;
+  mask: url('/open.png') center / contain no-repeat;
+  -webkit-mask: url('/open.png') center / contain no-repeat;
+  animation: enter-logo-silver-shine 19s ease-in-out infinite;
 }
 
 .enter-play-btn {
@@ -1988,4 +2018,18 @@ input[type="checkbox"] {
 @keyframes enter-silver-shine {
   0%, 38% { left: -65%; }
   62%, 100% { left: 118%; }
+}
+
+@keyframes enter-logo-silver-shine {
+  0% { background-position: 140% 50%; opacity: 0.5; }
+  38% { opacity: 0.74; }
+  58% { background-position: -45% 50%; opacity: 0.62; }
+  100% { background-position: -45% 50%; opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter-logo-wrap::before,
+  .enter-play-btn::before {
+    animation: none;
+  }
 }
