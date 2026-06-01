@@ -16,7 +16,7 @@ function fmtCash(n: number): string {
 function fmtDelta(n?: number, isCash?: boolean): { text: string; tone: 'pine' | 'ember' | 'muted' } {
   if (n == null || n === 0) return { text: '—', tone: 'muted' }
   const sign = n > 0 ? '+' : ''
-  const text = isCash ? `${sign}${fmtCash(n)} wk` : `${sign}${n}`
+  const text = isCash ? `${sign}${fmtCash(n)}` : `${sign}${n}`
   return { text, tone: n > 0 ? 'pine' : 'ember' }
 }
 

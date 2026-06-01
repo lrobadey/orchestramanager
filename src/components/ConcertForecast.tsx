@@ -8,6 +8,20 @@ interface ConcertForecastProps {
   workCount: 2 | 3
 }
 
+const SECTION_SHORT_LABEL: Record<string, string> = {
+  strings: 'STR',
+  winds: 'WIND',
+  brass: 'BRASS',
+  percussion: 'PERC',
+}
+
+const SECTION_FULL_LABEL: Record<string, string> = {
+  strings: 'Strings',
+  winds: 'Winds',
+  brass: 'Brass',
+  percussion: 'Percussion',
+}
+
 function fmt$(value: number): string {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
@@ -145,7 +159,12 @@ function AudienceMix({ rows }: { rows: AudienceBreakdown[] }) {
               {Math.round(row.shareOfHouse * 100)}%
             </span>
             {row.awarenessScore !== undefined && (
-              <span className="text-muted text-mono">A{row.awarenessScore} T{row.trustScore} H{row.habitScore}</span>
+              <span
+                className="text-muted text-mono"
+                title={`Awareness ${row.awarenessScore} · Trust ${row.trustScore} · Habit ${row.habitScore}`}
+              >
+                A {row.awarenessScore} · T {row.trustScore} · H {row.habitScore}
+              </span>
             )}
           </div>
         ))}
@@ -324,8 +343,8 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
               {(Object.entries(forecast.sectionStress) as [string, number][]).map(([section, stress]) => {
                 const pct = Math.max(0, Math.min(100, stress))
                 return (
-                  <div key={section} className="stress-cell">
-                    <span className="stress-cell-label">{section.slice(0, 4).toUpperCase()}</span>
+                  <div key={section} className="stress-cell" title={`${SECTION_FULL_LABEL[section] ?? section} stress`}>
+                    <span className="stress-cell-label">{SECTION_SHORT_LABEL[section] ?? section.slice(0, 4).toUpperCase()}</span>
                     <span className="stress-cell-value">{Math.round(stress)}</span>
                     <div className="stress-cell-bar">
                       <i className={statusTone(stress)} style={{ width: `${pct}%` }} />

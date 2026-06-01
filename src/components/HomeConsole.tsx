@@ -1,5 +1,5 @@
 import '../styles/home.css'
-import type { ConcertProgram, SeasonState, Work } from '../types/core'
+import type { ConcertProgram, InstitutionalDeltas, SeasonState, Work } from '../types/core'
 import CanopyHeader from './home/CanopyHeader'
 import UnderstoryVitals from './home/UnderstoryVitals'
 import FloorColumns from './home/FloorColumns'
@@ -11,6 +11,7 @@ interface HomeConsoleProps {
   season: SeasonState
   program: ConcertProgram
   works: Work[]
+  deltas?: InstitutionalDeltas
   onNavigate: (key: HomeNavKey) => void
   onOpenProgramme: () => void
 }
@@ -19,6 +20,7 @@ export default function HomeConsole({
   season,
   program,
   works,
+  deltas,
   onNavigate,
   onOpenProgramme,
 }: HomeConsoleProps) {
@@ -31,7 +33,7 @@ export default function HomeConsole({
           activeNav="home"
           onNavigate={onNavigate}
         />
-        <UnderstoryVitals institution={season.institution} />
+        <UnderstoryVitals institution={season.institution} deltas={deltas} />
         <FloorColumns
           roster={season.roster}
           season={season}

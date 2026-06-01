@@ -1234,11 +1234,6 @@
   user-select: none;
 }
 
-.repertoire-shelf,
-.rep-backdrop {
-  display: none !important;
-}
-
 @media (max-width: 1280px) {
   .programme-floor {
     grid-template-columns: 1fr;

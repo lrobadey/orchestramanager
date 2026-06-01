@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { SeasonState } from '../../types/core'
-import { TRAIL_ANNOTATIONS, slotHeadlineFallback } from '../../data/homeStubs'
+import { slotHeadlineFallback } from '../../data/homeStubs'
 import { formatShortDate } from '../../sim/calendar'
 import { CONCERT_ROMAN } from '../../data/numerals'
 
@@ -19,16 +19,6 @@ const LANDMARK_POS: { x: number; y: number }[] = [
   { x: 880, y: 104 },
   { x: 1200, y: 55 },
 ]
-
-// Annotation anchor positions in trail-space, keyed by the landmark index
-// the annotation attaches to. Decoupled from TRAIL_ANNOTATIONS array order
-// so the source data can be reordered without misaligning leader lines.
-const ANNOTATION_POS: Record<0 | 1 | 2 | 3, { x: number; y: number }> = {
-  0: { x: 120, y: 14 },
-  1: { x: 440, y: 10 },
-  2: { x: 780, y: 10 },
-  3: { x: 1150, y: 14 },
-}
 
 export default function SeasonTrail({ season }: SeasonTrailProps) {
   const [collapsed, setCollapsed] = useState(true)
@@ -113,23 +103,10 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
           />
         )}
 
-        {/* Leader lines from annotations to landmarks */}
-        {TRAIL_ANNOTATIONS.map((a, i) => {
-          const lm = LANDMARK_POS[a.lmIndex]
-          const an = ANNOTATION_POS[a.lmIndex] ?? { x: lm.x, y: 18 }
-          return (
-            <g key={i}>
-              <path
-                d={`M ${an.x} ${an.y} L ${(an.x + lm.x) / 2} ${(an.y + lm.y) / 2} L ${lm.x} ${lm.y}`}
-                fill="none"
-                stroke="var(--silver-dim)"
-                strokeWidth="0.7"
-                opacity="0.55"
-              />
-              <circle cx={lm.x} cy={lm.y} r="2.5" fill="var(--silver)" />
-            </g>
-          )
-        })}
+        {/* Landmark nodes on the path */}
+        {LANDMARK_POS.map((lm, i) => (
+          <circle key={i} cx={lm.x} cy={lm.y} r="2.5" fill="var(--silver)" />
+        ))}
       </svg>
 
       <div className="trail-corner tl">
@@ -189,25 +166,6 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
             {isActive && (
               <div className="lm-headline">“In progress — open the program builder.”</div>
             )}
-          </div>
-        )
-      })}
-
-      {TRAIL_ANNOTATIONS.map((a, i) => {
-        const pos = ANNOTATION_POS[a.lmIndex] ?? { x: 0, y: 0 }
-        const xPct = (pos.x / TRAIL_W) * 100
-        const yPct = (pos.y / TRAIL_H) * 100
-        return (
-          <div
-            key={i}
-            className="trail-annotation"
-            style={{ left: `${xPct}%`, top: `${yPct}%` }}
-          >
-            <div className="anno-meta">
-              <span className="anno-kind">{a.kind}</span>
-              <span className="anno-tick" />
-            </div>
-            <div className="anno-text">{a.text}</div>
           </div>
         )
       })}
