@@ -11,6 +11,12 @@ interface LedgerScreenProps {
   onNavigate: (key: 'home' | 'roster' | 'programme' | 'library' | 'ledger' | 'donors' | 'audience') => void
 }
 
+const LEDGER_STATUS_LABEL: Record<string, string> = {
+  resolved: 'Resolved',
+  forecast: 'Forecast',
+  planning: 'Planning',
+}
+
 export default function LedgerScreen({
   season,
   forecast,
@@ -102,7 +108,7 @@ export default function LedgerScreen({
                 {rows.map(row => (
                   <div key={row.id} className={`ledger-row ${row.status}`} role="row">
                     <span className="ledger-concert-name">{row.name}</span>
-                    <span className="ledger-status">{row.status}</span>
+                    <span className="ledger-status">{LEDGER_STATUS_LABEL[row.status] ?? row.status}</span>
                     <span>{row.revenue}</span>
                     <span>{row.donor}</span>
                     <span>{row.expenses}</span>

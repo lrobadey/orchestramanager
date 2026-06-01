@@ -361,7 +361,7 @@
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-family: var(--hc-mono);
-  font-size: 8px;
+  font-size: 9.5px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
 }
@@ -384,7 +384,8 @@
   display: block;
   max-width: 100%;
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: var(--display);
   font-size: 12.5px;
   line-height: 1;
@@ -395,7 +396,7 @@
 }
 .understory-rail-collapsed-stat i {
   font-family: var(--hc-mono);
-  font-size: 6.8px;
+  font-size: 8.5px;
   line-height: 1;
   font-style: normal;
   letter-spacing: 0.08em;
@@ -1200,6 +1201,31 @@
 .inbox-pressure-strip strong.pine { color: var(--pine); }
 .inbox-pressure-strip strong.bark { color: var(--bark-dim); }
 .inbox-pressure-strip strong.ember { color: var(--ember); }
+.inbox-pressure-strip strong.muted { color: var(--silver-dim); }
+
+.inbox-coming-soon {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.home-console .coming-soon-tag {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bark);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+.home-console .coming-soon-text {
+  margin: 6px 0 0;
+  font-family: var(--serif);
+  font-size: 12.5px;
+  line-height: 1.4;
+  font-style: italic;
+  color: var(--silver);
+}
 .inbox-message-ledger { margin-top: 14px; }
 .inbox-message-head {
   display: flex;

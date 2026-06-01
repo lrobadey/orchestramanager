@@ -147,7 +147,7 @@ function SlotRow({
               <div className="programme-slot-meta">
                 <span className="programme-slot-composer">{work.composer}</span>
                 <span>{work.durationMinutes}m</span>
-                <span>{work.era.replace('-', ' ')}</span>
+                <span>{ERA_LABEL[work.era]}</span>
               </div>
             </motion.div>
           ) : (
@@ -177,7 +177,7 @@ function SlotRow({
                 )
               })
             : SECTIONS.map(section => (
-                <div key={section} className="programme-slot-demand-cell">
+                <div key={section} className="programme-slot-demand-cell" title={`${section}: no work assigned`}>
                   <div className="programme-slot-demand-bar" />
                   <span className="programme-slot-demand-label">{SECTION_LABEL[section]}</span>
                 </div>
@@ -408,10 +408,10 @@ function LibraryTile({
       </div>
       <div className="programme-library-title">{work.title}</div>
       <div className="programme-library-meta">
-        <span>{work.durationMinutes}m</span>
-        <span>P{work.artisticPrestige}</span>
-        <span>D{work.audienceDraw}</span>
-        <span>L{work.rehearsalLoad}</span>
+        <span title="Duration in minutes">{work.durationMinutes}m</span>
+        <span title="Artistic prestige">P{work.artisticPrestige}</span>
+        <span title="Audience draw">D{work.audienceDraw}</span>
+        <span title="Rehearsal load">L{work.rehearsalLoad}</span>
       </div>
     </button>
   )

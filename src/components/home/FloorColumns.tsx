@@ -8,13 +8,9 @@ import type {
   Work,
 } from '../../types/core'
 import { calculateSectionStrengths } from '../../sim/roster'
-import {
-  FINANCE_SPARKLINE,
-  INBOX_MESSAGES,
-  VENUE_NAME,
-  concertDate,
-  daysToCurtain,
-} from '../../data/homeStubs'
+import { VENUE_NAME } from '../../data/homeStubs'
+import { fmtCash } from '../../format'
+import { formatShortDate } from '../../sim/calendar'
 import { CONCERT_ROMAN, SLOT_ROMAN } from '../../data/numerals'
 
 interface FloorColumnsProps {
@@ -49,6 +45,18 @@ export default function FloorColumns({
   const idx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
   const currentSlot = seasonComplete ? season.slots[3] : season.slots[idx]
+
+  // Real calendar-driven scheduling — the same source the canopy countdown uses,
+  // so the floor card and the header never disagree.
+  const { currentDay, startDate } = season.calendar
+  const currentDays = Math.max(0, currentSlot.scheduledDay - currentDay)
+  const currentDate = formatShortDate(currentSlot.scheduledDate, startDate)
+  const followUpSlot = season.slots[Math.min(idx + 1, 3)]
+  const followUpDate = formatShortDate(followUpSlot.scheduledDate, startDate)
+  const resolvedSlots = season.slots.filter(s => s.status === 'resolved')
+  const lastNet = resolvedSlots.length
+    ? resolvedSlots[resolvedSlots.length - 1].report?.net ?? null
+    : null
 
   const sectionStrengths = calculateSectionStrengths(roster.principals, [])
   const compositeStrength = Math.round(
@@ -94,14 +102,14 @@ export default function FloorColumns({
           <RosterColumn sections={sectionStrengths} composite={compositeStrength} watch={watchPrincipals} onCollapse={() => setPanelCollapsed('roster', true)} />
         )}
         {collapsed.programme ? (
-          <CollapsedRail label="Next" value={CONCERT_ROMAN[idx]} detail={seasonComplete ? 'closed' : `T−${daysToCurtain(idx)}d`} onExpand={() => setPanelCollapsed('programme', false)} />
+          <CollapsedRail label="Next" value={CONCERT_ROMAN[idx]} detail={seasonComplete ? 'closed' : `T−${currentDays}d`} onExpand={() => setPanelCollapsed('programme', false)} />
         ) : (
-          <NextConcertColumn slotName={currentSlot.name} idx={idx} workCount={program.workCount} selectedWorks={selectedWorks} suggested={suggested} seasonComplete={seasonComplete} onOpenProgramme={onOpenProgramme} onCollapse={() => setPanelCollapsed('programme', true)} />
+          <NextConcertColumn slotName={currentSlot.name} idx={idx} days={currentDays} date={currentDate} followUpDate={followUpDate} workCount={program.workCount} selectedWorks={selectedWorks} suggested={suggested} seasonComplete={seasonComplete} onOpenProgramme={onOpenProgramme} onCollapse={() => setPanelCollapsed('programme', true)} />
         )}
         {collapsed.inbox ? (
-          <CollapsedRail label="Inbox" value={`${INBOX_MESSAGES.length}`} detail="messages" onExpand={() => setPanelCollapsed('inbox', false)} />
+          <CollapsedRail label="Pressure" value={`${season.institution.donorConfidence}`} detail={donorRead(season.institution.donorConfidence)} tone={donorTone(season.institution.donorConfidence)} onExpand={() => setPanelCollapsed('inbox', false)} />
         ) : (
-          <InboxFinanceColumn institution={season.institution} onCollapse={() => setPanelCollapsed('inbox', true)} />
+          <InboxFinanceColumn institution={season.institution} lastNet={lastNet} onCollapse={() => setPanelCollapsed('inbox', true)} />
         )}
       </div>
     </div>
@@ -207,6 +215,9 @@ function RosterColumn({ sections, composite, watch, onCollapse }: RosterColumnPr
 interface NextConcertColumnProps {
   slotName: string
   idx: number
+  days: number
+  date: string
+  followUpDate: string
   workCount: 2 | 3
   selectedWorks: (Work | null)[]
   suggested: Work[]
@@ -215,10 +226,7 @@ interface NextConcertColumnProps {
   onCollapse: () => void
 }
 
-function NextConcertColumn({ slotName, idx, workCount, selectedWorks, suggested, seasonComplete, onOpenProgramme, onCollapse }: NextConcertColumnProps) {
-  const days = daysToCurtain(idx)
-  const date = concertDate(idx)
-  const followUpDate = concertDate(Math.min(idx + 1, 3))
+function NextConcertColumn({ slotName, idx, days, date, followUpDate, workCount, selectedWorks, suggested, seasonComplete, onOpenProgramme, onCollapse }: NextConcertColumnProps) {
   const visibleWorks = selectedWorks.slice(0, workCount)
   const openSlots = visibleWorks.filter(w => !w).length
   const assignedWorks = visibleWorks.filter((w): w is Work => Boolean(w))
@@ -273,10 +281,10 @@ function NextConcertColumn({ slotName, idx, workCount, selectedWorks, suggested,
           {suggested.map(w => (
             <div key={w.id} className="next-suggested-row">
               <span><span className="next-suggested-name">{w.composer},</span> <span className="next-suggested-title">{w.title}</span></span>
-              <span className="next-suggested-stat muted">{w.durationMinutes}m</span>
-              <span className="next-suggested-stat">P{w.artisticPrestige}</span>
-              <span className="next-suggested-stat">D{w.audienceDraw}</span>
-              <span className={`next-suggested-stat${w.rehearsalLoad > 60 ? ' ember' : ' muted'}`}>L{w.rehearsalLoad}</span>
+              <span className="next-suggested-stat muted" title="Duration in minutes">{w.durationMinutes}m</span>
+              <span className="next-suggested-stat" title="Artistic prestige">P{w.artisticPrestige}</span>
+              <span className="next-suggested-stat" title="Audience draw">D{w.audienceDraw}</span>
+              <span className={`next-suggested-stat${w.rehearsalLoad > 60 ? ' ember' : ' muted'}`} title="Rehearsal load">L{w.rehearsalLoad}</span>
             </div>
           ))}
         </div>
@@ -290,20 +298,16 @@ function NextConcertColumn({ slotName, idx, workCount, selectedWorks, suggested,
   )
 }
 
-function InboxFinanceColumn({ institution, onCollapse }: { institution: InstitutionState; onCollapse: () => void }) {
-  const netK = FINANCE_SPARKLINE.reduce((a, b) => a + b, 0)
+function InboxFinanceColumn({ institution, lastNet, onCollapse }: { institution: InstitutionState; lastNet: number | null; onCollapse: () => void }) {
   const donor = institution.donorConfidence
   const trust = institution.audienceTrust
-  const cashWeeks = Math.max(0, Math.round(institution.cash / 125_000))
-  const institutionalRead = inboxInstitutionRead(donor, trust, netK)
-  const financeNote = donor < 35 ? { tone: 'ember' as const, text: 'Donor confidence is sliding — the next concert needs a steadying result.' } : donor < 55 ? { tone: 'ember' as const, text: 'Donor confidence is soft — keep an eye on the next report.' } : { tone: 'pine' as const, text: 'Donors are holding — the institution has room to take a risk.' }
+  const institutionalRead = inboxInstitutionRead(donor, trust, lastNet ?? 0)
 
   return (
     <section className="floor-panel floor-panel-inbox inbox-pressure-card">
       <div className="floor-col-head inbox-pressure-head">
         <span className="hc-eyebrow">Institution pressure</span>
-        <span className="hc-num" style={{ fontSize: 9, color: 'var(--bark-dim)' }}>{INBOX_MESSAGES.length} messages</span>
-        <button type="button" className="floor-collapse-btn" onClick={onCollapse} aria-label="Collapse inbox panel">−</button>
+        <button type="button" className="floor-collapse-btn" onClick={onCollapse} aria-label="Collapse pressure panel">−</button>
       </div>
       <div className="floor-panel-body inbox-pressure-body">
         <div className="inbox-pressure-hero">
@@ -312,33 +316,31 @@ function InboxFinanceColumn({ institution, onCollapse }: { institution: Institut
             <p>{institutionalRead.text}</p>
           </div>
           <div className="inbox-cash-block">
-            <strong>{cashWeeks}</strong>
-            <span>wks runway</span>
+            <strong>{fmtCash(institution.cash)}</strong>
+            <span>cash on hand</span>
           </div>
         </div>
 
         <div className="inbox-pressure-strip" aria-label="Institution pressure summary">
           <div><span>Donors</span><strong className={donorTone(donor)}>{donorRead(donor)}</strong></div>
           <div><span>Audience</span><strong className={trustTone(trust)}>{trustRead(trust)}</strong></div>
-          <div><span>Cash</span><strong className={netK >= 0 ? 'pine' : 'ember'}>{netK >= 0 ? '+' : ''}${netK}K</strong></div>
+          <div><span>Last net</span><strong className={lastNet == null ? 'muted' : lastNet >= 0 ? 'pine' : 'ember'}>{lastNet == null ? '—' : `${lastNet >= 0 ? '+' : '−'}${fmtCash(Math.abs(lastNet))}`}</strong></div>
         </div>
 
-        <div className="inbox-message-ledger">
+        <div className="inbox-coming-soon">
           <div className="inbox-message-head">
-            <span className="hc-eyebrow">Signals</span>
-            <span className="hc-eyebrow" style={{ color: 'var(--bark-dim)' }}>stub feed</span>
+            <span className="hc-eyebrow">Inbox &amp; signals</span>
+            <span className="coming-soon-tag">coming soon</span>
           </div>
-          {INBOX_MESSAGES.map((m, i) => <div key={i} className="inbox-msg"><div className="inbox-meta"><span className="inbox-kind">{m.kind}</span><span className="inbox-time">{m.time}</span></div><div className="inbox-text">{m.text}</div></div>)}
+          <p className="coming-soon-text">Donor letters, press notices, and musician requests will surface here once the inbox and event systems come online.</p>
         </div>
 
-        <div className="finance-trace finance-pressure-trace">
-          <div className="finance-trace-head"><span className="hc-eyebrow">Finance trace</span><span className="hc-num" style={{ fontSize: 9.5, color: netK >= 0 ? 'var(--pine)' : 'var(--ember)' }}>{netK >= 0 ? '+' : ''}${netK}K net</span></div>
-          <svg className="finance-spark" viewBox="0 0 300 44" preserveAspectRatio="none" role="img" aria-label="Finance sparkline (stub)">
-            <line x1="0" y1="34" x2="300" y2="34" stroke="var(--hairline)" strokeWidth="0.5" />
-            <polyline points={FINANCE_SPARKLINE.map((v, i) => `${(i / (FINANCE_SPARKLINE.length - 1)) * 300},${42 - v * 1.4}`).join(' ')} fill="none" stroke="var(--silver)" strokeWidth="1.2" />
-            {FINANCE_SPARKLINE.map((v, i) => <circle key={i} cx={(i / (FINANCE_SPARKLINE.length - 1)) * 300} cy={42 - v * 1.4} r="1.4" fill="var(--silver)" />)}
-          </svg>
-          <div className="finance-note"><span className={`hc-dot ${financeNote.tone}`} style={{ marginTop: 4 }} /><span className={`finance-note-text ${financeNote.tone}`}>{financeNote.text}</span></div>
+        <div className="inbox-coming-soon">
+          <div className="inbox-message-head">
+            <span className="hc-eyebrow">Finance trace</span>
+            <span className="coming-soon-tag">coming soon</span>
+          </div>
+          <p className="coming-soon-text">Week-by-week cash history will chart here once per-week ledger tracking lands.</p>
         </div>
       </div>
     </section>
