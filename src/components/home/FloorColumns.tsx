@@ -9,6 +9,7 @@ import type {
 } from '../../types/core'
 import { calculateSectionStrengths } from '../../sim/roster'
 import { VENUE_NAME } from '../../data/homeStubs'
+import { fmtCash } from '../../format'
 import { formatShortDate } from '../../sim/calendar'
 import { CONCERT_ROMAN, SLOT_ROMAN } from '../../data/numerals'
 
@@ -344,12 +345,6 @@ function InboxFinanceColumn({ institution, lastNet, onCollapse }: { institution:
       </div>
     </section>
   )
-}
-
-function fmtCash(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (Math.abs(n) >= 1_000) return `$${(n / 1000).toFixed(1)}K`
-  return `$${n}`
 }
 
 function donorTone(score: number): 'pine' | 'bark' | 'ember' {

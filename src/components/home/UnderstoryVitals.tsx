@@ -1,16 +1,11 @@
 import { useState } from 'react'
 import type { InstitutionState, InstitutionalDeltas } from '../../types/core'
+import { fmtCash } from '../../format'
 
 interface UnderstoryVitalsProps {
   institution: InstitutionState
   deltas?: InstitutionalDeltas
   variant?: 'bar' | 'rail'
-}
-
-function fmtCash(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (Math.abs(n) >= 1_000) return `$${(n / 1000).toFixed(1)}K`
-  return `$${n}`
 }
 
 function fmtDelta(n?: number, isCash?: boolean): { text: string; tone: 'pine' | 'ember' | 'muted' } {
