@@ -111,13 +111,27 @@ export function resolveSeasonConcert(
     status: 'resolved',
   }
 
-  const newSlots = [...settledSlots] as SeasonState['slots']
+  let newSlots = [...settledSlots] as SeasonState['slots']
   newSlots[idx] = updatedSlot
+
+  // The deferred costs and donor support a concert schedules are normally
+  // settled at the start of the NEXT concert. The final concert has no
+  // successor to trigger that sweep, so its hall cost, production cost, and
+  // donor support would otherwise be stranded forever — leaving the cash meter
+  // overstated and contradicting the season summary's net. Close the books at
+  // season end by settling every still-scheduled transaction.
+  let closingCashDelta = 0
+  const isFinalConcert = !nextSlot
+  if (isFinalConcert) {
+    const closed = settleAllScheduledTransactions(newSlots)
+    newSlots = closed.slots
+    closingCashDelta = closed.cashDelta
+  }
 
   const baseInstitution = applyConcertReport(
     season.institution,
     report,
-    settlementCashDelta + immediateCashDelta,
+    settlementCashDelta + immediateCashDelta + closingCashDelta,
   )
   const nextRoster = updateRosterAfterConcert(season.roster, report.rosterChanges)
   const nextDonors = updateDonorsAfterConcert({
@@ -174,6 +188,31 @@ function settleDueTransactions(
         status: 'posted' as const,
         postedDay: currentDay,
         postedDate: currentDate,
+      }
+    }),
+  })) as SeasonState['slots']
+
+  return { slots: nextSlots, cashDelta }
+}
+
+// Settles every still-scheduled transaction regardless of due day, posting each
+// on its own due date. Used to close the season's books after the final concert,
+// which has no successor to trigger the normal due-day settlement sweep.
+function settleAllScheduledTransactions(
+  slots: SeasonState['slots'],
+): { slots: SeasonState['slots']; cashDelta: number } {
+  let cashDelta = 0
+  const nextSlots = slots.map(slot => ({
+    ...slot,
+    financeTransactions: slot.financeTransactions.map(transaction => {
+      if (transaction.status !== 'scheduled') return transaction
+
+      cashDelta += transaction.amount
+      return {
+        ...transaction,
+        status: 'posted' as const,
+        postedDay: transaction.dueDay,
+        postedDate: transaction.dueDate,
       }
     }),
   })) as SeasonState['slots']
