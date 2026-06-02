@@ -4,8 +4,9 @@ import { resolveConcert } from '../src/sim/resolveConcert'
 import { applyConcertReport } from '../src/sim/applyConcertReport'
 import { works } from '../src/data/works'
 import { principals } from '../src/data/principals'
-import { audienceSegments } from '../src/data/audienceSegments'
+import { audienceSegments, cityAudienceSegments, createInitialAudience } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
+import { HALL_CAPACITY } from '../src/sim/scoring'
 import { ConcertProgram } from '../src/types/core'
 
 // Canon program (Beethoven 5, Beethoven 7, Tchaikovsky 6) — loads 30/35/45.
@@ -472,5 +473,64 @@ describe('applyConcertReport', () => {
     const report = resolveConcert({ ...makeInput(adventurousProgram), roll: 50 })
     const next = applyConcertReport(startingInstitution, report)
     expect(next.identity.adventurous).toBeGreaterThan(startingInstitution.identity.adventurous)
+  })
+})
+
+// ── hall-capacity ceiling ────────────────────────────────────────────────────
+
+describe('hall capacity is a hard ceiling', () => {
+  // A mature orchestra: every segment maxed on awareness/trust/habit, cheap
+  // tickets, heavy marketing — demand that would otherwise blow far past the house.
+  const maxedAudience = () => ({
+    relationships: createInitialAudience().relationships.map(r => ({
+      ...r,
+      awareness: 100,
+      trust: 100,
+      habit: 100,
+      alignmentMemory: 100,
+    })),
+  })
+
+  const blockbuster: ConcertProgram = {
+    workCount: 3,
+    workIds: ['beethoven-5', 'beethoven-7', 'beethoven-6'],
+    intermissionAfter: 1,
+    rehearsalAllocation: [7, 7, 6],
+    marketingSpend: 40_000,
+    ticketPrice: 30,
+    studentTicketsEnabled: false,
+    studentTicketPrice: 25,
+  }
+
+  const maxedInput = () => ({
+    works,
+    institution: { ...startingInstitution, donorConfidence: 100 },
+    principals,
+    cityAudienceSegments,
+    audienceState: maxedAudience(),
+    program: blockbuster,
+  })
+
+  it('forecast attendance never exceeds the hall', () => {
+    const forecast = forecastProgram(maxedInput())
+    expect(forecast.projectedAttendance).toBeLessThanOrEqual(HALL_CAPACITY)
+    // and the house should be effectively sold out under this much demand
+    expect(forecast.projectedAttendance).toBeGreaterThan(HALL_CAPACITY * 0.95)
+  })
+
+  it('forecast revenue matches the capped (not the uncapped) attendance', () => {
+    const forecast = forecastProgram(maxedInput())
+    const revenueFromRows = forecast.projectedAudienceBreakdown.reduce(
+      (sum, row) => sum + row.ticketRevenue,
+      0,
+    )
+    expect(forecast.projectedRevenue).toBe(revenueFromRows)
+    // capped attendance × the $30 floor price stays within a sold-out house's take
+    expect(forecast.projectedRevenue).toBeLessThanOrEqual(HALL_CAPACITY * 30)
+  })
+
+  it('resolved attendance never exceeds the hall, even on a lucky variance roll', () => {
+    const report = resolveConcert({ ...maxedInput(), roll: 100 })
+    expect(report.attendance).toBeLessThanOrEqual(HALL_CAPACITY)
   })
 })

@@ -1,6 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { computeRehearsalDivisor, rehearsalHoursNeeded } from '../src/sim/scoring'
-import { Work, Principal } from '../src/types/core'
+import {
+  computeRehearsalDivisor,
+  rehearsalHoursNeeded,
+  capAudienceToHall,
+  HALL_CAPACITY,
+} from '../src/sim/scoring'
+import { Work, Principal, AudienceBreakdown } from '../src/types/core'
+
+function makeRow(segmentId: string, attendance: number, price: number): AudienceBreakdown {
+  return {
+    segmentId,
+    segmentName: segmentId,
+    attendance,
+    shareOfHouse: 0,
+    effectiveTicketPrice: price,
+    ticketRevenue: attendance * price,
+    priceAccessibilityScore: 100,
+  }
+}
 
 function makePrincipal(section: Principal['section'], leadership: number): Principal {
   return {
@@ -129,5 +146,42 @@ describe('computeRehearsalDivisor', () => {
     expect(rehearsalHoursNeeded(40, 5)).toBeCloseTo(8, 5)
     expect(rehearsalHoursNeeded(40, 7)).toBeCloseTo(5.714, 2)
     expect(rehearsalHoursNeeded(40, 7)).toBeLessThan(rehearsalHoursNeeded(40, 5))
+  })
+})
+
+describe('capAudienceToHall', () => {
+  it('leaves under-capacity demand untouched but assigns share-of-house', () => {
+    const rows = [makeRow('a', 300, 70), makeRow('b', 200, 50)]
+    const capped = capAudienceToHall(rows)
+    expect(capped.map(r => r.attendance)).toEqual([300, 200])
+    expect(capped[0].ticketRevenue).toBe(300 * 70)
+    expect(capped[0].shareOfHouse).toBeCloseTo(300 / 500, 5)
+    expect(capped[1].shareOfHouse).toBeCloseTo(200 / 500, 5)
+  })
+
+  it('never seats more than the hall holds when demand overflows', () => {
+    const rows = [makeRow('a', 5000, 70), makeRow('b', 4000, 50), makeRow('c', 3000, 30)]
+    const capped = capAudienceToHall(rows)
+    const total = capped.reduce((s, r) => s + r.attendance, 0)
+    expect(total).toBeLessThanOrEqual(HALL_CAPACITY)
+    // a sold-out house gets within a rounding seat of the ceiling
+    expect(total).toBeGreaterThanOrEqual(HALL_CAPACITY - capped.length)
+  })
+
+  it('scales every segment by the same factor, preserving the audience mix', () => {
+    const rows = [makeRow('a', 6000, 70), makeRow('b', 3000, 50), makeRow('c', 3000, 30)]
+    const capped = capAudienceToHall(rows)
+    // original mix is 50% / 25% / 25%; capping should keep those ratios
+    expect(capped[0].shareOfHouse).toBeCloseTo(0.5, 2)
+    expect(capped[1].shareOfHouse).toBeCloseTo(0.25, 2)
+    expect(capped[2].shareOfHouse).toBeCloseTo(0.25, 2)
+  })
+
+  it('recomputes ticket revenue from the capped attendance', () => {
+    const rows = [makeRow('a', 6000, 70), makeRow('b', 6000, 30)]
+    const capped = capAudienceToHall(rows)
+    for (const row of capped) {
+      expect(row.ticketRevenue).toBe(row.attendance * row.effectiveTicketPrice)
+    }
   })
 })

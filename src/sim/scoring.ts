@@ -1,4 +1,4 @@
-import { Work, Principal, ExpenseBreakdown } from '../types/core'
+import { Work, Principal, ExpenseBreakdown, AudienceBreakdown } from '../types/core'
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -29,10 +29,16 @@ export function pricePenalty(ticketPrice: number): number {
 // Rehearsal cost: $120/hour (hall + staff overhead)
 export const REHEARSAL_COST_PER_HOUR = 120
 
-// Base concert costs: hall rental, staff, programs, production
-export const BASE_CONCERT_COST = 45_000
+// Base concert costs: hall rental, staff, programs, production.
+// Rebalanced down from the original $45k so a concert's all-in cost lands in
+// the donor-coverable range (~$35–45k with modest marketing): the funding model
+// anchors each concert's "ask" to its cost, and a concert must be roughly
+// coverable by a single aligned major donor (capacities $55k–$120k) or the
+// sponsorship system never funds it. See docs/SEASON_FUNDING_MODEL.md (P0).
+export const BASE_CONCERT_COST = 30_000
 
-// Hall capacity — used for attendance rate calculations
+// Hall capacity — the physical seat count. Used both for attendance-rate
+// calculations and as a hard ceiling on how many tickets can actually be sold.
 export const HALL_CAPACITY = 1_200
 
 // Donor confidence threshold below which uplift is $0
@@ -89,6 +95,39 @@ export function computeExpenseBreakdown(
   const production = contemporaryCount * 3_000 + Math.min(highLoadCount * 2_500, 8_000)
   const total = BASE_CONCERT_COST + rehearsal + marketingSpend + production
   return { baseConcert: BASE_CONCERT_COST, rehearsal, marketing: marketingSpend, production, total }
+}
+
+// Enforce the physical hall: no more seats can be sold than the house holds.
+// When projected demand across segments exceeds HALL_CAPACITY, every segment is
+// scaled down by the same factor — a sold-out house, not a reshuffled one — so
+// the audience mix is preserved. Ticket revenue is recomputed from the capped
+// attendance, and share-of-house is (re)assigned from the final numbers.
+export function capAudienceToHall(breakdown: AudienceBreakdown[]): AudienceBreakdown[] {
+  const demand = breakdown.reduce((sum, row) => sum + row.attendance, 0)
+  let capped = breakdown.map(row => ({ ...row }))
+
+  if (demand > HALL_CAPACITY) {
+    const scale = HALL_CAPACITY / demand
+    capped = capped.map(row => ({ ...row, attendance: Math.round(row.attendance * scale) }))
+    // Per-segment rounding can leave the house a few seats over the ceiling;
+    // shave the remainder off the largest segments so the cap is never exceeded.
+    let overflow = capped.reduce((sum, row) => sum + row.attendance, 0) - HALL_CAPACITY
+    while (overflow > 0) {
+      const largest = capped.reduce((max, row) => (row.attendance > max.attendance ? row : max), capped[0])
+      largest.attendance -= 1
+      overflow -= 1
+    }
+  }
+
+  const withRevenue = capped.map(row => ({
+    ...row,
+    ticketRevenue: row.attendance * row.effectiveTicketPrice,
+  }))
+  const total = withRevenue.reduce((sum, row) => sum + row.attendance, 0)
+  return withRevenue.map(row => ({
+    ...row,
+    shareOfHouse: total > 0 ? row.attendance / total : 0,
+  }))
 }
 
 // Cash contribution from donors per concert, based on pre-concert donorConfidence.

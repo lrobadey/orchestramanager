@@ -29,6 +29,7 @@ import {
   pressureFromHoursGap,
   computeExpenseBreakdown,
   computeDonorUplift,
+  capAudienceToHall,
 } from './scoring'
 import { computeProgramArcSalience } from './programArcSalience'
 import { estimateDonorUpliftFromDonors } from './donorReactions'
@@ -245,7 +246,7 @@ function computeAttendance(
     }
   })
 
-  return withHouseShares(breakdown)
+  return capAudienceToHall(breakdown)
 }
 
 function priceAccessibilityForSegment(segment: CityAudienceSegment | AudienceSegment, ticketPrice: number): number {
@@ -275,14 +276,6 @@ function donorPrestigeLiftForSegment(segmentId: string, lift: number): number {
   if (segmentId === 'donors-patrons' || segmentId === 'civic-tech-professionals') return lift
   if (segmentId === 'seasoned-supporters' || segmentId === 'classical-core') return lift * 0.45
   return 0
-}
-
-function withHouseShares(breakdown: AudienceBreakdown[]): AudienceBreakdown[] {
-  const totalAttendance = breakdown.reduce((sum, row) => sum + row.attendance, 0)
-  return breakdown.map(row => ({
-    ...row,
-    shareOfHouse: totalAttendance > 0 ? row.attendance / totalAttendance : 0,
-  }))
 }
 
 function buildForecastNotes(

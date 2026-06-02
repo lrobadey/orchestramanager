@@ -8,7 +8,7 @@ import {
 } from '../types/core'
 import { ForecastInput, forecastProgram, computeIdentityProgramFit } from './forecastProgram'
 import { calculateRosterChangesAfterConcert } from './roster'
-import { clamp, average, HALL_CAPACITY, computeDonorUplift } from './scoring'
+import { clamp, average, HALL_CAPACITY, computeDonorUplift, capAudienceToHall } from './scoring'
 import { estimateDonorUpliftFromDonors } from './donorReactions'
 
 // roll: 0-100, where 50 = neutral, <50 = worse than expected, >50 = better
@@ -137,11 +137,9 @@ function resolveAudienceBreakdown(
     }
   })
 
-  const totalAttendance = resolved.reduce((sum, row) => sum + row.attendance, 0)
-  return resolved.map(row => ({
-    ...row,
-    shareOfHouse: totalAttendance > 0 ? row.attendance / totalAttendance : 0,
-  }))
+  // A lucky variance roll can push demand past the house; cap to the hall and
+  // let capAudienceToHall recompute revenue and shares from the seated numbers.
+  return capAudienceToHall(resolved)
 }
 
 function prestigeWeightedArcDamage(works: Work[], perWorkArcDamage: (number | null)[]): number {
