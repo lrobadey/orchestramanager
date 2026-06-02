@@ -699,6 +699,10 @@
   color: var(--silver-dim, rgba(255, 255, 255, 0.44));
 }
 
+.tone-gold {
+  color: var(--gold, #c9a24a);
+}
+
 .tone-silver {
   color: var(--silver, #c7cdc7);
 }

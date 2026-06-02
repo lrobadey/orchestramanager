@@ -502,7 +502,7 @@ export const works: Work[] = [
     title: 'Music for the Royal Fireworks, HWV 351',
     composer: 'Handel',
     durationMinutes: 20,
-    era: 'classical',
+    era: 'baroque',
     isContemporary: false,
     audienceDraw: 64,
     artisticPrestige: 72,

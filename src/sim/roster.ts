@@ -38,7 +38,7 @@ function eraFluency(principal: Principal, works: Work[]): number {
   return average(
     works.map(work => {
       if (work.isContemporary || work.era === 'contemporary') return principal.newMusicFluency
-      if (work.era === 'classical') return principal.classicalFluency
+      if (work.era === 'baroque' || work.era === 'classical') return principal.classicalFluency
       return principal.romanticFluency
     }),
   )

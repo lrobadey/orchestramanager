@@ -26,14 +26,16 @@ interface ProgramBuilderProps {
 }
 
 const ROMAN = ['I', 'II', 'III']
-const ERA_ORDER: Era[] = ['classical', 'romantic', 'late-romantic', 'contemporary']
+const ERA_ORDER: Era[] = ['baroque', 'classical', 'romantic', 'late-romantic', 'contemporary']
 const ERA_LABEL: Record<Era, string> = {
+  baroque: 'Baroque',
   classical: 'Classical',
   romantic: 'Romantic',
   'late-romantic': 'Late Romantic',
   contemporary: 'Contemporary',
 }
 const ERA_TONE: Record<Era, string> = {
+  baroque: 'gold',
   classical: 'silver',
   romantic: 'bark',
   'late-romantic': 'ember',
@@ -461,6 +463,7 @@ export default function ProgramBuilder({
       acc[era] = filteredWorks.filter(work => work.era === era)
       return acc
     }, {
+      baroque: [],
       classical: [],
       romantic: [],
       'late-romantic': [],
