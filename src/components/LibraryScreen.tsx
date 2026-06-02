@@ -16,6 +16,7 @@ interface LibraryScreenProps {
 
 const ERA_OPTIONS: Array<{ value: LibraryEraFilter; label: string }> = [
   { value: 'all', label: 'All eras' },
+  { value: 'baroque', label: 'Baroque' },
   { value: 'classical', label: 'Classical' },
   { value: 'romantic', label: 'Romantic' },
   { value: 'late-romantic', label: 'Late Romantic' },
