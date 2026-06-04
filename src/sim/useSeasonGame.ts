@@ -6,6 +6,7 @@ import { startingInstitution } from '../data/institution'
 import { forecastProgram } from './forecastProgram'
 import { resolveConcert } from './resolveConcert'
 import { createInitialSeason, resolveSeasonConcert } from './season'
+import { sanitizeOrchestraName } from './founding'
 import {
   ConcertProgram,
   ConcertReport,
@@ -16,7 +17,7 @@ import {
 import type { HomeNavKey } from '../components/HomeConsole'
 
 export type Phase = 'planning' | 'report'
-export type MainView = 'enter' | 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors' | 'audience'
+export type MainView = 'enter' | 'founding' | 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors' | 'audience'
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -32,10 +33,13 @@ const emptyProgram = (): ConcertProgram => ({
   studentTicketPrice: 25,
 })
 
+function createSeasonForOrchestra(orchestraName: string): SeasonState {
+  return createInitialSeason({ ...startingInstitution, name: orchestraName }, principals)
+}
+
 export function useSeasonGame() {
-  const [season, setSeason] = useState<SeasonState>(() =>
-    createInitialSeason(startingInstitution, principals),
-  )
+  const [orchestraName, setOrchestraName] = useState(startingInstitution.name)
+  const [season, setSeason] = useState<SeasonState>(() => createSeasonForOrchestra(startingInstitution.name))
   const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
   const [phase, setPhase] = useState<Phase>('planning')
   const [mainView, setMainView] = useState<MainView>('enter')
@@ -93,8 +97,17 @@ export function useSeasonGame() {
     setMainView(view)
   }
 
+  function handleFoundOrchestra(name: string) {
+    const cleanName = sanitizeOrchestraName(name)
+    setOrchestraName(cleanName)
+    setSeason(prev => ({
+      ...prev,
+      institution: { ...prev.institution, name: cleanName },
+    }))
+  }
+
   function handleNewSeason() {
-    setSeason(createInitialSeason(startingInstitution, principals))
+    setSeason(createSeasonForOrchestra(orchestraName))
     setProgram(emptyProgram())
     setReport(null)
     setPhase('planning')
@@ -135,5 +148,6 @@ export function useSeasonGame() {
     navigateTo,
     handleNewSeason,
     handleHomeNavigate,
+    handleFoundOrchestra,
   }
 }

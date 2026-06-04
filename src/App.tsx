@@ -11,6 +11,7 @@ import LedgerScreen from './components/LedgerScreen'
 import DonorRelationsScreen from './components/DonorRelationsScreen'
 import AudienceRelationsScreen from './components/AudienceRelationsScreen'
 import EnterScreen from './components/EnterScreen'
+import FoundingNameScreen from './components/FoundingNameScreen'
 import AppShell from './components/AppShell'
 import ConsoleScreen from './components/ConsoleScreen'
 import { useSeasonGame } from './sim/useSeasonGame'
@@ -36,6 +37,7 @@ export default function App() {
     navigateTo,
     handleNewSeason,
     handleHomeNavigate,
+    handleFoundOrchestra,
   } = game
 
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
@@ -69,7 +71,16 @@ export default function App() {
   }
 
   if (mainView === 'enter') {
-    return <EnterScreen onEnter={() => setMainView('home')} />
+    return <EnterScreen onEnter={() => setMainView('founding')} />
+  }
+
+  if (mainView === 'founding') {
+    return (
+      <FoundingNameScreen
+        onFound={handleFoundOrchestra}
+        onPlanFirstSeason={() => setMainView('home')}
+      />
+    )
   }
 
   if (seasonComplete) {
