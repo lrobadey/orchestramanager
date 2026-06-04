@@ -109,13 +109,18 @@ export function capAudienceToHall(breakdown: AudienceBreakdown[]): AudienceBreak
   if (demand > HALL_CAPACITY) {
     const scale = HALL_CAPACITY / demand
     capped = capped.map(row => ({ ...row, attendance: Math.round(row.attendance * scale) }))
-    // Per-segment rounding can leave the house a few seats over the ceiling;
-    // shave the remainder off the largest segments so the cap is never exceeded.
-    let overflow = capped.reduce((sum, row) => sum + row.attendance, 0) - HALL_CAPACITY
-    while (overflow > 0) {
+    // Per-segment rounding can leave the house a few seats over or under the
+    // ceiling; adjust the largest segments so a sold-out house lands exactly.
+    let total = capped.reduce((sum, row) => sum + row.attendance, 0)
+    while (total !== HALL_CAPACITY) {
       const largest = capped.reduce((max, row) => (row.attendance > max.attendance ? row : max), capped[0])
-      largest.attendance -= 1
-      overflow -= 1
+      if (total > HALL_CAPACITY) {
+        largest.attendance -= 1
+        total -= 1
+      } else {
+        largest.attendance += 1
+        total += 1
+      }
     }
   }
 
