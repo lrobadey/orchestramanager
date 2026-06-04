@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { InstitutionState, SeasonState } from '../types/core'
+import type { InstitutionState, InstitutionalDeltas, SeasonState } from '../types/core'
 import AppShell from './AppShell'
 import CanopyHeader from './home/CanopyHeader'
 import UnderstoryVitals from './home/UnderstoryVitals'
@@ -14,6 +14,7 @@ interface ConsoleScreenProps {
   strataClass?: string
   floorClass?: string
   vitalsVariant?: 'bar' | 'rail'
+  deltas?: InstitutionalDeltas
   children: ReactNode
 }
 
@@ -26,6 +27,7 @@ export default function ConsoleScreen({
   strataClass,
   floorClass,
   vitalsVariant = 'bar',
+  deltas,
   children,
 }: ConsoleScreenProps) {
   const floor = (
@@ -47,12 +49,12 @@ export default function ConsoleScreen({
           />
           {vitalsVariant === 'rail' ? (
             <div className="roster-body-with-vitals">
-              <UnderstoryVitals institution={institution} variant="rail" />
+              <UnderstoryVitals institution={institution} deltas={deltas} variant="rail" />
               {floor}
             </div>
           ) : (
             <>
-              <UnderstoryVitals institution={institution} />
+              <UnderstoryVitals institution={institution} deltas={deltas} />
               {floor}
             </>
           )}

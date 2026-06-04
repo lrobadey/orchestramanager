@@ -129,6 +129,12 @@ export function useSeasonGame() {
 
   const currentSlotName = !seasonComplete ? season.slots[season.currentSlotIndex].name : null
 
+  // Movement shown on the vitals strip is the institutional delta from the most
+  // recently resolved concert. currentSlotIndex points at the next pending slot,
+  // so the last resolved slot is the one immediately before it.
+  const lastResolvedSlot = season.currentSlotIndex > 0 ? season.slots[season.currentSlotIndex - 1] : null
+  const lastDeltas = lastResolvedSlot?.report?.institutionalDeltas
+
   return {
     season,
     program,
@@ -143,6 +149,7 @@ export function useSeasonGame() {
     slotWorks,
     filledSlotWorks,
     currentSlotName,
+    lastDeltas,
     handleRunConcert,
     handleDone,
     navigateTo,

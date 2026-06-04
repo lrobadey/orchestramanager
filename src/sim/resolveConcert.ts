@@ -339,12 +339,25 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
     programNovelty > 50
       ? Math.round(clamp(programNovelty / 30 + Math.max(0, forecast.arcPerceivedUpside - forecast.arcPerceivedDamage) / 40, 1, 5))
       : 0
-  const identityDelta =
-    adventurousUpside > 0
-      ? { adventurous: adventurousUpside }
-      : programPrestige > 75
-        ? { scholarly: 1 }
-        : {}
+  // Community identity accrues from accessible, audience-facing programming —
+  // chiefly student access plus genuinely affordable pricing. This mirrors the
+  // communitySignal used by computeIdentityProgramFit so the identity the player
+  // is rewarded for matches the identity they can actually build. It is
+  // orthogonal to the novelty/prestige lean: a cheap contemporary program can
+  // grow both adventurous and community identity in the same season.
+  const communitySignal = clamp(
+    (input.program.studentTicketsEnabled ? 35 : 0) +
+      (input.program.ticketPrice <= 55 ? 25 : 0) +
+      (100 - input.program.ticketPrice) * 0.15,
+    0,
+    100,
+  )
+  const communityUpside = communitySignal > 45 ? Math.round(clamp(communitySignal / 30, 1, 4)) : 0
+
+  const identityDelta: InstitutionalDeltas['identity'] = {}
+  if (adventurousUpside > 0) identityDelta.adventurous = adventurousUpside
+  else if (programPrestige > 75) identityDelta.scholarly = 1
+  if (communityUpside > 0) identityDelta.communityFocused = communityUpside
 
   const institutionalDeltas: InstitutionalDeltas = {
     cash: Math.round(net),

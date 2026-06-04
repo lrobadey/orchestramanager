@@ -264,7 +264,7 @@ export function buildConcertMusicProfile(works: readonly Work[]): DonorMusicTast
 
   return {
     classicalCanon: Math.round(average(works.map(work => {
-      const eraLift = work.era === 'classical' ? 34 : work.era === 'romantic' ? 18 : 0
+      const eraLift = work.era === 'baroque' || work.era === 'classical' ? 34 : work.era === 'romantic' ? 18 : 0
       return clamp(work.donorComfort * 0.35 + work.familiarity * 0.35 + work.artisticPrestige * 0.2 + eraLift, 0, 100)
     }))),
     romantic: Math.round(average(works.map(work => {

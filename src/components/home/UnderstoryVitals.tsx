@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { InstitutionState, InstitutionalDeltas } from '../../types/core'
+import { fmtCash } from '../../format'
 
 interface UnderstoryVitalsProps {
   institution: InstitutionState
@@ -7,16 +8,10 @@ interface UnderstoryVitalsProps {
   variant?: 'bar' | 'rail'
 }
 
-function fmtCash(n: number): string {
-  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (Math.abs(n) >= 1_000) return `$${(n / 1000).toFixed(1)}K`
-  return `$${n}`
-}
-
 function fmtDelta(n?: number, isCash?: boolean): { text: string; tone: 'pine' | 'ember' | 'muted' } {
   if (n == null || n === 0) return { text: '—', tone: 'muted' }
-  const sign = n > 0 ? '+' : ''
-  const text = isCash ? `${sign}${fmtCash(n)} wk` : `${sign}${n}`
+  const sign = n > 0 ? '+' : '-'
+  const text = isCash ? `${sign}${fmtCash(Math.abs(n))}` : `${sign}${Math.abs(n)}`
   return { text, tone: n > 0 ? 'pine' : 'ember' }
 }
 

@@ -38,6 +38,7 @@ export default function App() {
     handleNewSeason,
     handleHomeNavigate,
     handleFoundOrchestra,
+    lastDeltas,
   } = game
 
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
@@ -90,6 +91,7 @@ export default function App() {
         season={season}
         activeNav="home"
         onNavigate={handleHomeNavigate}
+        deltas={lastDeltas}
         strataClass="release-result-strata"
         floorClass="release-screen-floor"
       >
@@ -105,6 +107,7 @@ export default function App() {
           season={season}
           program={program}
           works={works}
+          deltas={lastDeltas}
           onNavigate={handleHomeNavigate}
           onOpenProgramme={() => navigateTo('programme')}
         />
@@ -119,6 +122,7 @@ export default function App() {
         season={season}
         activeNav="roster"
         onNavigate={handleHomeNavigate}
+        deltas={lastDeltas}
         compact
         strataClass="roster-strata"
         floorClass="roster-console-floor"
@@ -141,6 +145,7 @@ export default function App() {
         season={season}
         activeNav="programme"
         onNavigate={handleHomeNavigate}
+        deltas={lastDeltas}
         compact
         floorClass="programme-console-floor"
       >
@@ -212,6 +217,7 @@ export default function App() {
       season={season}
       activeNav="home"
       onNavigate={handleHomeNavigate}
+      deltas={lastDeltas}
       strataClass="release-result-strata"
       floorClass="release-screen-floor"
     >

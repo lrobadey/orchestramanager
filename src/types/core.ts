@@ -1,6 +1,6 @@
 import type { GameCalendar, ISODateString } from './calendar'
 
-export type Era = 'classical' | 'romantic' | 'late-romantic' | 'contemporary'
+export type Era = 'baroque' | 'classical' | 'romantic' | 'late-romantic' | 'contemporary'
 
 export interface Work {
   id: string
