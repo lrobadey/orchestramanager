@@ -1,0 +1,207 @@
+/* Season-plan screen — found a season by programming all four concerts up front,
+   then commit the whole plan at once ("Begin Season"). Reuses the home season
+   trail (in selectable mode) and the program builder (editable, no per-concert
+   run button). The funding rail is an inert placeholder reserved for the
+   funding phase. */
+
+.plan-season-floor {
+  overflow-y: auto;
+}
+
+.plan-season {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px 18px 24px;
+  width: 100%;
+}
+
+.plan-season-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.plan-season-head-copy h1 {
+  font-family: var(--serif);
+  font-size: 22px;
+  color: var(--birch);
+  margin: 4px 0 6px;
+  font-weight: 500;
+}
+.plan-season-sub {
+  font-size: 12.5px;
+  color: var(--birch-dim);
+  max-width: 52ch;
+  line-height: 1.5;
+}
+
+.plan-season-commit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+.plan-season-progress {
+  display: flex;
+  gap: 6px;
+}
+.plan-season-pip {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--silver-dim);
+  border-radius: 50%;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--silver-dim);
+}
+.plan-season-pip.done {
+  border-color: var(--pine);
+  color: var(--pine);
+  box-shadow: 0 0 0 2px rgba(122, 154, 138, 0.12);
+}
+.plan-season-begin {
+  font-family: var(--hc-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 11px 22px;
+  background: var(--ink-2);
+  color: var(--birch);
+  border: 1px solid var(--silver);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+.plan-season-begin:hover:not(:disabled) {
+  background: var(--silver);
+  color: var(--ink-0);
+}
+.plan-season-begin:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--silver-dim);
+  color: var(--silver-dim);
+}
+
+/* Selectable trail — button reset so the landmark/stop styling carries over. */
+.plan-season button.trail-landmark,
+.plan-season button.trail-compact-stop {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+.plan-season button.trail-compact-stop { text-align: center; }
+
+/* Planned (fully programmed) and selected landmark states mirror the resolved/
+   active looks the trail already defines for play mode. */
+.plan-season .trail-landmark.planned .trail-diamond { border-color: var(--pine); }
+.plan-season .trail-landmark.planned .trail-diamond .roman { color: var(--pine); }
+.plan-season .trail-landmark.planned .lm-status { color: var(--pine); letter-spacing: 0.04em; }
+
+.plan-season .trail-landmark.selected .trail-diamond {
+  width: 40px;
+  height: 40px;
+  border-color: var(--silver);
+  background: var(--ink-2);
+  box-shadow: 0 0 0 4px rgba(184, 192, 188, 0.10), 0 0 22px rgba(184, 192, 188, 0.18);
+}
+.plan-season .trail-landmark.selected .trail-diamond .roman { font-size: 15px; color: var(--birch); }
+.plan-season .trail-landmark.selected .lm-name { font-size: 13px; color: var(--birch); font-style: italic; }
+.plan-season .trail-landmark.selected .lm-status { color: var(--bark); }
+
+.plan-season .trail-compact-stop.planned::before { border-color: var(--pine); }
+.plan-season .trail-compact-stop.planned .trail-compact-roman { color: var(--pine); }
+.plan-season .trail-compact-stop.selected::before {
+  border-color: var(--silver);
+  box-shadow: 0 0 0 3px rgba(184, 192, 188, 0.12);
+}
+.plan-season .trail-compact-stop.selected .trail-compact-roman,
+.plan-season .trail-compact-stop.selected .trail-compact-name { color: var(--birch); }
+
+/* Editor block */
+.plan-season-editor {
+  border-top: 1px solid var(--hairline);
+  padding-top: 10px;
+}
+.plan-season-editor-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.plan-season-editor-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--birch);
+}
+.plan-season-editor .programme-shell { padding: 0; }
+
+/* Inert funding rail placeholder */
+.plan-season-funding {
+  border: 1px dashed var(--silver-dim);
+  border-radius: 6px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.015);
+}
+.plan-season-funding-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.plan-season-funding-tag {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--silver-dim);
+  border: 1px solid var(--silver-dim);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+.plan-season-funding-note {
+  font-size: 12px;
+  color: var(--birch-dim);
+  margin: 8px 0 12px;
+  max-width: 64ch;
+  line-height: 1.5;
+}
+.plan-season-funding-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  opacity: 0.4;
+}
+.plan-season-funding-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.plan-season-funding-roman {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--silver-dim);
+  width: 24px;
+}
+.plan-season-funding-bar {
+  flex: 1;
+  height: 8px;
+  border: 1px solid var(--silver-dim);
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--silver-dim) 0,
+    var(--silver-dim) 2px,
+    transparent 2px,
+    transparent 8px
+  );
+}

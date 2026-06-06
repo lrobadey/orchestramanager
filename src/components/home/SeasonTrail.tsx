@@ -6,6 +6,13 @@ import { CONCERT_ROMAN } from '../../data/numerals'
 
 interface SeasonTrailProps {
   season: SeasonState
+  // Planning mode: the trail becomes a concert picker. Landmarks are clickable,
+  // the selected concert is highlighted, and per-slot completeness is surfaced
+  // instead of the resolved/active styling used during play.
+  selectable?: boolean
+  selectedIndex?: number
+  completeFlags?: boolean[]
+  onSelect?: (index: number) => void
 }
 
 const TRAIL_W = 1440
@@ -20,11 +27,19 @@ const LANDMARK_POS: { x: number; y: number }[] = [
   { x: 1200, y: 55 },
 ]
 
-export default function SeasonTrail({ season }: SeasonTrailProps) {
-  const [collapsed, setCollapsed] = useState(true)
+export default function SeasonTrail({
+  season,
+  selectable = false,
+  selectedIndex = 0,
+  completeFlags,
+  onSelect,
+}: SeasonTrailProps) {
+  // In planning mode the map is most useful expanded so every concert is pickable.
+  const [collapsed, setCollapsed] = useState(!selectable)
   const resolvedCount = season.slots.filter(s => s.status === 'resolved').length
   const activeIdx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
+  const isComplete = (i: number) => completeFlags?.[i] ?? false
 
   return (
     <div className={`home-stratum trail ${collapsed ? 'collapsed' : 'expanded'}`}>
@@ -51,20 +66,37 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
           </div>
           <div className="trail-compact-rail">
             {season.slots.map((slot, i) => {
-              const isActive = !seasonComplete && i === activeIdx
+              const isActive = selectable ? i === selectedIndex : !seasonComplete && i === activeIdx
               const isResolved = slot.status === 'resolved'
               const cls = ['trail-compact-stop']
-              if (isActive) cls.push('active')
+              if (isActive) cls.push(selectable ? 'selected' : 'active')
+              else if (selectable) cls.push(isComplete(i) ? 'planned' : 'upcoming')
               else if (isResolved) cls.push('resolved')
               else cls.push('upcoming')
 
-              return (
-                <div key={slot.index} className={cls.join(' ')}>
+              const inner = (
+                <>
                   <span className="trail-compact-roman">{CONCERT_ROMAN[i]}</span>
                   <span className="trail-compact-date">
                     {formatShortDate(slot.scheduledDate, season.calendar.startDate).toUpperCase()}
                   </span>
                   <span className="trail-compact-name">{slot.name}</span>
+                </>
+              )
+
+              return selectable ? (
+                <button
+                  key={slot.index}
+                  type="button"
+                  className={cls.join(' ')}
+                  aria-pressed={isActive}
+                  onClick={() => onSelect?.(i)}
+                >
+                  {inner}
+                </button>
+              ) : (
+                <div key={slot.index} className={cls.join(' ')}>
+                  {inner}
                 </div>
               )
             })}
@@ -133,39 +165,67 @@ export default function SeasonTrail({ season }: SeasonTrailProps) {
         const pos = LANDMARK_POS[i]
         const xPct = (pos.x / TRAIL_W) * 100
         const yPct = (pos.y / TRAIL_H) * 100
-        const isActive = !seasonComplete && i === activeIdx
-        const isResolved = slot.status === 'resolved'
+        const isResolved = !selectable && slot.status === 'resolved'
+        const isSelected = selectable && i === selectedIndex
+        const isActive = selectable ? isSelected : !seasonComplete && i === activeIdx
+        const planned = selectable && isComplete(i)
         const cls = ['trail-landmark']
-        if (isActive) cls.push('active')
+        if (isActive) cls.push(selectable ? 'selected' : 'active')
+        else if (planned) cls.push('planned')
         else if (isResolved) cls.push('resolved')
         else cls.push('upcoming')
 
-        return (
-          <div
-            key={slot.index}
-            className={cls.join(' ')}
-            style={{ left: `${xPct}%`, top: `${yPct}%` }}
-          >
+        const body = (
+          <>
             <div className="trail-diamond">
               <span className="roman">{CONCERT_ROMAN[i]}</span>
             </div>
             <div className="lm-date">{formatShortDate(slot.scheduledDate, season.calendar.startDate).toUpperCase()}</div>
             <div className="lm-name">{slot.name}</div>
-            {isResolved && slot.report && (
+            {selectable ? (
               <div className="lm-status">
-                Q{Math.round(slot.report.performanceQuality)} · {slot.report.attendance.toLocaleString()} seats
+                {isSelected ? '● EDITING' : planned ? '✓ PROGRAMMED' : '○ NEEDS PROGRAM'}
               </div>
+            ) : (
+              <>
+                {isResolved && slot.report && (
+                  <div className="lm-status">
+                    Q{Math.round(slot.report.performanceQuality)} · {slot.report.attendance.toLocaleString()} seats
+                  </div>
+                )}
+                {isActive && <div className="lm-status">● PROGRAMMING</div>}
+                {!isActive && !isResolved && <div className="lm-status">○ UPCOMING</div>}
+                {isResolved && (
+                  <div className="lm-headline">
+                    “{slotHeadlineFallback(slot) ?? 'A capable evening.'}”
+                  </div>
+                )}
+                {isActive && (
+                  <div className="lm-headline">“In progress — open the program builder.”</div>
+                )}
+              </>
             )}
-            {isActive && <div className="lm-status">● PROGRAMMING</div>}
-            {!isActive && !isResolved && <div className="lm-status">○ UPCOMING</div>}
-            {isResolved && (
-              <div className="lm-headline">
-                “{slotHeadlineFallback(slot) ?? 'A capable evening.'}”
-              </div>
-            )}
-            {isActive && (
-              <div className="lm-headline">“In progress — open the program builder.”</div>
-            )}
+          </>
+        )
+
+        return selectable ? (
+          <button
+            key={slot.index}
+            type="button"
+            className={cls.join(' ')}
+            style={{ left: `${xPct}%`, top: `${yPct}%` }}
+            aria-pressed={isSelected}
+            onClick={() => onSelect?.(i)}
+          >
+            {body}
+          </button>
+        ) : (
+          <div
+            key={slot.index}
+            className={cls.join(' ')}
+            style={{ left: `${xPct}%`, top: `${yPct}%` }}
+          >
+            {body}
           </div>
         )
       })}

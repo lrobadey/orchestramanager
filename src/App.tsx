@@ -12,10 +12,12 @@ import DonorRelationsScreen from './components/DonorRelationsScreen'
 import AudienceRelationsScreen from './components/AudienceRelationsScreen'
 import EnterScreen from './components/EnterScreen'
 import FoundingNameScreen from './components/FoundingNameScreen'
+import SeasonPlanScreen from './components/SeasonPlanScreen'
 import AppShell from './components/AppShell'
 import ConsoleScreen from './components/ConsoleScreen'
 import { useSeasonGame } from './sim/useSeasonGame'
 import { summarizeSeason } from './sim/season'
+import { isProgramComplete } from './sim/founding'
 
 export default function App() {
   const game = useSeasonGame()
@@ -29,7 +31,13 @@ export default function App() {
     report,
     institution,
     seasonComplete,
+    seasonStarted,
     forecast,
+    draftPrograms,
+    selectedSlot,
+    selectSlot,
+    planComplete,
+    beginSeason,
     filledSlotWorks,
     currentSlotName,
     handleRunConcert,
@@ -40,6 +48,8 @@ export default function App() {
     handleFoundOrchestra,
     lastDeltas,
   } = game
+
+  const completeFlags = draftPrograms.map(isProgramComplete)
 
   const slotRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
 
@@ -79,7 +89,32 @@ export default function App() {
     return (
       <FoundingNameScreen
         onFound={handleFoundOrchestra}
-        onPlanFirstSeason={() => setMainView('home')}
+        onPlanFirstSeason={() => setMainView('plan-season')}
+      />
+    )
+  }
+
+  // Before the season is committed, the plan screen is the hub: 'home' and
+  // 'programme' both resolve here (so back-nav from reference screens lands on
+  // it), and reference screens below remain reachable for context.
+  if (!seasonStarted && (mainView === 'plan-season' || mainView === 'home' || mainView === 'programme')) {
+    return (
+      <SeasonPlanScreen
+        institution={institution}
+        season={season}
+        deltas={lastDeltas}
+        works={works}
+        program={program}
+        forecast={forecast}
+        selectedSlot={selectedSlot}
+        completeFlags={completeFlags}
+        planComplete={planComplete}
+        onSelectSlot={selectSlot}
+        onBeginSeason={beginSeason}
+        onProgramChange={setProgram}
+        registerSlotRef={(i, el) => { slotRefs.current[i] = el }}
+        onSlotDragEnd={handleSlotDrop}
+        onNavigate={handleHomeNavigate}
       />
     )
   }
@@ -160,6 +195,7 @@ export default function App() {
           onSlotDragEnd={handleSlotDrop}
           onProgramChange={setProgram}
           onRunConcert={handleRunConcert}
+          locked={seasonStarted}
           rightRail={null}
         />
       </ConsoleScreen>

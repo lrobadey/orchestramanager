@@ -6,7 +6,7 @@ import { startingInstitution } from '../data/institution'
 import { forecastProgram } from './forecastProgram'
 import { resolveConcert } from './resolveConcert'
 import { createInitialSeason, resolveSeasonConcert } from './season'
-import { sanitizeOrchestraName } from './founding'
+import { isSeasonPlanComplete, sanitizeOrchestraName } from './founding'
 import {
   ConcertProgram,
   ConcertReport,
@@ -17,7 +17,19 @@ import {
 import type { HomeNavKey } from '../components/HomeConsole'
 
 export type Phase = 'planning' | 'report'
-export type MainView = 'enter' | 'founding' | 'home' | 'programme' | 'roster' | 'library' | 'ledger' | 'donors' | 'audience'
+export type MainView =
+  | 'enter'
+  | 'founding'
+  | 'plan-season'
+  | 'home'
+  | 'programme'
+  | 'roster'
+  | 'library'
+  | 'ledger'
+  | 'donors'
+  | 'audience'
+
+type SeasonPrograms = [ConcertProgram, ConcertProgram, ConcertProgram, ConcertProgram]
 
 const evenAllocation = (): SlotTuple<number> => [7, 7, TOTAL_REHEARSAL_HOURS - 14]
 
@@ -33,6 +45,13 @@ const emptyProgram = (): ConcertProgram => ({
   studentTicketPrice: 25,
 })
 
+const emptyDraftPrograms = (): SeasonPrograms => [
+  emptyProgram(),
+  emptyProgram(),
+  emptyProgram(),
+  emptyProgram(),
+]
+
 function createSeasonForOrchestra(orchestraName: string): SeasonState {
   return createInitialSeason({ ...startingInstitution, name: orchestraName }, principals)
 }
@@ -40,7 +59,14 @@ function createSeasonForOrchestra(orchestraName: string): SeasonState {
 export function useSeasonGame() {
   const [orchestraName, setOrchestraName] = useState(startingInstitution.name)
   const [season, setSeason] = useState<SeasonState>(() => createSeasonForOrchestra(startingInstitution.name))
-  const [program, setProgram] = useState<ConcertProgram>(emptyProgram)
+  // One editable program per concert slot. Authored up front on the season-plan
+  // screen, then frozen when the season begins and consumed in order during play.
+  const [draftPrograms, setDraftPrograms] = useState<SeasonPrograms>(emptyDraftPrograms)
+  // Which slot the season-plan screen is editing (pre-season only).
+  const [selectedSlot, setSelectedSlot] = useState(0)
+  // The plan locks when the season begins; from then on programs are read-only
+  // and concerts resolve against the committed plan one at a time.
+  const [seasonStarted, setSeasonStarted] = useState(false)
   const [phase, setPhase] = useState<Phase>('planning')
   const [mainView, setMainView] = useState<MainView>('enter')
   const [report, setReport] = useState<ConcertReport | null>(null)
@@ -48,6 +74,23 @@ export function useSeasonGame() {
   const institution = season.institution
   const livePrincipals = season.roster.principals
   const seasonComplete = season.currentSlotIndex >= 4
+
+  // Pre-season the player edits the selected slot; in-season the "active" program
+  // is the concert currently up for resolution.
+  const activeProgramIndex = seasonStarted ? Math.min(season.currentSlotIndex, 3) : selectedSlot
+  const program = draftPrograms[activeProgramIndex]
+
+  const planComplete = useMemo(() => isSeasonPlanComplete(draftPrograms), [draftPrograms])
+
+  function setProgram(next: ConcertProgram) {
+    // Locked once the season is under way: no editing the committed plan.
+    if (seasonStarted) return
+    setDraftPrograms(prev => {
+      const copy = [...prev] as SeasonPrograms
+      copy[activeProgramIndex] = next
+      return copy
+    })
+  }
 
   const forecast = useMemo(
     () =>
@@ -60,7 +103,7 @@ export function useSeasonGame() {
         program,
         donorState: season.donors,
       }),
-    [institution, livePrincipals, program, season.donors],
+    [institution, livePrincipals, program, season.audience, season.donors],
   )
 
   function handleRunConcert() {
@@ -81,8 +124,7 @@ export function useSeasonGame() {
 
   function applyPendingReport() {
     if (!report) return
-    setSeason(prev => resolveSeasonConcert(prev, program, report, works))
-    setProgram(emptyProgram())
+    setSeason(prev => resolveSeasonConcert(prev, draftPrograms[prev.currentSlotIndex], report, works))
     setReport(null)
     setPhase('planning')
   }
@@ -106,12 +148,26 @@ export function useSeasonGame() {
     }))
   }
 
-  function handleNewSeason() {
-    setSeason(createSeasonForOrchestra(orchestraName))
-    setProgram(emptyProgram())
-    setReport(null)
+  function selectSlot(index: number) {
+    if (index < 0 || index > 3) return
+    setSelectedSlot(index)
+  }
+
+  function beginSeason() {
+    if (!planComplete || seasonStarted) return
+    setSeasonStarted(true)
     setPhase('planning')
     setMainView('home')
+  }
+
+  function handleNewSeason() {
+    setSeason(createSeasonForOrchestra(orchestraName))
+    setDraftPrograms(emptyDraftPrograms())
+    setSelectedSlot(0)
+    setSeasonStarted(false)
+    setReport(null)
+    setPhase('planning')
+    setMainView('plan-season')
   }
 
   function handleHomeNavigate(key: HomeNavKey) {
@@ -127,7 +183,7 @@ export function useSeasonGame() {
     .slice(0, program.workCount)
     .filter((w): w is NonNullable<typeof w> => w !== undefined)
 
-  const currentSlotName = !seasonComplete ? season.slots[season.currentSlotIndex].name : null
+  const currentSlotName = !seasonComplete ? season.slots[activeProgramIndex].name : null
 
   // Movement shown on the vitals strip is the institutional delta from the most
   // recently resolved concert. currentSlotIndex points at the next pending slot,
@@ -145,7 +201,13 @@ export function useSeasonGame() {
     report,
     institution,
     seasonComplete,
+    seasonStarted,
     forecast,
+    draftPrograms,
+    selectedSlot,
+    selectSlot,
+    planComplete,
+    beginSeason,
     slotWorks,
     filledSlotWorks,
     currentSlotName,
