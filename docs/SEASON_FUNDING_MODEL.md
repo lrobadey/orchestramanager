@@ -117,6 +117,7 @@ earned base can bypass donor constraints. This is the evolutionary spine of the 
 - **P3 — Funding UI.** Gauge, alignment-bar rail, season-trail coverage + donor chips, the
   "make the ask" commitment beat. Detailed spec: [`SEASON_FUNDING_P3.md`](./SEASON_FUNDING_P3.md).
 - **P4 — Mutation consequences.** Post-pledge program changes → breach → withdrawal warnings.
+  Detailed spec: [`SEASON_FUNDING_P4.md`](./SEASON_FUNDING_P4.md).
 - **P5 (later) — Operating funders & donor evolution.** Non-concert-latching institutional
   backers (e.g. Saye, judged on health not program); donor drift; the outgrow-donors endgame.
 
