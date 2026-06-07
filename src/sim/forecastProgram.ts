@@ -53,6 +53,7 @@ export interface ForecastInput {
   program: ConcertProgram
   donorState?: DonorState
   donorIncome?: number
+  operatingSupport?: number
 }
 
 function resolveSlotWorks(input: ForecastInput): SlotTuple<Work | null> {
@@ -355,6 +356,7 @@ function emptyForecast(
     projectedAttendance: 0,
     projectedRevenue: 0,
     projectedDonorUplift: 0,
+    projectedOperatingSupport: 0,
     projectedAudienceBreakdown: [],
     marketingImpact: EMPTY_MARKETING_IMPACT,
     projectedExpenses: 0,
@@ -542,7 +544,8 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
         marketingDonorSignal: marketingImpact.donorSignal,
       })
     : computeDonorUplift(institution.donorConfidence))
-  const projectedNet = projectedRevenue + projectedDonorUplift - projectedExpenses
+  const projectedOperatingSupport = Math.round(input.operatingSupport ?? 0)
+  const projectedNet = projectedRevenue + projectedDonorUplift + projectedOperatingSupport - projectedExpenses
 
   const identityFit = computeIdentityProgramFit(
     institution,
@@ -572,6 +575,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     projectedAttendance,
     projectedRevenue,
     projectedDonorUplift,
+    projectedOperatingSupport,
     projectedAudienceBreakdown,
     marketingImpact,
     projectedExpenses,

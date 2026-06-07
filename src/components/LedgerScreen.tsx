@@ -58,7 +58,7 @@ export default function LedgerScreen({
         name: slot.name,
         status: 'forecast',
         revenue: money(forecast.projectedRevenue),
-        donor: money(forecast.projectedDonorUplift),
+        donor: money(forecast.projectedDonorUplift + forecast.projectedOperatingSupport),
         expenses: money(forecast.projectedExpenses),
         net: money(forecast.projectedNet),
       }

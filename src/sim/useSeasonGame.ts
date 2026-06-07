@@ -142,6 +142,15 @@ export function useSeasonGame() {
     ? season.funding?.concerts.find(concert => concert.concertIndex === activeProgramIndex)
     : seasonFunding.concerts.find(concert => concert.concertIndex === activeProgramIndex)
   const forecastDonorIncome = activeFundingConcert?.pledged
+  const forecastOperatingSupport = useMemo(
+    () => computeOperatingSupport({
+      donors: season.donors.donors,
+      institution,
+      audienceState: season.audience,
+      concertCount: season.slots.length,
+    }).reduce((sum, donor) => sum + donor.perConcertAmount, 0),
+    [season.donors.donors, institution, season.audience, season.slots.length],
+  )
 
   // Dedicate a concert to a donor (their "home night"). A donor holds at most
   // one; the season holds at most MAX_DEDICATIONS. Toggling an existing pairing
@@ -287,8 +296,9 @@ export function useSeasonGame() {
         program,
         donorState: season.donors,
         donorIncome: forecastDonorIncome,
+        operatingSupport: forecastOperatingSupport,
       }),
-    [institution, livePrincipals, program, season.audience, season.donors, forecastDonorIncome],
+    [institution, livePrincipals, program, season.audience, season.donors, forecastDonorIncome, forecastOperatingSupport],
   )
 
   function handleRunConcert() {

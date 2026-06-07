@@ -224,9 +224,16 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
               />
               {forecast.projectedDonorUplift > 0 && (
                 <ForecastLine
-                  label="Donor support"
+                  label="Concert pledges"
                   value={<span className="aurora">{fmt$(forecast.projectedDonorUplift)}</span>}
                   animKey={`donor-${forecast.projectedDonorUplift}`}
+                />
+              )}
+              {forecast.projectedOperatingSupport > 0 && (
+                <ForecastLine
+                  label="Operating support"
+                  value={<span className="aurora">{fmt$(forecast.projectedOperatingSupport)}</span>}
+                  animKey={`operating-${forecast.projectedOperatingSupport}`}
                 />
               )}
               <ForecastLine

@@ -245,6 +245,7 @@ export interface ConcertForecast {
   projectedAttendance: number
   projectedRevenue: number
   projectedDonorUplift: number
+  projectedOperatingSupport: number
   projectedAudienceBreakdown: AudienceBreakdown[]
   marketingImpact: MarketingImpact
   projectedExpenses: number
