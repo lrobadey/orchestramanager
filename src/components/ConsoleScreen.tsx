@@ -15,6 +15,7 @@ interface ConsoleScreenProps {
   floorClass?: string
   vitalsVariant?: 'bar' | 'rail'
   deltas?: InstitutionalDeltas
+  navless?: boolean
   children: ReactNode
 }
 
@@ -28,6 +29,7 @@ export default function ConsoleScreen({
   floorClass,
   vitalsVariant = 'bar',
   deltas,
+  navless = false,
   children,
 }: ConsoleScreenProps) {
   const floor = (
@@ -46,6 +48,7 @@ export default function ConsoleScreen({
             activeNav={activeNav}
             onNavigate={onNavigate}
             compact={compact}
+            navless={navless}
           />
           {vitalsVariant === 'rail' ? (
             <div className="roster-body-with-vitals">

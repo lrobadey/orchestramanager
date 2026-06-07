@@ -583,3 +583,22 @@
   min-width: 52px;
   text-align: center;
 }
+
+/* Founding mode — the season plan stands alone, no cross-screen nav */
+.canopy-nav.navless {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.canopy-nav-mode {
+  font-family: var(--hc-mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bark);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 5px 14px;
+}
+/* A quieter, more focused backdrop so planning reads as its own act. */
+.plan-season-strata { background: var(--ink-0); }

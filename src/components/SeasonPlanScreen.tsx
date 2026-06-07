@@ -88,6 +88,8 @@ export default function SeasonPlanScreen({
       onNavigate={onNavigate}
       deltas={deltas}
       compact
+      navless
+      strataClass="plan-season-strata"
       floorClass="plan-season-floor"
     >
       <div className="plan-season">

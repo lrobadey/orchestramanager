@@ -12,6 +12,9 @@ interface CanopyHeaderProps {
   onNavigate: (key: HomeNavKey) => void
   children?: ReactNode
   compact?: boolean
+  // Founding/planning mode: drop the cross-screen nav entirely so the season
+  // plan stands alone, and label the header as a distinct mode.
+  navless?: boolean
 }
 
 const NAV_KEYS: HomeNavKey[] = ['home', 'roster', 'programme', 'library', 'ledger', 'donors', 'audience']
@@ -45,12 +48,14 @@ export default function CanopyHeader({
   onNavigate,
   children,
   compact = false,
+  navless = false,
 }: CanopyHeaderProps) {
   const navRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<Partial<Record<HomeNavKey, HTMLButtonElement | null>>>({})
   const [indicator, setIndicator] = useState<{ left: number; width: number; ready: boolean } | null>(null)
 
   useLayoutEffect(() => {
+    if (navless) return
     const nav = navRef.current
     const activeButton = buttonRefs.current[activeNav]
     if (!nav || !activeButton) return
@@ -71,7 +76,7 @@ export default function CanopyHeader({
     }
 
     lastNavIndicator = next
-  }, [activeNav])
+  }, [activeNav, navless])
 
   const idx = Math.min(season.currentSlotIndex, 3)
   const seasonComplete = season.currentSlotIndex >= 4
@@ -96,6 +101,11 @@ export default function CanopyHeader({
             {institution.seasonLabel}
           </span>
         </div>
+        {navless ? (
+          <div className="canopy-nav navless">
+            <span className="canopy-nav-mode">Founding the Season</span>
+          </div>
+        ) : (
         <div className="canopy-nav" ref={navRef}>
           <span className="canopy-nav-week">{getSeasonWeekLabel(season.calendar.currentDay, season.calendar.startDate)}</span>
           {indicator && (
@@ -126,6 +136,7 @@ export default function CanopyHeader({
             )
           })}
         </div>
+        )}
       </div>
       {!compact && (children ?? (
         <div className="canopy-headline-row">
