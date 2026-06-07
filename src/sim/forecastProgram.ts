@@ -52,6 +52,7 @@ export interface ForecastInput {
   audienceState?: AudienceState
   program: ConcertProgram
   donorState?: DonorState
+  donorIncome?: number
 }
 
 function resolveSlotWorks(input: ForecastInput): SlotTuple<Work | null> {
@@ -529,7 +530,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const totalRehearsalHours = program.rehearsalAllocation.reduce((s, h) => s + h, 0)
   const projectedExpenseBreakdown = computeExpenseBreakdown(works, totalRehearsalHours, program.marketingSpend)
   const projectedExpenses = projectedExpenseBreakdown.total
-  const projectedDonorUplift = input.donorState
+  const projectedDonorUplift = input.donorIncome ?? (input.donorState
     ? estimateDonorUpliftFromDonors({
         donorState: input.donorState,
         institution,
@@ -540,7 +541,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
         projectedExpenseBreakdown,
         marketingDonorSignal: marketingImpact.donorSignal,
       })
-    : computeDonorUplift(institution.donorConfidence)
+    : computeDonorUplift(institution.donorConfidence))
   const projectedNet = projectedRevenue + projectedDonorUplift - projectedExpenses
 
   const identityFit = computeIdentityProgramFit(

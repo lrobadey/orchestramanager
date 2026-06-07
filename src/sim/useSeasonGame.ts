@@ -138,6 +138,11 @@ export function useSeasonGame() {
 
   const goodwillRemaining = Math.max(0, START_GOODWILL - seasonFunding.goodwillSpent)
 
+  const activeFundingConcert = seasonStarted
+    ? season.funding?.concerts.find(concert => concert.concertIndex === activeProgramIndex)
+    : seasonFunding.concerts.find(concert => concert.concertIndex === activeProgramIndex)
+  const forecastDonorIncome = activeFundingConcert?.pledged
+
   // Dedicate a concert to a donor (their "home night"). A donor holds at most
   // one; the season holds at most MAX_DEDICATIONS. Toggling an existing pairing
   // clears it.
@@ -281,8 +286,9 @@ export function useSeasonGame() {
         audienceState: season.audience,
         program,
         donorState: season.donors,
+        donorIncome: forecastDonorIncome,
       }),
-    [institution, livePrincipals, program, season.audience, season.donors],
+    [institution, livePrincipals, program, season.audience, season.donors, forecastDonorIncome],
   )
 
   function handleRunConcert() {
