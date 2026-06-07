@@ -189,7 +189,18 @@
   font-size: 15px;
   color: var(--birch);
 }
-.plan-season-editor .programme-shell { padding: 0; }
+.plan-season-editor .programme-shell {
+  height: clamp(520px, 68dvh, 780px);
+  padding: 0;
+}
+.plan-season-editor .programme-floor { min-height: 0; }
+.plan-season-editor .programme-column-center { overflow: hidden; }
+.plan-season-editor .programme-column-center .programme-library-wall {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 
 /* Season funding panel — live donor auto-fill coverage */
 .plan-season-funding {
