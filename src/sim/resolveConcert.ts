@@ -15,6 +15,10 @@ import { estimateDonorUpliftFromDonors } from './donorReactions'
 // Pass roll = 50 in tests for deterministic output.
 export interface ResolveInput extends ForecastInput {
   roll?: number
+  // Committed realized donor money for this concert (the funding model). When
+  // provided it replaces the legacy per-concert donor "tip": the night's income
+  // is the donor pledges that latched to it, realized with their volatility.
+  donorIncome?: number
 }
 
 function sectionLabel(section: string): string {
@@ -244,7 +248,9 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const revenue = audienceBreakdown.reduce((sum, row) => sum + row.ticketRevenue, 0)
   const expenses = forecast.projectedExpenses
   const expenseBreakdown = forecast.projectedExpenseBreakdown
-  const donorUplift = input.donorState
+  const donorUplift = input.donorIncome != null
+    ? Math.round(input.donorIncome)
+    : input.donorState
     ? estimateDonorUpliftFromDonors({
         donorState: input.donorState,
         institution: input.institution,

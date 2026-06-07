@@ -135,6 +135,12 @@ export function useSeasonGame() {
 
   function handleRunConcert() {
     if (!forecast.isComplete) return
+    // The night's donor income is the committed pledges that latched to this
+    // concert, realized with their volatility. Falls back to the legacy estimate
+    // only if no plan was committed (defensive — should not happen in play).
+    const committedConcert = season.funding?.concerts.find(
+      concert => concert.concertIndex === season.currentSlotIndex,
+    )
     const result = resolveConcert({
       works,
       institution,
@@ -143,6 +149,7 @@ export function useSeasonGame() {
       audienceState: season.audience,
       program,
       donorState: season.donors,
+      donorIncome: committedConcert?.realized,
       roll: Math.random() * 100,
     })
     setReport(result)
@@ -182,6 +189,11 @@ export function useSeasonGame() {
 
   function beginSeason() {
     if (!planComplete || seasonStarted) return
+    // "Make the ask": freeze the live auto-fill into season state. From here the
+    // committed pledges (and their realized amounts) are what concerts resolve
+    // against, so the donor money the player saw while planning is the money
+    // that actually arrives.
+    setSeason(prev => ({ ...prev, funding: seasonFunding }))
     setSeasonStarted(true)
     setPhase('planning')
     setMainView('home')

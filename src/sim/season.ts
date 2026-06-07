@@ -67,6 +67,7 @@ export function createInitialSeason(
     roster: createInitialRoster(initialPrincipals),
     donors: createInitialDonors(),
     audience: createInitialAudience(),
+    funding: null,
   }
 }
 
@@ -166,6 +167,7 @@ export function resolveSeasonConcert(
     roster: nextRoster,
     donors: nextDonors,
     audience: nextAudience,
+    funding: season.funding,
   }
 }
 

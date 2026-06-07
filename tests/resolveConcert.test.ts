@@ -443,6 +443,20 @@ describe('resolveConcert', () => {
       expect(adventurous.notableMoments.length).toBeGreaterThan(0)
     }
   })
+
+  it('committed donorIncome replaces the per-concert donor estimate', () => {
+    const committed = 50_000
+    const report = resolveConcert({
+      ...makeInput(safeProgram),
+      donorState: { donors: [] },
+      donorIncome: committed,
+      roll: 50,
+    })
+    // The night's donor income is exactly the committed pledge total, and net
+    // reflects it dollar-for-dollar — donors fund the season, not tip the night.
+    expect(report.donorUplift).toBe(committed)
+    expect(report.net).toBe(report.revenue + committed - report.expenses)
+  })
 })
 
 // ── applyConcertReport ───────────────────────────────────────────────────────

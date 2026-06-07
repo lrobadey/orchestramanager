@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { ConcertForecast, ConcertProgram, InstitutionState, InstitutionalDeltas, SeasonState, Work } from '../types/core'
 import ConsoleScreen from './ConsoleScreen'
 import ProgramBuilder from './ProgramBuilder'
@@ -48,6 +49,22 @@ export default function SeasonPlanScreen({
   const completeCount = completeFlags.filter(Boolean).length
   const selectedName = season.slots[selectedSlot]?.name ?? ''
 
+  // Soft funding gate: the player may begin a season with exposed concerts
+  // ("fund it anyway because it's who you are"), but an underfunded plan asks
+  // for explicit confirmation first.
+  const [confirmingExposed, setConfirmingExposed] = useState(false)
+  const exposedCount = funding.concerts.filter(concert => concert.coveragePercent < 0.999).length
+  const totalGap = funding.concerts.reduce((sum, concert) => sum + concert.gap, 0)
+
+  function handleBegin() {
+    if (!planComplete) return
+    if (exposedCount > 0 && !confirmingExposed) {
+      setConfirmingExposed(true)
+      return
+    }
+    onBeginSeason()
+  }
+
   return (
     <ConsoleScreen
       institution={institution}
@@ -80,14 +97,40 @@ export default function SeasonPlanScreen({
                 </span>
               ))}
             </div>
-            <button
-              type="button"
-              className="plan-season-begin"
-              onClick={onBeginSeason}
-              disabled={!planComplete}
-            >
-              {planComplete ? 'Begin Season' : `${completeCount}/4 concerts ready`}
-            </button>
+            {confirmingExposed ? (
+              <div className="plan-season-confirm" role="alertdialog" aria-label="Confirm underfunded season">
+                <p className="plan-season-confirm-note">
+                  {exposedCount === 1 ? 'One concert is' : `${exposedCount} concerts are`} underfunded —{' '}
+                  <strong>{`$${Math.round(totalGap).toLocaleString()}`}</strong> uncovered. Begin anyway and
+                  cover the gap from cash?
+                </p>
+                <div className="plan-season-confirm-actions">
+                  <button type="button" className="plan-season-begin exposed" onClick={onBeginSeason}>
+                    Begin exposed →
+                  </button>
+                  <button
+                    type="button"
+                    className="plan-season-keep"
+                    onClick={() => setConfirmingExposed(false)}
+                  >
+                    Keep planning
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className={`plan-season-begin ${planComplete && exposedCount > 0 ? 'exposed' : ''}`}
+                onClick={handleBegin}
+                disabled={!planComplete}
+              >
+                {!planComplete
+                  ? `${completeCount}/4 concerts ready`
+                  : exposedCount > 0
+                    ? `Begin Season — ${exposedCount} exposed`
+                    : 'Begin Season'}
+              </button>
+            )}
           </div>
         </header>
 

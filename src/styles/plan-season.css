@@ -86,6 +86,51 @@
   border-color: var(--silver-dim);
   color: var(--silver-dim);
 }
+.plan-season-begin.exposed {
+  border-color: var(--ember);
+  color: var(--ember);
+}
+.plan-season-begin.exposed:hover:not(:disabled) {
+  background: var(--ember);
+  color: var(--ink-0);
+}
+
+/* Underfunded confirm */
+.plan-season-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 320px;
+}
+.plan-season-confirm-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--birch-dim);
+  text-align: right;
+}
+.plan-season-confirm-note strong { color: var(--ember); }
+.plan-season-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+.plan-season-keep {
+  font-family: var(--hc-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 11px 18px;
+  background: transparent;
+  color: var(--silver-dim);
+  border: 1px solid var(--silver-dim);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.plan-season-keep:hover {
+  color: var(--birch);
+  border-color: var(--silver);
+}
 
 /* Selectable trail — button reset so the landmark/stop styling carries over. */
 .plan-season button.trail-landmark,
