@@ -1,5 +1,6 @@
 import type { SeasonFundingResult } from '../../sim/seasonFunding'
 import type { SeasonState } from '../../types/core'
+import DonorRail from './DonorRail'
 import { CONCERT_ROMAN } from '../../data/numerals'
 import { fmtCash } from '../../format'
 
@@ -95,6 +96,15 @@ export default function SeasonFundingPanel({
           )
         })}
       </div>
+
+      {programmedCount > 0 && (
+        <DonorRail
+          funding={funding}
+          donors={season.donors.donors}
+          slotNames={season.slots.map(slot => slot.name)}
+          selectedSlot={selectedSlot}
+        />
+      )}
     </aside>
   )
 }
