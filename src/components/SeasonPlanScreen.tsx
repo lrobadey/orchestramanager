@@ -2,7 +2,9 @@ import type { ConcertForecast, ConcertProgram, InstitutionState, InstitutionalDe
 import ConsoleScreen from './ConsoleScreen'
 import ProgramBuilder from './ProgramBuilder'
 import SeasonTrail from './home/SeasonTrail'
+import SeasonFundingPanel from './funding/SeasonFundingPanel'
 import type { HomeNavKey } from './HomeConsole'
+import type { SeasonFundingResult } from '../sim/seasonFunding'
 import { CONCERT_ROMAN } from '../data/numerals'
 import '../styles/plan-season.css'
 
@@ -16,6 +18,7 @@ interface SeasonPlanScreenProps {
   selectedSlot: number
   completeFlags: boolean[]
   planComplete: boolean
+  funding: SeasonFundingResult
   onSelectSlot: (index: number) => void
   onBeginSeason: () => void
   onProgramChange: (next: ConcertProgram) => void
@@ -34,6 +37,7 @@ export default function SeasonPlanScreen({
   selectedSlot,
   completeFlags,
   planComplete,
+  funding,
   onSelectSlot,
   onBeginSeason,
   onProgramChange,
@@ -119,26 +123,12 @@ export default function SeasonPlanScreen({
           />
         </div>
 
-        {/* Funding rail — the season's donor-funding picture lands here in the
-            funding phase. Inert placeholder for now so the layout is reserved. */}
-        <aside className="plan-season-funding" aria-label="Season funding (coming soon)">
-          <div className="plan-season-funding-head">
-            <span className="eyebrow">Season Funding</span>
-            <span className="plan-season-funding-tag">Coming in funding phase</span>
-          </div>
-          <p className="plan-season-funding-note">
-            Donors will sponsor each concert against its cost based on the repertoire you
-            choose — coverage gaps will show up here per concert.
-          </p>
-          <div className="plan-season-funding-rows" aria-hidden="true">
-            {season.slots.map((slot, i) => (
-              <div key={slot.index} className="plan-season-funding-row">
-                <span className="plan-season-funding-roman">{CONCERT_ROMAN[i]}</span>
-                <span className="plan-season-funding-bar" />
-              </div>
-            ))}
-          </div>
-        </aside>
+        <SeasonFundingPanel
+          funding={funding}
+          season={season}
+          completeFlags={completeFlags}
+          selectedSlot={selectedSlot}
+        />
       </div>
     </ConsoleScreen>
   )

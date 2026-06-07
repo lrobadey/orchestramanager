@@ -6,7 +6,8 @@ import { startingInstitution } from '../data/institution'
 import { forecastProgram } from './forecastProgram'
 import { resolveConcert } from './resolveConcert'
 import { createInitialSeason, resolveSeasonConcert } from './season'
-import { isSeasonPlanComplete, sanitizeOrchestraName } from './founding'
+import { computeSeasonFunding, type SeasonFundingConcertInput } from './seasonFunding'
+import { isProgramComplete, isSeasonPlanComplete, sanitizeOrchestraName } from './founding'
 import {
   ConcertProgram,
   ConcertReport,
@@ -81,6 +82,32 @@ export function useSeasonGame() {
   const program = draftPrograms[activeProgramIndex]
 
   const planComplete = useMemo(() => isSeasonPlanComplete(draftPrograms), [draftPrograms])
+
+  // Live donor auto-fill while planning: each programmed concert's cost becomes
+  // an ask, and the deterministic engine fills it from aligned donor capacity.
+  // Only fully-programmed concerts are scored (an empty program has no
+  // repertoire for donors to react to); coverage grows as the plan fills in.
+  const fundingConcerts = useMemo<SeasonFundingConcertInput[]>(
+    () =>
+      draftPrograms.map((draft, index) => ({
+        id: `concert-${index}`,
+        index,
+        name: season.slots[index]?.name ?? `Concert ${index + 1}`,
+        program: isProgramComplete(draft) ? draft : null,
+      })),
+    [draftPrograms, season.slots],
+  )
+
+  const seasonFunding = useMemo(
+    () =>
+      computeSeasonFunding({
+        donors: season.donors.donors,
+        concerts: fundingConcerts,
+        works,
+        institution,
+      }),
+    [season.donors.donors, fundingConcerts, institution],
+  )
 
   function setProgram(next: ConcertProgram) {
     // Locked once the season is under way: no editing the committed plan.
@@ -207,6 +234,7 @@ export function useSeasonGame() {
     selectedSlot,
     selectSlot,
     planComplete,
+    seasonFunding,
     beginSeason,
     slotWorks,
     filledSlotWorks,

@@ -37,6 +37,7 @@ export default function App() {
     selectedSlot,
     selectSlot,
     planComplete,
+    seasonFunding,
     beginSeason,
     filledSlotWorks,
     currentSlotName,
@@ -109,6 +110,7 @@ export default function App() {
         selectedSlot={selectedSlot}
         completeFlags={completeFlags}
         planComplete={planComplete}
+        funding={seasonFunding}
         onSelectSlot={selectSlot}
         onBeginSeason={beginSeason}
         onProgramChange={setProgram}

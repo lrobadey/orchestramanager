@@ -144,9 +144,9 @@
 }
 .plan-season-editor .programme-shell { padding: 0; }
 
-/* Inert funding rail placeholder */
+/* Season funding panel — live donor auto-fill coverage */
 .plan-season-funding {
-  border: 1px dashed var(--silver-dim);
+  border: 1px solid var(--hairline);
   border-radius: 6px;
   padding: 14px 16px;
   background: rgba(255, 255, 255, 0.015);
@@ -157,34 +157,80 @@
   justify-content: space-between;
   gap: 12px;
 }
-.plan-season-funding-tag {
+.plan-season-funding-cov {
   font-family: var(--hc-mono);
   font-size: 9px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--silver-dim);
-  border: 1px solid var(--silver-dim);
   padding: 3px 8px;
   border-radius: 999px;
+  border: 1px solid currentColor;
 }
-.plan-season-funding-note {
-  font-size: 12px;
+.tone-covered { color: var(--pine); }
+.tone-short { color: var(--amber, #c79a3e); }
+.tone-naked { color: var(--ember); }
+.tone-idle { color: var(--silver-dim); }
+
+/* Season gauge */
+.fund-gauge { margin: 12px 0 14px; }
+.fund-gauge-track {
+  position: relative;
+  height: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+}
+.fund-gauge-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.16) 0,
+    rgba(255, 255, 255, 0.16) 2px,
+    transparent 2px,
+    transparent 5px
+  );
+  pointer-events: none;
+}
+.fund-gauge-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 6px 0 0 6px;
+  background: currentColor;
+  opacity: 0.55;
+  transition: width 0.25s ease;
+}
+.fund-gauge-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 11px;
   color: var(--birch-dim);
-  margin: 8px 0 12px;
-  max-width: 64ch;
-  line-height: 1.5;
 }
+.fund-gauge-legend strong { color: var(--birch); }
+.fund-gauge-band-note {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--silver-dim);
+}
+
 .plan-season-funding-rows {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  opacity: 0.4;
 }
 .plan-season-funding-row {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+.plan-season-funding-row.selected .plan-season-funding-roman { color: var(--birch); }
 .plan-season-funding-roman {
   font-family: var(--serif);
   font-style: italic;
@@ -193,15 +239,32 @@
   width: 24px;
 }
 .plan-season-funding-bar {
+  position: relative;
   flex: 1;
   height: 8px;
-  border: 1px solid var(--silver-dim);
+  border: 1px solid var(--hairline);
   border-radius: 4px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--silver-dim) 0,
-    var(--silver-dim) 2px,
-    transparent 2px,
-    transparent 8px
-  );
+  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
 }
+.plan-season-funding-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 4px 0 0 4px;
+  background: currentColor;
+  opacity: 0.6;
+  transition: width 0.25s ease;
+}
+.plan-season-funding-row.tone-covered { color: var(--pine); }
+.plan-season-funding-row.tone-short { color: var(--amber, #c79a3e); }
+.plan-season-funding-row.tone-naked { color: var(--ember); }
+.plan-season-funding-row.tone-idle { color: var(--silver-dim); }
+.plan-season-funding-figure {
+  font-family: var(--hc-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--birch-dim);
+  min-width: 96px;
+  text-align: right;
+}
+.plan-season-funding-row.tone-naked .plan-season-funding-figure { color: var(--ember); }
