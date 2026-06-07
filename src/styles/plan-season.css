@@ -4,8 +4,10 @@
    run button). The funding rail is an inert placeholder reserved for the
    funding phase. */
 
-.plan-season-floor {
+.home-stratum.console-screen-floor.plan-season-floor {
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
 }
 
 .plan-season {
