@@ -115,7 +115,7 @@ earned base can bypass donor constraints. This is the evolutionary spine of the 
 - **P2 — Cost-anchored sponsorship engine.** Per-concert fit; deterministic capacity allocation;
   coverage% and volatility-derived ranges. Pure-sim, fully testable.
 - **P3 — Funding UI.** Gauge, alignment-bar rail, season-trail coverage + donor chips, the
-  "make the ask" commitment beat.
+  "make the ask" commitment beat. Detailed spec: [`SEASON_FUNDING_P3.md`](./SEASON_FUNDING_P3.md).
 - **P4 — Mutation consequences.** Post-pledge program changes → breach → withdrawal warnings.
 - **P5 (later) — Operating funders & donor evolution.** Non-concert-latching institutional
   backers (e.g. Saye, judged on health not program); donor drift; the outgrow-donors endgame.
