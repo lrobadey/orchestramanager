@@ -120,6 +120,7 @@ earned base can bypass donor constraints. This is the evolutionary spine of the 
   Detailed spec: [`SEASON_FUNDING_P4.md`](./SEASON_FUNDING_P4.md).
 - **P5 (later) — Operating funders & donor evolution.** Non-concert-latching institutional
   backers (e.g. Saye, judged on health not program); donor drift; the outgrow-donors endgame.
+  Detailed spec: [`SEASON_FUNDING_P5.md`](./SEASON_FUNDING_P5.md).
 
 ## 5. Open questions
 - Operating funders vs. concert sponsors: confirmed *not everyone latches to concerts*, but
