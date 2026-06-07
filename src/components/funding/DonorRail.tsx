@@ -1,14 +1,32 @@
 import { useState } from 'react'
-import type { DonorConcertFundingFit, SeasonFundingResult } from '../../sim/seasonFunding'
+import type { DonorConcertFundingFit, DonorConcertPledge, SeasonFundingResult } from '../../sim/seasonFunding'
+import type { SwayState } from '../../sim/seasonSway'
+import { swayKey } from '../../sim/seasonSway'
 import type { Donor } from '../../types/core'
 import { CONCERT_ROMAN } from '../../data/numerals'
 import { fmtCash } from '../../format'
+
+const PUSH_STEP = 5_000
 
 interface DonorRailProps {
   funding: SeasonFundingResult
   donors: Donor[]
   slotNames: string[]
   selectedSlot: number
+  sway: SwayState
+  goodwillRemaining: number
+  dedicationsUsed: number
+  maxDedications: number
+  onToggleDedicate: (concertIndex: number, donorId: string) => void
+  onAdjustAsk: (donorId: string, concertIndex: number, target: number) => void
+  onToggleRestrict: (donorId: string, concertIndex: number) => void
+}
+
+function responseTag(pledge: DonorConcertPledge | undefined): { text: string; tone: string } | null {
+  if (!pledge?.pushed) return null
+  if (pledge.response === 'offended') return { text: '⚠ Offended — recoiled', tone: 'tone-naked' }
+  if (pledge.response === 'countered') return { text: 'Countered', tone: 'tone-short' }
+  return { text: 'Pushed', tone: 'tone-covered' }
 }
 
 // musicFit lives in [-75, 75], institutionalFit in [-50, 50]. Normalize both to a
@@ -31,7 +49,19 @@ function culprit(fit: DonorConcertFundingFit): string | null {
   return worst && worst.aversion >= 45 ? worst.workTitle : null
 }
 
-export default function DonorRail({ funding, donors, slotNames, selectedSlot }: DonorRailProps) {
+export default function DonorRail({
+  funding,
+  donors,
+  slotNames,
+  selectedSlot,
+  sway,
+  goodwillRemaining,
+  dedicationsUsed,
+  maxDedications,
+  onToggleDedicate,
+  onAdjustAsk,
+  onToggleRestrict,
+}: DonorRailProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const donorById = new Map(donors.map(donor => [donor.id, donor]))
 
@@ -41,8 +71,15 @@ export default function DonorRail({ funding, donors, slotNames, selectedSlot }: 
   return (
     <div className="donor-rail" aria-label="Donor funding rail">
       <div className="donor-rail-head">
-        <span className="eyebrow">Donors</span>
-        <span className="donor-rail-sub">pledged · capacity</span>
+        <span className="eyebrow">Donors · The Ask</span>
+        <span className="donor-rail-resources">
+          <span className="donor-rail-res" title="Dedications used this season">
+            ★ {dedicationsUsed}/{maxDedications}
+          </span>
+          <span className={`donor-rail-res ${goodwillRemaining < 25 ? 'tone-short' : ''}`} title="Goodwill remaining">
+            goodwill {goodwillRemaining}
+          </span>
+        </span>
       </div>
 
       <ul className="donor-rail-list">
@@ -86,6 +123,15 @@ export default function DonorRail({ funding, donors, slotNames, selectedSlot }: 
                     const app = appetiteLabel(fit.appetiteScore)
                     const pledge = result.pledges.find(p => p.concertId === fit.concertId)
                     const warn = culprit(fit)
+                    const idx = fit.concertIndex
+                    const key = swayKey(result.donorId, idx)
+                    const dedicated = sway.dedications[idx] === result.donorId
+                    const restricted = Boolean(sway.restricted[key])
+                    const canFund = fit.appetiteScore > 5
+                    const dedicateLocked = !dedicated && !canFund
+                    const dedicateCapped = !dedicated && dedicationsUsed >= maxDedications && sway.dedications[idx] !== result.donorId
+                    const currentTarget = sway.asks[key] ?? pledge?.pledgedAmount ?? fit.maxPledge
+                    const rTag = responseTag(pledge)
                     return (
                       <div
                         key={fit.concertId}
@@ -118,7 +164,55 @@ export default function DonorRail({ funding, donors, slotNames, selectedSlot }: 
                           ) : (
                             <span className="donor-fit-pledge muted">Capacity spent elsewhere</span>
                           )}
+                          {rTag && <span className={`donor-fit-response ${rTag.tone}`}>{rTag.text}</span>}
                           {warn && <span className="donor-fit-warn" title={`Aversion to ${warn}`}>⚠ {warn}</span>}
+                        </div>
+
+                        {/* The ask: dedicate the night, name the gift, or push for more. */}
+                        <div className="donor-fit-ask">
+                          <button
+                            type="button"
+                            className={`ask-btn ${dedicated ? 'on' : ''}`}
+                            disabled={dedicateLocked || dedicateCapped}
+                            title={
+                              dedicateCapped ? 'No dedications left'
+                                : dedicateLocked ? 'This donor has no appetite for this night'
+                                : 'Dedicate this concert as the donor’s home night'
+                            }
+                            onClick={() => onToggleDedicate(idx, result.donorId)}
+                          >
+                            ★ {dedicated ? 'Home night' : 'Dedicate'}
+                          </button>
+                          <button
+                            type="button"
+                            className={`ask-btn ${restricted ? 'on' : ''}`}
+                            disabled={!canFund}
+                            title="Tie the gift to the donor’s top priority — more now, breach risk later"
+                            onClick={() => onToggleRestrict(result.donorId, idx)}
+                          >
+                            ⛓ {restricted ? 'Restricted' : 'Restrict'}
+                          </button>
+                          <span className="ask-push">
+                            <button
+                              type="button"
+                              className="ask-step"
+                              disabled={!canFund || currentTarget <= 0}
+                              title="Ease off the ask"
+                              onClick={() => onAdjustAsk(result.donorId, idx, currentTarget - PUSH_STEP)}
+                            >
+                              −
+                            </button>
+                            <span className="ask-target">{fmtCash(currentTarget)}</span>
+                            <button
+                              type="button"
+                              className="ask-step"
+                              disabled={!canFund || goodwillRemaining <= 0}
+                              title="Push for a larger pledge (costs goodwill, risks offense)"
+                              onClick={() => onAdjustAsk(result.donorId, idx, currentTarget + PUSH_STEP)}
+                            >
+                              +
+                            </button>
+                          </span>
                         </div>
                       </div>
                     )

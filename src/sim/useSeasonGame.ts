@@ -7,6 +7,15 @@ import { forecastProgram } from './forecastProgram'
 import { resolveConcert } from './resolveConcert'
 import { createInitialSeason, resolveSeasonConcert } from './season'
 import { computeSeasonFunding, type SeasonFundingConcertInput } from './seasonFunding'
+import {
+  createSwayState,
+  swayKey,
+  dedicationsUsed,
+  MAX_DEDICATIONS,
+  START_GOODWILL,
+  type SwayState,
+} from './seasonSway'
+import { clamp } from './scoring'
 import { isProgramComplete, isSeasonPlanComplete, sanitizeOrchestraName } from './founding'
 import {
   ConcertProgram,
@@ -71,6 +80,9 @@ export function useSeasonGame() {
   const [phase, setPhase] = useState<Phase>('planning')
   const [mainView, setMainView] = useState<MainView>('enter')
   const [report, setReport] = useState<ConcertReport | null>(null)
+  // The player's sway over donors during planning: dedications, pushed asks, and
+  // restricted asks. Frozen into the committed funding when the season begins.
+  const [sway, setSway] = useState<SwayState>(createSwayState)
 
   const institution = season.institution
   const livePrincipals = season.roster.principals
@@ -105,9 +117,52 @@ export function useSeasonGame() {
         concerts: fundingConcerts,
         works,
         institution,
+        sway,
       }),
-    [season.donors.donors, fundingConcerts, institution],
+    [season.donors.donors, fundingConcerts, institution, sway],
   )
+
+  const goodwillRemaining = Math.max(0, START_GOODWILL - seasonFunding.goodwillSpent)
+
+  // Dedicate a concert to a donor (their "home night"). A donor holds at most
+  // one; the season holds at most MAX_DEDICATIONS. Toggling an existing pairing
+  // clears it.
+  function toggleDedication(concertIndex: number, donorId: string) {
+    if (seasonStarted) return
+    setSway(prev => {
+      const dedications = [...prev.dedications]
+      if (dedications[concertIndex] === donorId) {
+        dedications[concertIndex] = null
+        return { ...prev, dedications }
+      }
+      const heldElsewhere = dedications.indexOf(donorId)
+      if (heldElsewhere >= 0) dedications[heldElsewhere] = null
+      const usedAfter = dedications.filter((d, i) => i !== concertIndex && d).length + 1
+      if (usedAfter > MAX_DEDICATIONS) return prev
+      dedications[concertIndex] = donorId
+      return { ...prev, dedications }
+    })
+  }
+
+  // Set the absolute pledge target the player is asking a donor for on a concert.
+  function setAsk(donorId: string, concertIndex: number, target: number) {
+    if (seasonStarted) return
+    setSway(prev => ({
+      ...prev,
+      asks: { ...prev.asks, [swayKey(donorId, concertIndex)]: Math.max(0, Math.round(target)) },
+    }))
+  }
+
+  function toggleRestricted(donorId: string, concertIndex: number) {
+    if (seasonStarted) return
+    setSway(prev => {
+      const key = swayKey(donorId, concertIndex)
+      const restricted = { ...prev.restricted }
+      if (restricted[key]) delete restricted[key]
+      else restricted[key] = true
+      return { ...prev, restricted }
+    })
+  }
 
   function setProgram(next: ConcertProgram) {
     // Locked once the season is under way: no editing the committed plan.
@@ -192,8 +247,15 @@ export function useSeasonGame() {
     // "Make the ask": freeze the live auto-fill into season state. From here the
     // committed pledges (and their realized amounts) are what concerts resolve
     // against, so the donor money the player saw while planning is the money
-    // that actually arrives.
-    setSeason(prev => ({ ...prev, funding: seasonFunding }))
+    // that actually arrives. The ask also leaves a mark on the donors — a
+    // dedication warms them, an over-push cools them (mild drift).
+    setSeason(prev => {
+      const donors = prev.donors.donors.map(donor => {
+        const delta = seasonFunding.donors.find(result => result.donorId === donor.id)?.relationshipDelta ?? 0
+        return delta ? { ...donor, relationship: clamp(donor.relationship + delta, 0, 100) } : donor
+      })
+      return { ...prev, funding: seasonFunding, donors: { donors } }
+    })
     setSeasonStarted(true)
     setPhase('planning')
     setMainView('home')
@@ -203,6 +265,7 @@ export function useSeasonGame() {
     setSeason(createSeasonForOrchestra(orchestraName))
     setDraftPrograms(emptyDraftPrograms())
     setSelectedSlot(0)
+    setSway(createSwayState())
     setSeasonStarted(false)
     setReport(null)
     setPhase('planning')
@@ -247,6 +310,13 @@ export function useSeasonGame() {
     selectSlot,
     planComplete,
     seasonFunding,
+    sway,
+    goodwillRemaining,
+    dedicationsUsed: dedicationsUsed(sway),
+    maxDedications: MAX_DEDICATIONS,
+    toggleDedication,
+    setAsk,
+    toggleRestricted,
     beginSeason,
     slotWorks,
     filledSlotWorks,

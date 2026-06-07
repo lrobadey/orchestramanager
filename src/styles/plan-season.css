@@ -510,3 +510,76 @@
 }
 .lm-chip.overflow { color: var(--silver-dim); }
 .lm-chip.empty { color: var(--ember); border-color: var(--ember); }
+
+/* The Ask — sway resources + per-fit controls */
+.donor-rail-resources { display: flex; gap: 10px; }
+.donor-rail-res {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--birch-dim);
+}
+.donor-rail-res.tone-short { color: var(--amber, #c79a3e); }
+
+.donor-fit-response {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.donor-fit-response.tone-covered { color: var(--pine); }
+.donor-fit-response.tone-short { color: var(--amber, #c79a3e); }
+.donor-fit-response.tone-naked { color: var(--ember); }
+
+.donor-fit-ask {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  flex-wrap: wrap;
+}
+.ask-btn {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--silver-dim);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.ask-btn:hover:not(:disabled) { color: var(--birch); border-color: var(--silver); }
+.ask-btn.on { color: var(--pine); border-color: var(--pine); background: rgba(122, 154, 138, 0.1); }
+.ask-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.ask-push {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.ask-step {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--birch-dim);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+}
+.ask-step:hover:not(:disabled) { color: var(--birch); border-color: var(--silver); }
+.ask-step:disabled { opacity: 0.35; cursor: not-allowed; }
+.ask-target {
+  font-family: var(--hc-mono);
+  font-size: 10px;
+  color: var(--birch);
+  min-width: 52px;
+  text-align: center;
+}

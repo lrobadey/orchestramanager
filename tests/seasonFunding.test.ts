@@ -4,6 +4,7 @@ import {
   scoreDonorConcertFundingFit,
   scoreDonorWorkStance,
 } from '../src/sim/seasonFunding'
+import { createSwayState, swayKey } from '../src/sim/seasonSway'
 import type {
   ConcertProgram,
   Donor,
@@ -314,6 +315,14 @@ describe('season funding allocation', () => {
     expect(result.concerts[1].pledged).toBeGreaterThan(0)
   })
 
+  it('leaves results identical when no sway is applied', () => {
+    const concerts = [{ index: 0, name: 'Canon night', program: programFor(['beethoven', 'mozart']), cost: 60_000 }]
+    const plain = computeSeasonFunding({ donors: [eleanorLike], concerts, works, institution })
+    const empty = computeSeasonFunding({ donors: [eleanorLike], concerts, works, institution, sway: createSwayState() })
+    expect(empty.concerts[0].pledged).toBe(plain.concerts[0].pledged)
+    expect(empty.goodwillSpent).toBe(0)
+  })
+
   it('uses volatility to widen pledge ranges and change realized amounts deterministically', () => {
     const lowVolatility = { ...eleanorLike, id: 'low-vol', volatility: 10 }
     const highVolatility = { ...eleanorLike, id: 'high-vol', volatility: 90 }
@@ -334,5 +343,44 @@ describe('season funding allocation', () => {
     const highRelativeWidth = (high!.expectedHigh - high!.expectedLow) / high!.pledgedAmount
     expect(highRelativeWidth).toBeGreaterThan(lowRelativeWidth)
     expect(high!.realizedAmount).not.toBe(high!.pledgedAmount)
+  })
+})
+
+describe('season funding sway', () => {
+  // Ample capacity and a high cost so pledges are appetite-limited (not capped
+  // by capacity or cost), leaving headroom for a push to register.
+  const bigDonor = makeDonor({ ...eleanorLike, id: 'eleanor-big', capacity: 300_000 })
+  const concerts = [{ index: 0, name: 'Canon night', program: programFor(['beethoven', 'mozart']), cost: 300_000 }]
+  const base = () => computeSeasonFunding({ donors: [bigDonor], concerts, works, institution })
+
+  it('a dedication raises the donor’s effective ceiling on their home night and warms them', () => {
+    const dedicated = computeSeasonFunding({
+      donors: [bigDonor],
+      concerts,
+      works,
+      institution,
+      sway: { ...createSwayState(), dedications: [bigDonor.id, null, null, null] },
+    })
+    expect(dedicated.donors[0].fits[0].maxPledge).toBeGreaterThan(base().donors[0].fits[0].maxPledge)
+    expect(dedicated.donors[0].relationshipDelta).toBeGreaterThan(0)
+    expect(dedicated.donors[0].pledges[0].dedicated).toBe(true)
+  })
+
+  it('a push above comfortable raises the pledge and spends goodwill', () => {
+    const comfortable = base().donors[0].fits[0].maxPledge
+    const sway = { ...createSwayState(), asks: { [swayKey(bigDonor.id, 0)]: comfortable + 8_000 } }
+    const pushed = computeSeasonFunding({ donors: [bigDonor], concerts, works, institution, sway })
+    expect(pushed.goodwillSpent).toBeGreaterThan(0)
+    expect(pushed.donors[0].pledges[0].pushed).toBe(true)
+    expect(pushed.concerts[0].pledged).toBeGreaterThan(base().concerts[0].pledged)
+    expect(pushed.donors[0].doorClosed).toBe(false)
+  })
+
+  it('an over-push past the ceiling offends the donor and closes the door', () => {
+    const comfortable = base().donors[0].fits[0].maxPledge
+    const sway = { ...createSwayState(), asks: { [swayKey(bigDonor.id, 0)]: comfortable * 5 } }
+    const offended = computeSeasonFunding({ donors: [bigDonor], concerts, works, institution, sway })
+    expect(offended.donors[0].doorClosed).toBe(true)
+    expect(offended.donors[0].relationshipDelta).toBeLessThan(0)
   })
 })

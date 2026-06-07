@@ -6,6 +6,7 @@ import SeasonTrail from './home/SeasonTrail'
 import SeasonFundingPanel from './funding/SeasonFundingPanel'
 import type { HomeNavKey } from './HomeConsole'
 import type { SeasonFundingResult } from '../sim/seasonFunding'
+import type { SwayState } from '../sim/seasonSway'
 import { CONCERT_ROMAN } from '../data/numerals'
 import '../styles/plan-season.css'
 
@@ -20,6 +21,13 @@ interface SeasonPlanScreenProps {
   completeFlags: boolean[]
   planComplete: boolean
   funding: SeasonFundingResult
+  sway: SwayState
+  goodwillRemaining: number
+  dedicationsUsed: number
+  maxDedications: number
+  onToggleDedicate: (concertIndex: number, donorId: string) => void
+  onAdjustAsk: (donorId: string, concertIndex: number, target: number) => void
+  onToggleRestrict: (donorId: string, concertIndex: number) => void
   onSelectSlot: (index: number) => void
   onBeginSeason: () => void
   onProgramChange: (next: ConcertProgram) => void
@@ -39,6 +47,13 @@ export default function SeasonPlanScreen({
   completeFlags,
   planComplete,
   funding,
+  sway,
+  goodwillRemaining,
+  dedicationsUsed,
+  maxDedications,
+  onToggleDedicate,
+  onAdjustAsk,
+  onToggleRestrict,
   onSelectSlot,
   onBeginSeason,
   onProgramChange,
@@ -172,6 +187,13 @@ export default function SeasonPlanScreen({
           season={season}
           completeFlags={completeFlags}
           selectedSlot={selectedSlot}
+          sway={sway}
+          goodwillRemaining={goodwillRemaining}
+          dedicationsUsed={dedicationsUsed}
+          maxDedications={maxDedications}
+          onToggleDedicate={onToggleDedicate}
+          onAdjustAsk={onAdjustAsk}
+          onToggleRestrict={onToggleRestrict}
         />
       </div>
     </ConsoleScreen>

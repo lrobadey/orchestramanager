@@ -38,6 +38,13 @@ export default function App() {
     selectSlot,
     planComplete,
     seasonFunding,
+    sway,
+    goodwillRemaining,
+    dedicationsUsed,
+    maxDedications,
+    toggleDedication,
+    setAsk,
+    toggleRestricted,
     beginSeason,
     filledSlotWorks,
     currentSlotName,
@@ -111,6 +118,13 @@ export default function App() {
         completeFlags={completeFlags}
         planComplete={planComplete}
         funding={seasonFunding}
+        sway={sway}
+        goodwillRemaining={goodwillRemaining}
+        dedicationsUsed={dedicationsUsed}
+        maxDedications={maxDedications}
+        onToggleDedicate={toggleDedication}
+        onAdjustAsk={setAsk}
+        onToggleRestrict={toggleRestricted}
         onSelectSlot={selectSlot}
         onBeginSeason={beginSeason}
         onProgramChange={setProgram}

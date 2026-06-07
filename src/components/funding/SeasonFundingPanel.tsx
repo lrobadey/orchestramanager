@@ -1,4 +1,5 @@
 import type { SeasonFundingResult } from '../../sim/seasonFunding'
+import type { SwayState } from '../../sim/seasonSway'
 import type { SeasonState } from '../../types/core'
 import DonorRail from './DonorRail'
 import { CONCERT_ROMAN } from '../../data/numerals'
@@ -9,6 +10,13 @@ interface SeasonFundingPanelProps {
   season: SeasonState
   completeFlags: boolean[]
   selectedSlot: number
+  sway: SwayState
+  goodwillRemaining: number
+  dedicationsUsed: number
+  maxDedications: number
+  onToggleDedicate: (concertIndex: number, donorId: string) => void
+  onAdjustAsk: (donorId: string, concertIndex: number, target: number) => void
+  onToggleRestrict: (donorId: string, concertIndex: number) => void
 }
 
 const pct = (value: number) => Math.round(value * 100)
@@ -28,6 +36,13 @@ export default function SeasonFundingPanel({
   season,
   completeFlags,
   selectedSlot,
+  sway,
+  goodwillRemaining,
+  dedicationsUsed,
+  maxDedications,
+  onToggleDedicate,
+  onAdjustAsk,
+  onToggleRestrict,
 }: SeasonFundingPanelProps) {
   // Aggregate volatility band: the season's pledged total can realize anywhere
   // between the sum of donor low ends and the sum of high ends.
@@ -103,6 +118,13 @@ export default function SeasonFundingPanel({
           donors={season.donors.donors}
           slotNames={season.slots.map(slot => slot.name)}
           selectedSlot={selectedSlot}
+          sway={sway}
+          goodwillRemaining={goodwillRemaining}
+          dedicationsUsed={dedicationsUsed}
+          maxDedications={maxDedications}
+          onToggleDedicate={onToggleDedicate}
+          onAdjustAsk={onAdjustAsk}
+          onToggleRestrict={onToggleRestrict}
         />
       )}
     </aside>

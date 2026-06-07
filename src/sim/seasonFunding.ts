@@ -9,6 +9,26 @@ import type {
 } from '../types/core'
 import { buildConcertMusicProfile } from './donorReactions'
 import { average, clamp, computeExpenseBreakdown, marketingEffect } from './scoring'
+import { negotiateConcertAsk, swayKey, type AskResponse, type SwayState } from './seasonSway'
+
+// Dedication and a restricted ("named") ask raise the donor's comfortable
+// pledge before any push — a home night, or a gift tied to their cause, simply
+// means more.
+const DEDICATION_COMFORT_BOOST = 1.2
+const RESTRICTED_COMFORT_BOOST = 1.15
+
+// Per-(donor, concert) outcome of the player's sway, folded into the fit before
+// allocation so the existing greedy fill and realized-swing logic handle it.
+interface SwayOutcome {
+  effectiveMaxPledge: number
+  goodwillCost: number
+  relationshipDelta: number
+  doorClosed: boolean
+  response: AskResponse
+  pushed: boolean
+  restricted: boolean
+  dedicated: boolean
+}
 
 export interface SeasonFundingConcertInput {
   id?: string
@@ -57,6 +77,11 @@ export interface DonorConcertPledge {
   expectedHigh: number
   realizedAmount: number
   appetiteScore: number
+  // Sway metadata (present when the player worked this pledge):
+  pushed?: boolean
+  response?: AskResponse
+  restricted?: boolean
+  dedicated?: boolean
 }
 
 export interface ConcertFundingResult {
@@ -82,6 +107,10 @@ export interface DonorFundingResult {
   unusedCapacity: number
   pledges: DonorConcertPledge[]
   fits: DonorConcertFundingFit[]
+  // Sway aftermath: relationship change earned this season and whether an
+  // over-push has closed the donor's door.
+  relationshipDelta: number
+  doorClosed: boolean
 }
 
 export interface SeasonFundingResult {
@@ -92,6 +121,8 @@ export interface SeasonFundingResult {
   realizedCoveragePercent: number
   concerts: ConcertFundingResult[]
   donors: DonorFundingResult[]
+  // Goodwill consumed by the asks the player made (0 when none).
+  goodwillSpent: number
 }
 
 interface NormalizedConcert {
@@ -230,34 +261,70 @@ export function scoreDonorConcertFundingFit({
   }
 }
 
+// Fold the player's sway (dedication / restricted / pushed ask) into a fit:
+// dedication and a named ask raise the comfortable pledge, then any push is
+// negotiated against the donor's emergent ceiling. The result is an effective
+// cap the existing allocation can spend against.
+function applySway(donor: Donor, fit: DonorConcertFundingFit, sway: SwayState): SwayOutcome {
+  const dedicated = sway.dedications[fit.concertIndex] === donor.id
+  const key = swayKey(donor.id, fit.concertIndex)
+  const restricted = Boolean(sway.restricted[key])
+  const requested = sway.asks[key] ?? 0
+
+  let comfortBoost = 1
+  if (dedicated) comfortBoost *= DEDICATION_COMFORT_BOOST
+  if (restricted && fit.appetiteScore > 0) comfortBoost *= RESTRICTED_COMFORT_BOOST
+  const boostedComfortable = Math.round(fit.maxPledge * comfortBoost)
+  const target = Math.max(requested, boostedComfortable)
+
+  const outcome = negotiateConcertAsk({ donor, fit: { ...fit, maxPledge: boostedComfortable }, target, dedicated })
+
+  return {
+    effectiveMaxPledge: outcome.accepted,
+    goodwillCost: outcome.goodwillCost,
+    // Mild cross-season drift: a dedication warms the donor; an over-push cools
+    // them (the negotiate relationshipDelta).
+    relationshipDelta: outcome.relationshipDelta + (dedicated ? 1 : 0),
+    doorClosed: outcome.doorClosed,
+    response: outcome.response,
+    pushed: requested > boostedComfortable,
+    restricted,
+    dedicated,
+  }
+}
+
 export function computeSeasonFunding({
   donors,
   concerts,
   works,
   institution,
+  sway,
 }: {
   donors: readonly Donor[]
   concerts: readonly SeasonFundingConcertInput[]
   works: readonly Work[]
   institution: InstitutionState
+  sway?: SwayState
 }): SeasonFundingResult {
   const normalizedConcerts = concerts
     .filter((concert): concert is SeasonFundingConcertInput & { program: ConcertProgram } => Boolean(concert.program))
     .map(concert => normalizeConcert(concert, works))
 
   const fitByDonor = new Map<string, DonorConcertFundingFit[]>()
+  const swayByKey = new Map<string, SwayOutcome>()
   for (const donor of donors) {
-    fitByDonor.set(
-      donor.id,
-      normalizedConcerts.map(concert =>
-        scoreDonorConcertFundingFit({
-          donor,
-          concert,
-          works,
-          institution,
-        }),
-      ),
-    )
+    const fits = normalizedConcerts.map(concert => {
+      const base = scoreDonorConcertFundingFit({ donor, concert, works, institution })
+      if (!sway) return base
+      const outcome = applySway(donor, base, sway)
+      swayByKey.set(swayKey(donor.id, base.concertIndex), outcome)
+      if (!outcome.dedicated && !outcome.restricted && outcome.effectiveMaxPledge === base.maxPledge) {
+        return base
+      }
+      const band = pledgeRange(outcome.effectiveMaxPledge, donor.volatility)
+      return { ...base, maxPledge: outcome.effectiveMaxPledge, expectedLow: band.low, expectedHigh: band.high }
+    })
+    fitByDonor.set(donor.id, fits)
   }
 
   const pledgedByConcert = new Map<string, DonorConcertPledge[]>()
@@ -315,6 +382,21 @@ export function computeSeasonFunding({
     donorPledges.set(donor.id, donorConcertPledges)
   }
 
+  // Stamp sway metadata onto the pledges the player worked (pledge objects are
+  // shared between the per-concert and per-donor views, so annotate once).
+  if (sway) {
+    for (const pledges of donorPledges.values()) {
+      for (const pledge of pledges) {
+        const outcome = swayByKey.get(swayKey(pledge.donorId, pledge.concertIndex))
+        if (!outcome) continue
+        pledge.pushed = outcome.pushed
+        pledge.response = outcome.response
+        pledge.restricted = outcome.restricted
+        pledge.dedicated = outcome.dedicated
+      }
+    }
+  }
+
   const concertResults = normalizedConcerts.map(concert => {
     const pledges = pledgedByConcert.get(concert.id) ?? []
     const pledged = pledges.reduce((sum, pledge) => sum + pledge.pledgedAmount, 0)
@@ -338,6 +420,12 @@ export function computeSeasonFunding({
     const pledges = donorPledges.get(donor.id) ?? []
     const pledged = pledges.reduce((sum, pledge) => sum + pledge.pledgedAmount, 0)
     const realized = pledges.reduce((sum, pledge) => sum + pledge.realizedAmount, 0)
+    // Sum the sway aftermath across this donor's concerts.
+    const donorSway = normalizedConcerts
+      .map(concert => swayByKey.get(swayKey(donor.id, concert.index)))
+      .filter((outcome): outcome is SwayOutcome => Boolean(outcome))
+    const relationshipDelta = donorSway.reduce((sum, outcome) => sum + outcome.relationshipDelta, 0)
+    const doorClosed = donorSway.some(outcome => outcome.doorClosed)
     return {
       donorId: donor.id,
       donorName: donor.name,
@@ -347,12 +435,15 @@ export function computeSeasonFunding({
       unusedCapacity: Math.max(0, donor.capacity - pledged),
       pledges,
       fits: fitByDonor.get(donor.id) ?? [],
+      relationshipDelta,
+      doorClosed,
     }
   })
 
   const seasonCost = concertResults.reduce((sum, concert) => sum + concert.cost, 0)
   const pledged = concertResults.reduce((sum, concert) => sum + concert.pledged, 0)
   const realized = concertResults.reduce((sum, concert) => sum + concert.realized, 0)
+  const goodwillSpent = [...swayByKey.values()].reduce((sum, outcome) => sum + outcome.goodwillCost, 0)
 
   return {
     seasonCost,
@@ -362,6 +453,7 @@ export function computeSeasonFunding({
     realizedCoveragePercent: seasonCost > 0 ? realized / seasonCost : 0,
     concerts: concertResults,
     donors: donorResults,
+    goodwillSpent,
   }
 }
 

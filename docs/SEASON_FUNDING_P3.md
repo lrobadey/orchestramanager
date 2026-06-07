@@ -1,6 +1,14 @@
 # Season Funding — P3: Funding UI & The Ask
 
-Status: **Specced, in build** · Branch: `claude/pr-37-milestone-4kmCB` · Parent: [`SEASON_FUNDING_MODEL.md`](./SEASON_FUNDING_MODEL.md)
+Status: **Built (P3a–P3e)** · Branch: `claude/pr-37-milestone-4kmCB` · Parent: [`SEASON_FUNDING_MODEL.md`](./SEASON_FUNDING_MODEL.md)
+
+> **Build note.** P3a–P3e are implemented and tested. The haggle is a single
+> emergent ask per donor-concert (the player steps the target up/down; the donor
+> accepts / counters / takes offense based purely on their stats) rather than a
+> multi-round click loop. Reopening a closed door after offense currently just
+> re-negotiates (no separate goodwill toll yet). Cross-season capacity drift is
+> represented as a mild relationship nudge applied at commit, since the game is
+> single-season for now; fuller multi-season donor evolution stays in P5.
 
 P3 turns the P2 sponsorship engine (`src/sim/seasonFunding.ts`) into a played
 loop: the player sees coverage build live while planning, **courts and asks**
