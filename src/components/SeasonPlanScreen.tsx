@@ -139,6 +139,7 @@ export default function SeasonPlanScreen({
           selectable
           selectedIndex={selectedSlot}
           completeFlags={completeFlags}
+          funding={funding}
           onSelect={onSelectSlot}
         />
 

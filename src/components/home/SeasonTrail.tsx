@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { SeasonState } from '../../types/core'
+import type { SeasonFundingResult } from '../../sim/seasonFunding'
 import { slotHeadlineFallback } from '../../data/homeStubs'
 import { formatShortDate } from '../../sim/calendar'
 import { CONCERT_ROMAN } from '../../data/numerals'
@@ -12,7 +13,18 @@ interface SeasonTrailProps {
   selectable?: boolean
   selectedIndex?: number
   completeFlags?: boolean[]
+  // Live donor funding, surfaced as per-concert coverage fills and donor chips
+  // on the planning landmarks so the funding coalition reads as a map.
+  funding?: SeasonFundingResult
   onSelect?: (index: number) => void
+}
+
+// Two-letter glyph for a donor chip, skipping a leading article.
+function donorInitials(name: string): string {
+  const words = name.split(/\s+/).filter(w => !/^the$/i.test(w))
+  if (words.length === 0) return name.slice(0, 2).toUpperCase()
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return (words[0][0] + words[1][0]).toUpperCase()
 }
 
 const TRAIL_W = 1440
@@ -32,8 +44,12 @@ export default function SeasonTrail({
   selectable = false,
   selectedIndex = 0,
   completeFlags,
+  funding,
   onSelect,
 }: SeasonTrailProps) {
+  const fundingByIndex = new Map(
+    (funding?.concerts ?? []).map(concert => [concert.concertIndex, concert]),
+  )
   // In planning mode the map is most useful expanded so every concert is pickable.
   const [collapsed, setCollapsed] = useState(!selectable)
   const resolvedCount = season.slots.filter(s => s.status === 'resolved').length
@@ -183,9 +199,38 @@ export default function SeasonTrail({
             <div className="lm-date">{formatShortDate(slot.scheduledDate, season.calendar.startDate).toUpperCase()}</div>
             <div className="lm-name">{slot.name}</div>
             {selectable ? (
-              <div className="lm-status">
-                {isSelected ? '● EDITING' : planned ? '✓ PROGRAMMED' : '○ NEEDS PROGRAM'}
-              </div>
+              <>
+                <div className="lm-status">
+                  {isSelected ? '● EDITING' : planned ? '✓ PROGRAMMED' : '○ NEEDS PROGRAM'}
+                </div>
+                {planned && fundingByIndex.has(i) && (() => {
+                  const concert = fundingByIndex.get(i)!
+                  const tone =
+                    concert.coveragePercent <= 0.001 ? 'naked'
+                      : concert.coveragePercent < 0.999 ? 'short'
+                      : 'covered'
+                  const top = [...concert.pledges]
+                    .sort((a, b) => b.pledgedAmount - a.pledgedAmount)
+                    .slice(0, 3)
+                  const overflow = concert.pledges.length - top.length
+                  return (
+                    <div className="lm-funding">
+                      <div className={`lm-coverage tone-${tone}`}>
+                        <span className="lm-coverage-fill" style={{ width: `${Math.min(100, Math.round(concert.coveragePercent * 100))}%` }} />
+                      </div>
+                      <div className="lm-chips">
+                        {top.map(pledge => (
+                          <span key={pledge.donorId} className="lm-chip" title={`${pledge.donorName}: ${Math.round(pledge.pledgedAmount).toLocaleString()}`}>
+                            {donorInitials(pledge.donorName)}
+                          </span>
+                        ))}
+                        {overflow > 0 && <span className="lm-chip overflow">+{overflow}</span>}
+                        {concert.pledges.length === 0 && <span className="lm-chip empty" title="No donor latched to this night">—</span>}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </>
             ) : (
               <>
                 {isResolved && slot.report && (
