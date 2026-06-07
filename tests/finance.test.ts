@@ -43,4 +43,27 @@ describe('finance transactions', () => {
     expect(baseCost.dueDate).toBe('2026-05-31')
     expect(baseCost.postedDate).toBeNull()
   })
+
+  it('keeps operating support as a distinct scheduled income transaction', () => {
+    const report = resolveConcert({
+      works,
+      institution: startingInstitution,
+      principals,
+      audienceSegments,
+      program: safeProgram,
+      donorIncome: 20_000,
+      operatingSupport: 12_000,
+      roll: 50,
+    })
+
+    const transactions = buildConcertFinanceTransactions('Opening Night', 0, report)
+    const total = transactions.reduce((sum, tx) => sum + tx.amount, 0)
+    const operating = transactions.find(tx => tx.kind === 'operating-support')!
+
+    expect(transactions).toHaveLength(7)
+    expect(total).toBe(report.net)
+    expect(operating.label).toBe('Operating support')
+    expect(operating.amount).toBe(12_000)
+    expect(operating.status).toBe('scheduled')
+  })
 })

@@ -166,7 +166,8 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
           <ReportPanel title="Finance" meta="settlement">
             <div className="report-finance-grid">
               <FinanceCell label="Ticket rev." value={fmt$(report.revenue)} />
-              <FinanceCell label="Donor support" value={fmt$(report.donorUplift)} tone={report.donorUplift > 0 ? 'pos' : ''} />
+              <FinanceCell label="Concert pledges" value={fmt$(report.donorUplift)} tone={report.donorUplift > 0 ? 'pos' : ''} />
+              <FinanceCell label="Operating" value={fmt$(report.operatingSupport ?? 0)} tone={(report.operatingSupport ?? 0) > 0 ? 'pos' : ''} />
               <FinanceCell label="Expenses" value={fmt$(report.expenses)} />
               <FinanceCell label="Net" value={fmt$(report.net)} tone={report.net >= 0 ? 'pos' : 'neg'} />
             </div>

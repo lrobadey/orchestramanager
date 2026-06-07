@@ -85,6 +85,14 @@ export default function SeasonFundingPanel({
         </div>
       </div>
 
+      <div className="operating-readout" aria-label="Projected operating support">
+        <span>
+          <strong>{fmtCash(funding.operatingProjected)}</strong>
+          projected operating support
+        </span>
+        <em>earned from institutional health, not pledged to repertoire</em>
+      </div>
+
       <div className="plan-season-funding-rows">
         {season.slots.map((slot, i) => {
           const concert = concertByIndex.get(i)

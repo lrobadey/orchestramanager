@@ -264,6 +264,28 @@
   letter-spacing: 0.08em;
   color: var(--silver-dim);
 }
+.operating-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--birch-dim);
+}
+.operating-readout strong {
+  color: var(--pine);
+  margin-right: 5px;
+}
+.operating-readout em {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--silver-dim);
+}
 
 .plan-season-funding-rows {
   display: flex;
@@ -415,6 +437,25 @@
   flex-direction: column;
   gap: 6px;
   padding: 4px 10px 10px;
+}
+.donor-operating-note {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 9px;
+  border: 1px solid var(--hairline);
+  border-radius: 5px;
+  background: rgba(69, 112, 85, 0.08);
+  font-size: 10px;
+  color: var(--birch-dim);
+}
+.donor-operating-note span {
+  font-family: var(--hc-mono);
+  color: var(--pine);
+}
+.donor-operating-note em {
+  font-style: normal;
+  color: var(--silver-dim);
 }
 .donor-fit {
   border: 1px solid var(--hairline);

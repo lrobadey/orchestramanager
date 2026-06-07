@@ -330,6 +330,7 @@ export interface ConcertReport {
   attendance: number
   revenue: number
   donorUplift: number
+  operatingSupport?: number
   marketingDonorSignal?: number
   audienceBreakdown: AudienceBreakdown[]
   expenses: number
@@ -349,6 +350,7 @@ export interface ConcertReport {
 export type FinanceTransactionKind =
   | 'ticket-revenue'
   | 'donor-support'
+  | 'operating-support'
   | 'base-cost'
   | 'rehearsal-cost'
   | 'marketing-cost'
@@ -404,6 +406,7 @@ export interface SeasonSummary {
   totalAttendance: number
   totalRevenue: number
   totalDonorSupport: number
+  totalOperatingSupport: number
   totalExpenses: number
   totalNet: number
   startingInstitution: InstitutionState

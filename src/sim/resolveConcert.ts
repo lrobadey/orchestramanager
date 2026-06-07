@@ -19,6 +19,9 @@ export interface ResolveInput extends ForecastInput {
   // provided it replaces the legacy per-concert donor "tip": the night's income
   // is the donor pledges that latched to it, realized with their volatility.
   donorIncome?: number
+  // Unrestricted institutional support earned from current health. Kept
+  // separate from concert-latched pledges for report and ledger readability.
+  operatingSupport?: number
 }
 
 function sectionLabel(section: string): string {
@@ -161,6 +164,7 @@ function fmt$(n: number): string {
 function buildFinancialNotes(
   revenue: number,
   donorUplift: number,
+  operatingSupport: number,
   expenses: number,
   net: number,
   attendance: number,
@@ -168,13 +172,13 @@ function buildFinancialNotes(
   expenseBreakdown: ExpenseBreakdown,
 ): string[] {
   const notes: string[] = []
-  const totalIncome = revenue + donorUplift
+  const totalIncome = revenue + donorUplift + operatingSupport
   const coveragePercent = expenses > 0 ? Math.round((totalIncome / expenses) * 100) : 100
 
   if (net < 0) {
     if (totalIncome < expenseBreakdown.baseConcert) {
       notes.push(
-        `Ticket sales and donor support (${fmt$(totalIncome)}) did not cover the base hall cost of ${fmt$(expenseBreakdown.baseConcert)} — growing the audience is the primary lever.`,
+        `Ticket sales and contributed support (${fmt$(totalIncome)}) did not cover the base hall cost of ${fmt$(expenseBreakdown.baseConcert)} — growing the audience is the primary lever.`,
       )
     } else {
       const { rehearsal, marketing, production } = expenseBreakdown
@@ -262,7 +266,8 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
         marketingDonorSignal: forecast.marketingImpact.donorSignal,
       })
     : computeDonorUplift(input.institution.donorConfidence)
-  const net = revenue + donorUplift - expenses
+  const operatingSupport = Math.round(input.operatingSupport ?? 0)
+  const net = revenue + donorUplift + operatingSupport - expenses
 
   const programPrestige = average(works.map(w => w.artisticPrestige))
   const programNovelty = average(works.map(w => w.novelty))
@@ -376,13 +381,14 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   }
 
   const financialNotes = buildFinancialNotes(
-    revenue, donorUplift, expenses, net, attendance, audienceBreakdown, expenseBreakdown,
+    revenue, donorUplift, operatingSupport, expenses, net, attendance, audienceBreakdown, expenseBreakdown,
   )
 
   return {
     attendance,
     revenue,
     donorUplift,
+    operatingSupport,
     marketingDonorSignal: forecast.marketingImpact.donorSignal,
     audienceBreakdown,
     expenses,

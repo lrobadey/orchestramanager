@@ -87,7 +87,7 @@ export default function DonorRail({
           const donor = donorById.get(result.donorId)
           if (!donor) return null
           const expanded = expandedId === result.donorId
-          const capacityPct = result.capacity > 0 ? Math.round((result.pledged / result.capacity) * 100) : 0
+          const capacityPct = result.concertCapacity > 0 ? Math.round((result.pledged / result.concertCapacity) * 100) : 0
           const musicWeight = donor.influenceWeights.music
           return (
             <li key={result.donorId} className={`donor-rail-item ${expanded ? 'expanded' : ''}`}>
@@ -106,7 +106,7 @@ export default function DonorRail({
                     <span className="donor-rail-cap-fill" style={{ width: `${Math.min(100, capacityPct)}%` }} />
                   </span>
                   <span className="donor-rail-cap-fig">
-                    {fmtCash(result.pledged)} <span className="muted">/ {fmtCash(result.capacity)}</span>
+                    {fmtCash(result.pledged)} <span className="muted">/ {fmtCash(result.concertCapacity)}</span>
                   </span>
                 </span>
                 {/* Which lever moves this donor: music vs institutional weight. */}
@@ -119,6 +119,12 @@ export default function DonorRail({
 
               {expanded && (
                 <div className="donor-rail-detail">
+                  {result.operatingBudget > 0 && (
+                    <div className="donor-operating-note">
+                      <span>{fmtCash(result.operatingProjected)} operating</span>
+                      <em>{Math.round(result.operatingHealthFactor * 100)}% health fit · {fmtCash(result.operatingBudget)} reserved</em>
+                    </div>
+                  )}
                   {result.fits.map(fit => {
                     const app = appetiteLabel(fit.appetiteScore)
                     const pledge = result.pledges.find(p => p.concertId === fit.concertId)

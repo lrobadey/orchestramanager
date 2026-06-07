@@ -4,6 +4,7 @@ import type {
   DonorInstitutionalPriorities,
   DonorMusicTaste,
   ExpenseBreakdown,
+  AudienceState,
   InstitutionState,
   Work,
 } from '../types/core'
@@ -67,6 +68,23 @@ export interface DonorConcertFundingFit {
   notes: string[]
 }
 
+export interface DonorCapacitySplit {
+  donorId: string
+  totalCapacity: number
+  concertCapacity: number
+  operatingBudget: number
+  operatingPropensity: number
+}
+
+export interface DonorOperatingSupport {
+  donorId: string
+  donorName: string
+  operatingBudget: number
+  healthFactor: number
+  projectedSeasonAmount: number
+  perConcertAmount: number
+}
+
 export interface DonorConcertPledge {
   donorId: string
   donorName: string
@@ -102,6 +120,10 @@ export interface DonorFundingResult {
   donorId: string
   donorName: string
   capacity: number
+  concertCapacity: number
+  operatingBudget: number
+  operatingProjected: number
+  operatingHealthFactor: number
   pledged: number
   realized: number
   unusedCapacity: number
@@ -117,10 +139,15 @@ export interface SeasonFundingResult {
   seasonCost: number
   pledged: number
   realized: number
+  operatingBudget: number
+  operatingProjected: number
+  projectedContributed: number
   coveragePercent: number
   realizedCoveragePercent: number
+  projectedCoveragePercent: number
   concerts: ConcertFundingResult[]
   donors: DonorFundingResult[]
+  operatingSupport: DonorOperatingSupport[]
   // Goodwill consumed by the asks the player made (0 when none).
   goodwillSpent: number
 }
@@ -182,11 +209,13 @@ export function scoreDonorConcertFundingFit({
   concert,
   works,
   institution,
+  capacity,
 }: {
   donor: Donor
   concert: SeasonFundingConcertInput
   works: readonly Work[]
   institution: InstitutionState
+  capacity?: number
 }): DonorConcertFundingFit {
   const programWorks = concert.program ? resolveProgramWorks(concert.program, works) : []
   const normalizedCost = concert.program
@@ -231,7 +260,8 @@ export function scoreDonorConcertFundingFit({
   )
   const appetiteMultiplier = appetiteScoreToMultiplier(appetiteScore)
   const commitmentFactor = clamp(0.35 + donor.commitment / 130 + donor.relationship / 450, 0.35, 1.25)
-  const maxPledge = Math.round(donor.capacity * appetiteMultiplier * commitmentFactor)
+  const pledgeCapacity = capacity ?? donor.capacity
+  const maxPledge = Math.round(pledgeCapacity * appetiteMultiplier * commitmentFactor)
   const volatilityRange = pledgeRange(maxPledge, donor.volatility)
 
   const notes: string[] = []
@@ -259,6 +289,74 @@ export function scoreDonorConcertFundingFit({
     workStances,
     notes,
   }
+}
+
+export function splitDonorCapacity(donor: Donor): DonorCapacitySplit {
+  const music = Math.max(0, donor.influenceWeights.music)
+  const institutional = Math.max(0, donor.influenceWeights.institutional)
+  const totalWeight = music + institutional || 100
+  const operatingPropensity = clamp(institutional / totalWeight, 0, 1)
+  const operatingBudget = Math.round(donor.capacity * operatingPropensity)
+  return {
+    donorId: donor.id,
+    totalCapacity: donor.capacity,
+    concertCapacity: Math.max(0, donor.capacity - operatingBudget),
+    operatingBudget,
+    operatingPropensity: roundTo(operatingPropensity, 3),
+  }
+}
+
+export function buildOperatingHealthProfile({
+  institution,
+  audienceState,
+}: {
+  institution: InstitutionState
+  audienceState?: AudienceState
+}): DonorInstitutionalPriorities {
+  const relationships = audienceState?.relationships ?? []
+  const averageAwareness = relationships.length > 0 ? average(relationships.map(row => row.awareness)) : institution.audienceTrust
+  const averageTrust = relationships.length > 0 ? average(relationships.map(row => row.trust)) : institution.audienceTrust
+  const averageHabit = relationships.length > 0 ? average(relationships.map(row => row.habit)) : institution.audienceTrust
+  const cashHealth = clamp(institution.cash / 4_000, 0, 100)
+  const earnedIncomeSignal = clamp((cashHealth * 0.6) + (institution.donorConfidence * 0.2) + (averageHabit * 0.2), 0, 100)
+
+  return {
+    prestige: Math.round(clamp(institution.artisticReputation, 0, 100)),
+    stability: Math.round(clamp(cashHealth * 0.5 + institution.donorConfidence * 0.35 + institution.musicianMorale * 0.15, 0, 100)),
+    access: Math.round(clamp(institution.identity.communityFocused * 0.55 + averageTrust * 0.3 + averageAwareness * 0.15, 0, 100)),
+    reach: Math.round(clamp(averageAwareness * 0.55 + averageHabit * 0.25 + institution.audienceTrust * 0.2, 0, 100)),
+    revenue: Math.round(earnedIncomeSignal),
+    innovation: Math.round(clamp(institution.identity.adventurous * 0.65 + institution.artisticReputation * 0.2 + institution.identity.scholarly * 0.15, 0, 100)),
+  }
+}
+
+export function computeOperatingSupport({
+  donors,
+  institution,
+  audienceState,
+  concertCount = 4,
+}: {
+  donors: readonly Donor[]
+  institution: InstitutionState
+  audienceState?: AudienceState
+  concertCount?: number
+}): DonorOperatingSupport[] {
+  const healthProfile = buildOperatingHealthProfile({ institution, audienceState })
+  return donors.map(donor => {
+    const split = splitDonorCapacity(donor)
+    const operatingFit = scoreInstitutionalFit(donor.institutionalPriorities, healthProfile)
+    const healthFactor = clamp((operatingFit + 50) / 100, 0, 1)
+    const projectedSeasonAmount = Math.round(split.operatingBudget * healthFactor)
+    const perConcertAmount = Math.round(projectedSeasonAmount / Math.max(1, concertCount))
+    return {
+      donorId: donor.id,
+      donorName: donor.name,
+      operatingBudget: split.operatingBudget,
+      healthFactor: roundTo(healthFactor, 3),
+      projectedSeasonAmount,
+      perConcertAmount,
+    }
+  })
 }
 
 // Fold the player's sway (dedication / restricted / pushed ask) into a fit:
@@ -298,12 +396,14 @@ export function computeSeasonFunding({
   concerts,
   works,
   institution,
+  audienceState,
   sway,
 }: {
   donors: readonly Donor[]
   concerts: readonly SeasonFundingConcertInput[]
   works: readonly Work[]
   institution: InstitutionState
+  audienceState?: AudienceState
   sway?: SwayState
 }): SeasonFundingResult {
   const normalizedConcerts = concerts
@@ -312,9 +412,18 @@ export function computeSeasonFunding({
 
   const fitByDonor = new Map<string, DonorConcertFundingFit[]>()
   const swayByKey = new Map<string, SwayOutcome>()
+  const capacityByDonor = new Map(donors.map(donor => [donor.id, splitDonorCapacity(donor)]))
+  const operatingSupport = computeOperatingSupport({
+    donors,
+    institution,
+    audienceState,
+    concertCount: Math.max(1, concerts.length || 4),
+  })
+  const operatingByDonor = new Map(operatingSupport.map(support => [support.donorId, support]))
   for (const donor of donors) {
+    const split = capacityByDonor.get(donor.id) ?? splitDonorCapacity(donor)
     const fits = normalizedConcerts.map(concert => {
-      const base = scoreDonorConcertFundingFit({ donor, concert, works, institution })
+      const base = scoreDonorConcertFundingFit({ donor, concert, works, institution, capacity: split.concertCapacity })
       if (!sway) return base
       const outcome = applySway(donor, base, sway)
       swayByKey.set(swayKey(donor.id, base.concertIndex), outcome)
@@ -333,7 +442,8 @@ export function computeSeasonFunding({
 
   for (const donor of donors) {
     const fits = fitByDonor.get(donor.id) ?? []
-    let remainingCapacity = donor.capacity
+    const split = capacityByDonor.get(donor.id) ?? splitDonorCapacity(donor)
+    let remainingCapacity = split.concertCapacity
     const donorConcertPledges: DonorConcertPledge[] = []
 
     if (donor.influenceWeights.institutional > donor.influenceWeights.music) {
@@ -354,7 +464,7 @@ export function computeSeasonFunding({
         const fit = eligible[0]
         const gap = remainingGap.get(fit.concertId) ?? 0
         const fitCapacity = remainingFitCapacity.get(fit.concertId) ?? 0
-        const spreadChunk = Math.max(2_500, donor.capacity * 0.22)
+        const spreadChunk = Math.max(2_500, split.concertCapacity * 0.22)
         const amount = Math.round(Math.min(gap, fitCapacity, remainingCapacity, spreadChunk))
         if (amount <= 0) break
         recordPledge({ donor, fit, amount, donorConcertPledges, pledgedByConcert })
@@ -417,6 +527,8 @@ export function computeSeasonFunding({
   })
 
   const donorResults = donors.map(donor => {
+    const split = capacityByDonor.get(donor.id) ?? splitDonorCapacity(donor)
+    const operating = operatingByDonor.get(donor.id)
     const pledges = donorPledges.get(donor.id) ?? []
     const pledged = pledges.reduce((sum, pledge) => sum + pledge.pledgedAmount, 0)
     const realized = pledges.reduce((sum, pledge) => sum + pledge.realizedAmount, 0)
@@ -430,9 +542,13 @@ export function computeSeasonFunding({
       donorId: donor.id,
       donorName: donor.name,
       capacity: donor.capacity,
+      concertCapacity: split.concertCapacity,
+      operatingBudget: split.operatingBudget,
+      operatingProjected: operating?.projectedSeasonAmount ?? 0,
+      operatingHealthFactor: operating?.healthFactor ?? 0,
       pledged,
       realized,
-      unusedCapacity: Math.max(0, donor.capacity - pledged),
+      unusedCapacity: Math.max(0, split.concertCapacity - pledged),
       pledges,
       fits: fitByDonor.get(donor.id) ?? [],
       relationshipDelta,
@@ -443,16 +559,24 @@ export function computeSeasonFunding({
   const seasonCost = concertResults.reduce((sum, concert) => sum + concert.cost, 0)
   const pledged = concertResults.reduce((sum, concert) => sum + concert.pledged, 0)
   const realized = concertResults.reduce((sum, concert) => sum + concert.realized, 0)
+  const operatingBudget = operatingSupport.reduce((sum, support) => sum + support.operatingBudget, 0)
+  const operatingProjected = operatingSupport.reduce((sum, support) => sum + support.projectedSeasonAmount, 0)
+  const projectedContributed = pledged + operatingProjected
   const goodwillSpent = [...swayByKey.values()].reduce((sum, outcome) => sum + outcome.goodwillCost, 0)
 
   return {
     seasonCost,
     pledged,
     realized,
+    operatingBudget,
+    operatingProjected,
+    projectedContributed,
     coveragePercent: seasonCost > 0 ? pledged / seasonCost : 0,
     realizedCoveragePercent: seasonCost > 0 ? realized / seasonCost : 0,
+    projectedCoveragePercent: seasonCost > 0 ? projectedContributed / seasonCost : 0,
     concerts: concertResults,
     donors: donorResults,
+    operatingSupport,
     goodwillSpent,
   }
 }

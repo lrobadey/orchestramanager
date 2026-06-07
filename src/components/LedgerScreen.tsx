@@ -32,6 +32,9 @@ export default function LedgerScreen({
   const donorWatch = allTransactions
     .filter(transaction => transaction.status === 'scheduled' && transaction.kind === 'donor-support' && transaction.amount > 0)
     .slice(0, 4)
+  const operatingWatch = allTransactions
+    .filter(transaction => transaction.status === 'scheduled' && transaction.kind === 'operating-support' && transaction.amount > 0)
+    .slice(0, 4)
   const billsQueued = allTransactions
     .filter(transaction => transaction.status === 'scheduled' && transaction.amount < 0)
     .slice(0, 4)
@@ -43,7 +46,7 @@ export default function LedgerScreen({
         name: slot.name,
         status: 'resolved',
         revenue: money(slot.report.revenue),
-        donor: money(slot.report.donorUplift),
+        donor: money(slot.report.donorUplift + (slot.report.operatingSupport ?? 0)),
         expenses: money(slot.report.expenses),
         net: money(slot.report.net),
       }
@@ -101,7 +104,7 @@ export default function LedgerScreen({
                   <span>Concert</span>
                   <span>Status</span>
                   <span>Revenue</span>
-                  <span>Donor</span>
+                  <span>Support</span>
                   <span>Expenses</span>
                   <span>Net</span>
                 </div>
@@ -123,6 +126,14 @@ export default function LedgerScreen({
                     <TransactionRow key={row.id} transaction={row} />
                   )) : (
                     <EmptyFinanceRow label="No donor pledges scheduled" />
+                  )}
+                </StubPanel>
+
+                <StubPanel title="Operating support" stub={false}>
+                  {operatingWatch.length > 0 ? operatingWatch.map(row => (
+                    <TransactionRow key={row.id} transaction={row} />
+                  )) : (
+                    <EmptyFinanceRow label="No operating checks scheduled" />
                   )}
                 </StubPanel>
 

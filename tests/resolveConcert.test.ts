@@ -419,7 +419,7 @@ describe('resolveConcert', () => {
 
     expect(report.attendance).toBe(reportAttendance)
     expect(report.revenue).toBe(reportRevenue)
-    expect(report.net).toBe(report.revenue + report.donorUplift - report.expenses)
+    expect(report.net).toBe(report.revenue + report.donorUplift + (report.operatingSupport ?? 0) - report.expenses)
     expect(studentReport.attendance).toBeGreaterThan(studentForecast.attendance)
     expect(studentReport.ticketRevenue).toBe(
       studentReport.attendance * studentReport.effectiveTicketPrice,
@@ -456,6 +456,20 @@ describe('resolveConcert', () => {
     // reflects it dollar-for-dollar — donors fund the season, not tip the night.
     expect(report.donorUplift).toBe(committed)
     expect(report.net).toBe(report.revenue + committed - report.expenses)
+  })
+
+  it('adds operating support as a separate contributed-income stream', () => {
+    const report = resolveConcert({
+      ...makeInput(safeProgram),
+      donorState: { donors: [] },
+      donorIncome: 30_000,
+      operatingSupport: 12_500,
+      roll: 50,
+    })
+
+    expect(report.donorUplift).toBe(30_000)
+    expect(report.operatingSupport).toBe(12_500)
+    expect(report.net).toBe(report.revenue + 30_000 + 12_500 - report.expenses)
   })
 })
 

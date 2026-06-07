@@ -6,7 +6,12 @@ import { startingInstitution } from '../data/institution'
 import { forecastProgram } from './forecastProgram'
 import { resolveConcert } from './resolveConcert'
 import { createInitialSeason, resolveSeasonConcert } from './season'
-import { computeSeasonFunding, scoreDonorConcertFundingFit, type SeasonFundingConcertInput } from './seasonFunding'
+import {
+  computeOperatingSupport,
+  computeSeasonFunding,
+  scoreDonorConcertFundingFit,
+  type SeasonFundingConcertInput,
+} from './seasonFunding'
 import { computeConcertBreach, applyBreachToFunding } from './seasonBreach'
 import {
   createSwayState,
@@ -125,9 +130,10 @@ export function useSeasonGame() {
         concerts: fundingConcerts,
         works,
         institution,
+        audienceState: season.audience,
         sway,
       }),
-    [season.donors.donors, fundingConcerts, institution, sway],
+    [season.donors.donors, fundingConcerts, institution, season.audience, sway],
   )
 
   const goodwillRemaining = Math.max(0, START_GOODWILL - seasonFunding.goodwillSpent)
@@ -290,6 +296,12 @@ export function useSeasonGame() {
     const committedConcert = season.funding?.concerts.find(
       concert => concert.concertIndex === season.currentSlotIndex,
     )
+    const operatingSupport = computeOperatingSupport({
+      donors: season.donors.donors,
+      institution,
+      audienceState: season.audience,
+      concertCount: season.slots.length,
+    }).reduce((sum, donor) => sum + donor.perConcertAmount, 0)
     const result = resolveConcert({
       works,
       institution,
@@ -299,6 +311,7 @@ export function useSeasonGame() {
       program,
       donorState: season.donors,
       donorIncome: committedConcert?.realized,
+      operatingSupport,
       roll: Math.random() * 100,
     })
     setReport(result)

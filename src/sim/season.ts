@@ -289,6 +289,7 @@ export function summarizeSeason(season: SeasonState): SeasonSummary | null {
     totalAttendance,
     totalRevenue: reports.reduce((sum, r) => sum + r.revenue, 0),
     totalDonorSupport: reports.reduce((sum, r) => sum + r.donorUplift, 0),
+    totalOperatingSupport: reports.reduce((sum, r) => sum + (r.operatingSupport ?? 0), 0),
     totalExpenses: reports.reduce((sum, r) => sum + r.expenses, 0),
     totalNet: reports.reduce((sum, r) => sum + r.net, 0),
     startingInstitution,

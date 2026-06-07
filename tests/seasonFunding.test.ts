@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  computeOperatingSupport,
   computeSeasonFunding,
   scoreDonorConcertFundingFit,
   scoreDonorWorkStance,
+  splitDonorCapacity,
 } from '../src/sim/seasonFunding'
 import { createSwayState, swayKey } from '../src/sim/seasonSway'
 import type {
@@ -343,6 +345,66 @@ describe('season funding allocation', () => {
     const highRelativeWidth = (high!.expectedHigh - high!.expectedLow) / high!.pledgedAmount
     expect(highRelativeWidth).toBeGreaterThan(lowRelativeWidth)
     expect(high!.realizedAmount).not.toBe(high!.pledgedAmount)
+  })
+
+  it('splits one donor wallet so institutional donors reserve operating budget before concert asks', () => {
+    const institutionalDonor = makeDonor({
+      id: 'operating-first',
+      capacity: 100_000,
+      relationship: 90,
+      loyalty: 90,
+      commitment: 90,
+      musicTaste: { ...zeroTaste, classicalCanon: 100, romantic: 80, accessible: 70 },
+      institutionalPriorities: { ...zeroPriorities, stability: 90, reach: 80, revenue: 75 },
+      influenceWeights: { music: 25, institutional: 75 },
+    })
+
+    const split = splitDonorCapacity(institutionalDonor)
+    const result = computeSeasonFunding({
+      donors: [institutionalDonor],
+      concerts: [{ index: 0, name: 'Canon night', program: programFor(['beethoven', 'mozart']), cost: 100_000 }],
+      works,
+      institution,
+    })
+
+    expect(split.operatingBudget).toBe(75_000)
+    expect(split.concertCapacity).toBe(25_000)
+    expect(result.donors[0].concertCapacity).toBe(25_000)
+    expect(result.donors[0].pledged).toBeLessThanOrEqual(25_000)
+    expect(result.donors[0].operatingBudget).toBe(75_000)
+  })
+
+  it('projects operating support from institutional health instead of concert appetite', () => {
+    const donor = makeDonor({
+      id: 'health-funder',
+      capacity: 80_000,
+      institutionalPriorities: { ...zeroPriorities, stability: 100, reach: 80, revenue: 80 },
+      influenceWeights: { music: 20, institutional: 80 },
+    })
+    const strong = computeOperatingSupport({
+      donors: [donor],
+      institution: {
+        ...institution,
+        cash: 420_000,
+        donorConfidence: 80,
+        audienceTrust: 82,
+        musicianMorale: 75,
+      },
+    })
+    const weak = computeOperatingSupport({
+      donors: [donor],
+      institution: {
+        ...institution,
+        cash: 40_000,
+        donorConfidence: 20,
+        audienceTrust: 25,
+        musicianMorale: 35,
+      },
+    })
+
+    expect(strong[0].operatingBudget).toBe(64_000)
+    expect(strong[0].projectedSeasonAmount).toBeGreaterThan(weak[0].projectedSeasonAmount)
+    expect(strong[0].perConcertAmount).toBe(Math.round(strong[0].projectedSeasonAmount / 4))
   })
 })
 
