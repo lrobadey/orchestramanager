@@ -1,6 +1,13 @@
 # Season Funding — P4: Mutation Consequences (Breach → Withdrawal)
 
-Status: **Specced** · Branch: `season-funding-redesign` · Parents: [`SEASON_FUNDING_MODEL.md`](./SEASON_FUNDING_MODEL.md), [`SEASON_FUNDING_P3.md`](./SEASON_FUNDING_P3.md)
+Status: **Built** · Branch: `season-funding-redesign` · Parents: [`SEASON_FUNDING_MODEL.md`](./SEASON_FUNDING_MODEL.md), [`SEASON_FUNDING_P3.md`](./SEASON_FUNDING_P3.md)
+
+> **Build note.** In-season revision is currently scoped to the **active (next)
+> concert** — the one about to play — rather than any arbitrary future slot:
+> open the Programme screen in-season, edit freely, and a live breach preview +
+> Confirm/Discard gate applies it. Editing concerts further out, and a
+> persistent in-season coverage view (beyond the revise-time preview), are
+> follow-ups.
 
 P4 closes the loop between **the ask** and **a mutable plan**. A committed pledge
 is collateral on the program the donor was shown. P4 lets the player change an

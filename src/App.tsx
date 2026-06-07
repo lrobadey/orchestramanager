@@ -13,6 +13,7 @@ import AudienceRelationsScreen from './components/AudienceRelationsScreen'
 import EnterScreen from './components/EnterScreen'
 import FoundingNameScreen from './components/FoundingNameScreen'
 import SeasonPlanScreen from './components/SeasonPlanScreen'
+import ReviseBar from './components/funding/ReviseBar'
 import AppShell from './components/AppShell'
 import ConsoleScreen from './components/ConsoleScreen'
 import { useSeasonGame } from './sim/useSeasonGame'
@@ -45,6 +46,11 @@ export default function App() {
     toggleDedication,
     setAsk,
     toggleRestricted,
+    isEditing,
+    breachPreview,
+    editingConcertFunding,
+    confirmEdit,
+    cancelEdit,
     beginSeason,
     filledSlotWorks,
     currentSlotName,
@@ -211,8 +217,18 @@ export default function App() {
           onSlotDragEnd={handleSlotDrop}
           onProgramChange={setProgram}
           onRunConcert={handleRunConcert}
-          locked={seasonStarted}
+          locked={false}
+          showLaunch={false}
           rightRail={null}
+        />
+        <ReviseBar
+          isEditing={isEditing}
+          breach={breachPreview}
+          concert={editingConcertFunding}
+          runReady={forecast.isComplete}
+          onConfirm={confirmEdit}
+          onCancel={cancelEdit}
+          onRun={handleRunConcert}
         />
       </ConsoleScreen>
     )

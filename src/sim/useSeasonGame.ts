@@ -6,7 +6,8 @@ import { startingInstitution } from '../data/institution'
 import { forecastProgram } from './forecastProgram'
 import { resolveConcert } from './resolveConcert'
 import { createInitialSeason, resolveSeasonConcert } from './season'
-import { computeSeasonFunding, type SeasonFundingConcertInput } from './seasonFunding'
+import { computeSeasonFunding, scoreDonorConcertFundingFit, type SeasonFundingConcertInput } from './seasonFunding'
+import { computeConcertBreach, applyBreachToFunding } from './seasonBreach'
 import {
   createSwayState,
   swayKey,
@@ -83,6 +84,10 @@ export function useSeasonGame() {
   // The player's sway over donors during planning: dedications, pushed asks, and
   // restricted asks. Frozen into the committed funding when the season begins.
   const [sway, setSway] = useState<SwayState>(createSwayState)
+  // Mid-season revision: an uncommitted draft of the active concert's program.
+  // Editing in-season stages here so the player can explore freely; the change
+  // (and any donor breach) only lands on confirm. Null when not revising.
+  const [editDraft, setEditDraft] = useState<ConcertProgram | null>(null)
 
   const institution = season.institution
   const livePrincipals = season.roster.principals
@@ -91,7 +96,10 @@ export function useSeasonGame() {
   // Pre-season the player edits the selected slot; in-season the "active" program
   // is the concert currently up for resolution.
   const activeProgramIndex = seasonStarted ? Math.min(season.currentSlotIndex, 3) : selectedSlot
-  const program = draftPrograms[activeProgramIndex]
+  // In-season the active concert can be revised: show the working draft if one is
+  // open, otherwise the committed program.
+  const isEditing = seasonStarted && editDraft != null
+  const program = isEditing ? (editDraft as ConcertProgram) : draftPrograms[activeProgramIndex]
 
   const planComplete = useMemo(() => isSeasonPlanComplete(draftPrograms), [draftPrograms])
 
@@ -153,6 +161,84 @@ export function useSeasonGame() {
     }))
   }
 
+  // Live breach preview while revising: who would withdraw, and how much, if the
+  // current draft were confirmed. Recomputed as the player drags — but nothing
+  // is applied until confirmEdit.
+  const breachPreview = useMemo(() => {
+    if (!isEditing || !editDraft || !season.funding) return null
+    const committedConcert = season.funding.concerts.find(c => c.concertIndex === activeProgramIndex)
+    if (!committedConcert) return null
+    return computeConcertBreach({
+      donors: season.donors.donors,
+      committedProgram: draftPrograms[activeProgramIndex],
+      newProgram: editDraft,
+      committedPledges: committedConcert.pledges,
+      works,
+      institution,
+      concertIndex: activeProgramIndex,
+      concertName: season.slots[activeProgramIndex].name,
+    })
+  }, [isEditing, editDraft, season.funding, season.donors.donors, draftPrograms, activeProgramIndex, institution, season.slots])
+
+  // The committed funding for the concert currently being revised (for coverage
+  // context in the revise UI).
+  const editingConcertFunding = isEditing
+    ? season.funding?.concerts.find(c => c.concertIndex === activeProgramIndex) ?? null
+    : null
+
+  // Confirm a revision: swap in the new program, then apply any donor breach —
+  // pledges shrink, donors cool, doors can close, and the reduced money flows to
+  // cash when the concert resolves.
+  function confirmEdit() {
+    if (!editDraft) return
+    const idx = activeProgramIndex
+    const funding = season.funding
+    if (funding) {
+      const committedConcert = funding.concerts.find(c => c.concertIndex === idx)
+      const breach = computeConcertBreach({
+        donors: season.donors.donors,
+        committedProgram: draftPrograms[idx],
+        newProgram: editDraft,
+        committedPledges: committedConcert?.pledges ?? [],
+        works,
+        institution,
+        concertIndex: idx,
+        concertName: season.slots[idx].name,
+      })
+      const newFits = season.donors.donors
+        .map(donor =>
+          scoreDonorConcertFundingFit({
+            donor,
+            concert: { index: idx, name: season.slots[idx].name, program: editDraft },
+            works,
+            institution,
+          }),
+        )
+      const newFunding = applyBreachToFunding({ funding, concertIndex: idx, breach, newFits })
+      const coolByDonor = new Map(breach.withdrawals.map(w => [w.donorId, w]))
+      const cooledDonors = season.donors.donors.map(donor => {
+        const w = coolByDonor.get(donor.id)
+        if (!w) return donor
+        return {
+          ...donor,
+          relationship: clamp(donor.relationship + w.relationshipDelta, 0, 100),
+          loyalty: clamp(donor.loyalty + w.loyaltyDelta, 0, 100),
+        }
+      })
+      setSeason(prev => ({ ...prev, funding: newFunding, donors: { donors: cooledDonors } }))
+    }
+    setDraftPrograms(prev => {
+      const copy = [...prev] as SeasonPrograms
+      copy[idx] = editDraft
+      return copy
+    })
+    setEditDraft(null)
+  }
+
+  function cancelEdit() {
+    setEditDraft(null)
+  }
+
   function toggleRestricted(donorId: string, concertIndex: number) {
     if (seasonStarted) return
     setSway(prev => {
@@ -165,8 +251,13 @@ export function useSeasonGame() {
   }
 
   function setProgram(next: ConcertProgram) {
-    // Locked once the season is under way: no editing the committed plan.
-    if (seasonStarted) return
+    // In-season, edits stage into a draft (revision) rather than mutating the
+    // committed plan directly — the change only lands, with any breach, on
+    // confirm. Pre-season this edits the draft plan in place.
+    if (seasonStarted) {
+      setEditDraft(next)
+      return
+    }
     setDraftPrograms(prev => {
       const copy = [...prev] as SeasonPrograms
       copy[activeProgramIndex] = next
@@ -190,6 +281,9 @@ export function useSeasonGame() {
 
   function handleRunConcert() {
     if (!forecast.isComplete) return
+    // Resolve only the committed program — an open revision must be confirmed or
+    // discarded first.
+    if (editDraft) return
     // The night's donor income is the committed pledges that latched to this
     // concert, realized with their volatility. Falls back to the legacy estimate
     // only if no plan was committed (defensive — should not happen in play).
@@ -216,6 +310,8 @@ export function useSeasonGame() {
     setSeason(prev => resolveSeasonConcert(prev, draftPrograms[prev.currentSlotIndex], report, works))
     setReport(null)
     setPhase('planning')
+    // The active concert advances; drop any stale revision draft.
+    setEditDraft(null)
   }
 
   function handleDone() {
@@ -266,6 +362,7 @@ export function useSeasonGame() {
     setDraftPrograms(emptyDraftPrograms())
     setSelectedSlot(0)
     setSway(createSwayState())
+    setEditDraft(null)
     setSeasonStarted(false)
     setReport(null)
     setPhase('planning')
@@ -317,6 +414,11 @@ export function useSeasonGame() {
     toggleDedication,
     setAsk,
     toggleRestricted,
+    isEditing,
+    breachPreview,
+    editingConcertFunding,
+    confirmEdit,
+    cancelEdit,
     beginSeason,
     slotWorks,
     filledSlotWorks,
