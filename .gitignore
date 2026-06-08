@@ -6,5 +6,6 @@ dist/
 
 # Local agent/tooling artifacts
 .pi/
+.tmp.driveupload/
 .understand-anything/
 open.png
