@@ -10,6 +10,7 @@ import { ForecastInput, forecastProgram, computeIdentityProgramFit } from './for
 import { calculateRosterChangesAfterConcert } from './roster'
 import { clamp, average, HALL_CAPACITY, computeDonorUplift, capAudienceToHall } from './scoring'
 import { estimateDonorUpliftFromDonors } from './donorReactions'
+import { updateAudienceAfterConcert, summarizeAudienceTrust } from './audienceReactions'
 
 // roll: 0-100, where 50 = neutral, <50 = worse than expected, >50 = better
 // Pass roll = 50 in tests for deterministic output.
@@ -22,6 +23,10 @@ export interface ResolveInput extends ForecastInput {
   // Unrestricted institutional support earned from current health. Kept
   // separate from concert-latched pledges for report and ledger readability.
   operatingSupport?: number
+  // Whether this is the season opener. Forwarded to the audience-relationship
+  // model so the realized audience-trust delta this report reports matches the
+  // movement resolveSeasonConcert will actually apply to the meter.
+  isOpeningNight?: boolean
 }
 
 function sectionLabel(section: string): string {
@@ -332,7 +337,31 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const coreRow = audienceBreakdown.find(r => r.segmentId === 'classical-core')
     ?? audienceBreakdown.find(r => r.segmentId === 'seasoned-supporters')
   const coreShare = coreRow?.shareOfHouse ?? 0.2
-  const trustDelta = Math.round(clamp((audienceResponse - 50) * 0.2 + (coreShare - 0.25) * 10 + identityFit * 0.08, -10, 10))
+  const heuristicTrustDelta = Math.round(clamp((audienceResponse - 50) * 0.2 + (coreShare - 0.25) * 10 + identityFit * 0.08, -10, 10))
+
+  // The institution's audience-trust meter is the summarized audience-relationship
+  // trust: resolveSeasonConcert overwrites it with summarizeAudienceTrust(nextAudience).
+  // The heuristic above was therefore silently discarded, so the delta the player
+  // read on the vitals strip and the concert report never matched the meter's real
+  // movement. When the city audience model is wired in, derive the delta from that
+  // same model so the displayed change equals the change the meter will apply.
+  let trustDelta = heuristicTrustDelta
+  if (input.cityAudienceSegments && input.cityAudienceSegments.length > 0 && input.audienceState) {
+    const audienceModelInstitution = {
+      ...input.institution,
+      artisticReputation: clamp(input.institution.artisticReputation + reputationDelta, 0, 100),
+    }
+    const projectedAudience = updateAudienceAfterConcert({
+      audienceState: input.audienceState,
+      cityAudienceSegments: input.cityAudienceSegments,
+      program: input.program,
+      report: { audienceBreakdown, audienceResponse, performanceQuality } as ConcertReport,
+      works,
+      institution: audienceModelInstitution,
+      isOpeningNight: input.isOpeningNight ?? false,
+    })
+    trustDelta = summarizeAudienceTrust(projectedAudience) - input.institution.audienceTrust
+  }
   const attendanceRate = attendance / HALL_CAPACITY
   const donorDelta = Math.round(clamp(
     (forecast.donorResponse - 50) * 0.25
