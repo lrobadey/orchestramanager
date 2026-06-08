@@ -42,6 +42,13 @@ const ERA_LABEL: Record<Era, string> = {
   'late-romantic': 'Late Romantic',
   contemporary: 'Contemporary',
 }
+
+const WORK_STAT_TOOLTIPS = {
+  duration: 'Duration: how long the piece is in minutes.',
+  prestige: 'Prestige: artistic/status value for critics, reputation, and donors.',
+  draw: 'Audience draw: how naturally attractive the piece is to ticket buyers.',
+  load: 'Rehearsal load: preparation pressure placed on the orchestra.',
+}
 const ERA_TONE: Record<Era, string> = {
   baroque: 'gold',
   classical: 'silver',
@@ -428,10 +435,10 @@ function LibraryTile({
       </div>
       <div className="programme-library-title">{work.title}</div>
       <div className="programme-library-meta">
-        <span title="Duration in minutes">{work.durationMinutes}m</span>
-        <span title="Artistic prestige">P{work.artisticPrestige}</span>
-        <span title="Audience draw">D{work.audienceDraw}</span>
-        <span title="Rehearsal load">L{work.rehearsalLoad}</span>
+        <span title={WORK_STAT_TOOLTIPS.duration} aria-label={WORK_STAT_TOOLTIPS.duration}>{work.durationMinutes}m</span>
+        <span title={WORK_STAT_TOOLTIPS.prestige} aria-label={WORK_STAT_TOOLTIPS.prestige}>P{work.artisticPrestige}</span>
+        <span title={WORK_STAT_TOOLTIPS.draw} aria-label={WORK_STAT_TOOLTIPS.draw}>D{work.audienceDraw}</span>
+        <span title={WORK_STAT_TOOLTIPS.load} aria-label={WORK_STAT_TOOLTIPS.load}>L{work.rehearsalLoad}</span>
       </div>
     </button>
   )
