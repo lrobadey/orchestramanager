@@ -161,21 +161,34 @@ export default function SeasonTrail({
         <div className="hc-eyebrow" style={{ color: 'var(--silver)' }}>The Season</div>
         <div className="label-line">SEPT ▸ JUNE</div>
       </div>
-      <div className="trail-corner bl">
-        <div className="blurb">
-          {resolvedCount} done · {seasonComplete ? '0 in flight' : '1 in flight'} · {Math.max(0, 4 - resolvedCount - (seasonComplete ? 0 : 1))} ahead
+
+      {/* Founding mode keeps the trail quiet — no play-mode status chrome,
+          just a single readout of how many concerts are programmed. */}
+      {selectable ? (
+        <div className="trail-corner br">
+          <div className="label-line">
+            {season.slots.filter((_, i) => isComplete(i)).length}/4 PROGRAMMED
+          </div>
         </div>
-        <div className="label-line">KARTTA / {season.slots[0]?.name?.split('·')[0] ?? 'SEASON'}</div>
-      </div>
-      <div className="trail-corner tr">
-        <div className="hc-eyebrow" style={{ color: 'var(--silver-dim)' }}>NEXT TURN</div>
-        <div className="blurb">{seasonComplete ? 'Season II glimpsed →' : 'IV closes the season'}</div>
-      </div>
-      <div className="trail-corner br">
-        <div className="label-line">
-          {seasonComplete ? 'SEASON CLOSED' : `${CONCERT_ROMAN[activeIdx]} IN PROGRAMMING`}
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="trail-corner bl">
+            <div className="blurb">
+              {resolvedCount} done · {seasonComplete ? '0 in flight' : '1 in flight'} · {Math.max(0, 4 - resolvedCount - (seasonComplete ? 0 : 1))} ahead
+            </div>
+            <div className="label-line">KARTTA / {season.slots[0]?.name?.split('·')[0] ?? 'SEASON'}</div>
+          </div>
+          <div className="trail-corner tr">
+            <div className="hc-eyebrow" style={{ color: 'var(--silver-dim)' }}>NEXT TURN</div>
+            <div className="blurb">{seasonComplete ? 'Season II glimpsed →' : 'IV closes the season'}</div>
+          </div>
+          <div className="trail-corner br">
+            <div className="label-line">
+              {seasonComplete ? 'SEASON CLOSED' : `${CONCERT_ROMAN[activeIdx]} IN PROGRAMMING`}
+            </div>
+          </div>
+        </>
+      )}
 
       {season.slots.map((slot, i) => {
         const pos = LANDMARK_POS[i]
