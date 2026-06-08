@@ -56,6 +56,9 @@ export function buildConcertFinanceTransactions(
   return [
     posted('ticket-revenue', 'Ticket revenue', report.revenue),
     scheduled('donor-support', 'Donor support', report.donorUplift),
+    ...(report.operatingSupport && report.operatingSupport > 0
+      ? [scheduled('operating-support', 'Operating support', report.operatingSupport)]
+      : []),
     scheduled('base-cost', 'Hall and fixed concert costs', -report.expenseBreakdown.baseConcert),
     posted('rehearsal-cost', 'Rehearsal costs', -report.expenseBreakdown.rehearsal),
     posted('marketing-cost', 'Marketing spend', -report.expenseBreakdown.marketing),

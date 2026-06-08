@@ -23,6 +23,14 @@ interface ProgramBuilderProps {
   onSlotDragEnd: (sourceIdx: number, point: { x: number; y: number }) => void
   onProgramChange: (next: ConcertProgram) => void
   onRunConcert: () => void
+  // Read-only review of a committed program (in-season, after the plan locks).
+  locked?: boolean
+  // Hide the per-concert "Run Concert" CTA (the season-plan screen commits the
+  // whole season at once instead of running individual concerts).
+  showLaunch?: boolean
+  // Hide the right-hand forecast column (the season-plan screen surfaces the
+  // forecast on its own tab instead of crowding the builder).
+  showForecast?: boolean
 }
 
 const ROMAN = ['I', 'II', 'III']
@@ -33,6 +41,13 @@ const ERA_LABEL: Record<Era, string> = {
   romantic: 'Romantic',
   'late-romantic': 'Late Romantic',
   contemporary: 'Contemporary',
+}
+
+const WORK_STAT_TOOLTIPS = {
+  duration: 'Duration: how long the piece is in minutes.',
+  prestige: 'Prestige: artistic/status value for critics, reputation, and donors.',
+  draw: 'Audience draw: how naturally attractive the piece is to ticket buyers.',
+  load: 'Rehearsal load: preparation pressure placed on the orchestra.',
 }
 const ERA_TONE: Record<Era, string> = {
   baroque: 'gold',
@@ -80,6 +95,7 @@ function SlotRow({
   perWorkRisk,
   hoursNeeded,
   hours,
+  locked,
   registerRef,
   onDropWork,
   onClear,
@@ -90,6 +106,7 @@ function SlotRow({
   perWorkRisk: number | null
   hoursNeeded: number | null
   hours: number
+  locked: boolean
   registerRef: (el: HTMLDivElement | null) => void
   onDropWork: (index: number, workId: string) => void
   onClear: (index: number) => void
@@ -101,6 +118,7 @@ function SlotRow({
   const progress = hoursNeeded && hoursNeeded > 0 ? Math.min(100, (hours / hoursNeeded) * 100) : 0
 
   function handleDragOver(event: DragEvent<HTMLDivElement>) {
+    if (locked) return
     event.preventDefault()
     setIsDropActive(true)
   }
@@ -110,6 +128,7 @@ function SlotRow({
   }
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
+    if (locked) return
     event.preventDefault()
     setIsDropActive(false)
     const workId = event.dataTransfer.getData('text/work-id') || event.dataTransfer.getData('text/plain')
@@ -120,7 +139,7 @@ function SlotRow({
   return (
     <div
       ref={registerRef}
-      className={`programme-slot ${isDropActive ? 'is-drop-active' : ''}`}
+      className={`programme-slot ${isDropActive ? 'is-drop-active' : ''} ${locked ? 'is-locked' : ''}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -137,11 +156,11 @@ function SlotRow({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.18 }}
-              drag
+              drag={!locked}
               dragSnapToOrigin
               dragElastic={0.6}
               whileDrag={{ opacity: 0.7, zIndex: 50 }}
-              onDragEnd={(_, info: PanInfo) => onDragEnd(info.point)}
+              onDragEnd={locked ? undefined : (_, info: PanInfo) => onDragEnd(info.point)}
             >
               <div className="programme-slot-title" title={work.title}>
                 {work.title}
@@ -209,15 +228,17 @@ function SlotRow({
         </div>
       </div>
 
-      <button
-        type="button"
-        className="programme-slot-clear"
-        onClick={() => onClear(index)}
-        aria-label={`Clear slot ${ROMAN[index]}`}
-        disabled={!work}
-      >
-        ×
-      </button>
+      {!locked && (
+        <button
+          type="button"
+          className="programme-slot-clear"
+          onClick={() => onClear(index)}
+          aria-label={`Clear slot ${ROMAN[index]}`}
+          disabled={!work}
+        >
+          ×
+        </button>
+      )}
     </div>
   )
 }
@@ -275,11 +296,13 @@ function RehearsalAllocator({
   allocation,
   workCount,
   perWorkPressure,
+  locked,
   onChange,
 }: {
   allocation: SlotTuple<number>
   workCount: 2 | 3
   perWorkPressure: SlotTuple<number | null>
+  locked: boolean
   onChange: (next: SlotTuple<number>) => void
 }) {
   const barRef = useRef<HTMLDivElement>(null)
@@ -339,7 +362,7 @@ function RehearsalAllocator({
           )
         })}
 
-        {workCount === 2 ? (
+        {locked ? null : workCount === 2 ? (
           <Marker
             hours={m1}
             minHours={1}
@@ -382,10 +405,12 @@ function RehearsalAllocator({
 function LibraryTile({
   work,
   used,
+  locked,
   onClick,
 }: {
   work: Work
   used: boolean
+  locked: boolean
   onClick: () => void
 }) {
   function handleDragStart(event: DragEvent<HTMLButtonElement>) {
@@ -399,9 +424,9 @@ function LibraryTile({
     <button
       type="button"
       className={`programme-library-item ${used ? 'is-used' : ''}`}
-      draggable={!used}
-      onDragStart={handleDragStart}
-      onClick={used ? undefined : onClick}
+      draggable={!used && !locked}
+      onDragStart={locked ? undefined : handleDragStart}
+      onClick={used || locked ? undefined : onClick}
       title={used ? 'In programme' : ''}
     >
       <div className="programme-library-item-top">
@@ -410,10 +435,10 @@ function LibraryTile({
       </div>
       <div className="programme-library-title">{work.title}</div>
       <div className="programme-library-meta">
-        <span title="Duration in minutes">{work.durationMinutes}m</span>
-        <span title="Artistic prestige">P{work.artisticPrestige}</span>
-        <span title="Audience draw">D{work.audienceDraw}</span>
-        <span title="Rehearsal load">L{work.rehearsalLoad}</span>
+        <span title={WORK_STAT_TOOLTIPS.duration} aria-label={WORK_STAT_TOOLTIPS.duration}>{work.durationMinutes}m</span>
+        <span title={WORK_STAT_TOOLTIPS.prestige} aria-label={WORK_STAT_TOOLTIPS.prestige}>P{work.artisticPrestige}</span>
+        <span title={WORK_STAT_TOOLTIPS.draw} aria-label={WORK_STAT_TOOLTIPS.draw}>D{work.audienceDraw}</span>
+        <span title={WORK_STAT_TOOLTIPS.load} aria-label={WORK_STAT_TOOLTIPS.load}>L{work.rehearsalLoad}</span>
       </div>
     </button>
   )
@@ -431,9 +456,13 @@ export default function ProgramBuilder({
   onSlotDragEnd,
   onProgramChange,
   onRunConcert,
+  locked = false,
+  showLaunch = true,
+  showForecast = true,
 }: ProgramBuilderProps) {
   const [search, setSearch] = useState('')
   const [eraFilter, setEraFilter] = useState<Era | 'all'>('all')
+  const [productionOpen, setProductionOpen] = useState(false)
 
   const slotWorks = useMemo(
     () => program.workIds.map(id => findWork(works, id)) as SlotTuple<Work | null>,
@@ -481,6 +510,7 @@ export default function ProgramBuilder({
   }, [program.intermissionAfter, program.workCount, slotWorks])
 
   function setWorkCount(workCount: 2 | 3) {
+    if (locked) return
     if (program.workCount === workCount) return
     if (workCount === 2) {
       onProgramChange({
@@ -501,6 +531,7 @@ export default function ProgramBuilder({
   }
 
   function toggleIntermission(pos: 0 | 1) {
+    if (locked) return
     const next = program.intermissionAfter === pos ? null : pos
     onProgramChange({ ...program, intermissionAfter: next })
   }
@@ -540,8 +571,8 @@ export default function ProgramBuilder({
   const activeSlots = Array.from({ length: program.workCount }, (_, index) => index)
 
   return (
-    <div className={`programme-shell ${isDragging ? 'dragging-mode' : ''}`}>
-      <div className="programme-floor">
+    <div className={`programme-shell ${isDragging ? 'dragging-mode' : ''} ${locked ? 'is-locked' : ''}`}>
+      <div className={`programme-floor ${showForecast ? '' : 'no-forecast'}`}>
         <section className="programme-column programme-column-left">
           <div className="programme-section-head">
             <span className="eyebrow">Programme</span>
@@ -555,6 +586,7 @@ export default function ProgramBuilder({
               type="button"
               className={program.workCount === 2 ? 'active' : ''}
               onClick={() => setWorkCount(2)}
+              disabled={locked}
             >
               2 Works
             </button>
@@ -562,6 +594,7 @@ export default function ProgramBuilder({
               type="button"
               className={program.workCount === 3 ? 'active' : ''}
               onClick={() => setWorkCount(3)}
+              disabled={locked}
             >
               3 Works
             </button>
@@ -578,6 +611,7 @@ export default function ProgramBuilder({
                       className={program.intermissionAfter === index - 1 ? 'active' : ''}
                       onClick={() => toggleIntermission((index - 1) as 0 | 1)}
                       aria-pressed={program.intermissionAfter === index - 1}
+                      disabled={locked}
                     >
                       {program.intermissionAfter === index - 1 ? 'Intermission' : '+ Intermission'}
                     </button>
@@ -591,6 +625,7 @@ export default function ProgramBuilder({
                   perWorkRisk={forecast.perWorkPerformanceRisk[index]}
                   hoursNeeded={forecast.perWorkRehearsalHoursNeeded[index]}
                   hours={program.rehearsalAllocation[index]}
+                  locked={locked}
                   registerRef={el => registerSlotRef(index, el)}
                   onDropWork={placeInSlot}
                   onClear={clearSlot}
@@ -616,14 +651,26 @@ export default function ProgramBuilder({
             allocation={program.rehearsalAllocation}
             workCount={program.workCount}
             perWorkPressure={forecast.perWorkRehearsalPressure}
+            locked={locked}
             onChange={next => onProgramChange({ ...program, rehearsalAllocation: next })}
           />
 
-          <section className="programme-production">
-            <div className="programme-section-head">
+          <section className={`programme-production ${productionOpen ? 'is-open' : ''}`}>
+            <button
+              type="button"
+              className="programme-production-toggle-head"
+              aria-expanded={productionOpen}
+              onClick={() => setProductionOpen(open => !open)}
+            >
               <span className="eyebrow">Production</span>
-            </div>
+              <span className="programme-production-summary">
+                ${program.ticketPrice} · ${(program.marketingSpend / 1000).toFixed(0)}K mktg
+                {program.studentTicketsEnabled ? ' · students' : ''}
+              </span>
+              <span className="programme-production-chev">{productionOpen ? '–' : '+'}</span>
+            </button>
 
+            {productionOpen && (
             <div className="programme-production-grid">
               <div className="programme-production-cell">
                 <div className="programme-production-row">
@@ -637,6 +684,7 @@ export default function ProgramBuilder({
                   max={120}
                   step={5}
                   value={program.ticketPrice}
+                  disabled={locked}
                   onChange={e => onProgramChange({ ...program, ticketPrice: Number(e.target.value) })}
                 />
               </div>
@@ -655,6 +703,7 @@ export default function ProgramBuilder({
                   max={30000}
                   step={1000}
                   value={program.marketingSpend}
+                  disabled={locked}
                   onChange={e => onProgramChange({ ...program, marketingSpend: Number(e.target.value) })}
                 />
               </div>
@@ -665,6 +714,7 @@ export default function ProgramBuilder({
                 </div>
                 <select
                   value={program.marketingStyle ?? 'digital'}
+                  disabled={locked}
                   onChange={e => onProgramChange({ ...program, marketingStyle: e.target.value as ConcertProgram['marketingStyle'] })}
                   style={{ width: '100%' }}
                 >
@@ -679,6 +729,7 @@ export default function ProgramBuilder({
                   <input
                     type="checkbox"
                     checked={program.studentTicketsEnabled}
+                    disabled={locked}
                     onChange={e =>
                       onProgramChange({ ...program, studentTicketsEnabled: e.target.checked })
                     }
@@ -696,25 +747,28 @@ export default function ProgramBuilder({
                   max={50}
                   step={5}
                   value={program.studentTicketPrice}
-                  disabled={!program.studentTicketsEnabled}
+                  disabled={locked || !program.studentTicketsEnabled}
                   onChange={e =>
                     onProgramChange({ ...program, studentTicketPrice: Number(e.target.value) })
                   }
                 />
               </div>
             </div>
+            )}
           </section>
 
-          <div className="programme-launch">
-            <button
-              type="button"
-              className="programme-cta"
-              onClick={handleRun}
-              disabled={!forecast.isComplete}
-            >
-              {forecast.isComplete ? 'Run Concert' : `Fill ${program.workCount} works to continue`}
-            </button>
-          </div>
+          {showLaunch && (
+            <div className="programme-launch">
+              <button
+                type="button"
+                className="programme-cta"
+                onClick={handleRun}
+                disabled={!forecast.isComplete}
+              >
+                {forecast.isComplete ? 'Run Concert' : `Fill ${program.workCount} works to continue`}
+              </button>
+            </div>
+          )}
         </section>
 
         <section className="programme-column programme-column-center">
@@ -780,6 +834,7 @@ export default function ProgramBuilder({
                         key={work.id}
                         work={work}
                         used={usedIds.has(work.id)}
+                        locked={locked}
                         onClick={() => placeInFirstEmpty(work.id)}
                       />
                     ))}
@@ -794,13 +849,15 @@ export default function ProgramBuilder({
           </div>
         </section>
 
-        <aside className="programme-column programme-column-right">
-          <ConcertForecastView
-            forecast={forecast}
-            slotWorks={forecastSlotWorks}
-            workCount={program.workCount}
-          />
-        </aside>
+        {showForecast && (
+          <aside className="programme-column programme-column-right">
+            <ConcertForecastView
+              forecast={forecast}
+              slotWorks={forecastSlotWorks}
+              workCount={program.workCount}
+            />
+          </aside>
+        )}
       </div>
     </div>
   )

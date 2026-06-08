@@ -1,4 +1,8 @@
 import type { GameCalendar, ISODateString } from './calendar'
+// Type-only import: the funding result shapes live with the engine that
+// produces them. `import type` is erased at build time, so this does not create
+// a runtime module cycle with seasonFunding.ts (which imports state types here).
+import type { SeasonFundingResult } from '../sim/seasonFunding'
 
 export type Era = 'baroque' | 'classical' | 'romantic' | 'late-romantic' | 'contemporary'
 
@@ -241,6 +245,7 @@ export interface ConcertForecast {
   projectedAttendance: number
   projectedRevenue: number
   projectedDonorUplift: number
+  projectedOperatingSupport: number
   projectedAudienceBreakdown: AudienceBreakdown[]
   marketingImpact: MarketingImpact
   projectedExpenses: number
@@ -326,6 +331,7 @@ export interface ConcertReport {
   attendance: number
   revenue: number
   donorUplift: number
+  operatingSupport?: number
   marketingDonorSignal?: number
   audienceBreakdown: AudienceBreakdown[]
   expenses: number
@@ -345,6 +351,7 @@ export interface ConcertReport {
 export type FinanceTransactionKind =
   | 'ticket-revenue'
   | 'donor-support'
+  | 'operating-support'
   | 'base-cost'
   | 'rehearsal-cost'
   | 'marketing-cost'
@@ -390,12 +397,17 @@ export interface SeasonState {
   roster: RosterState
   donors: DonorState
   audience: AudienceState
+  // Donor pledges committed when the season begins ("the ask"). Frozen from the
+  // live auto-fill at commit time; concerts resolve their donor income against
+  // it. Null until the plan is committed.
+  funding: SeasonFundingResult | null
 }
 
 export interface SeasonSummary {
   totalAttendance: number
   totalRevenue: number
   totalDonorSupport: number
+  totalOperatingSupport: number
   totalExpenses: number
   totalNet: number
   startingInstitution: InstitutionState

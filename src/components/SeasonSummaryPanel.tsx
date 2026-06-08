@@ -84,8 +84,14 @@ export default function SeasonSummaryPanel({ summary, onNewSeason }: SeasonSumma
         </div>
         {summary.totalDonorSupport > 0 && (
           <div className="report-stat">
-            <span className="report-stat-label">Donor support</span>
+            <span className="report-stat-label">Concert pledges</span>
             <span className="report-stat-num aurora">{fmt$(summary.totalDonorSupport)}</span>
+          </div>
+        )}
+        {summary.totalOperatingSupport > 0 && (
+          <div className="report-stat">
+            <span className="report-stat-label">Operating support</span>
+            <span className="report-stat-num aurora">{fmt$(summary.totalOperatingSupport)}</span>
           </div>
         )}
         <div className="report-stat">

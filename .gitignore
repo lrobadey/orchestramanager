@@ -3,3 +3,8 @@ dist/
 .DS_Store
 .claude/
 .playwright-mcp/
+
+# Local agent/tooling artifacts
+.pi/
+.understand-anything/
+open.png

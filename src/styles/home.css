@@ -89,7 +89,7 @@
   position: relative;
   border-bottom: 1px solid var(--hairline);
 }
-.home-stratum.canopy { background: linear-gradient(180deg, #0c1814 0%, #0a1612 100%); padding: 0 56px 18px 8px; }
+.home-stratum.canopy { background: linear-gradient(180deg, #0c1814 0%, #0a1612 100%); padding: 0 56px 10px 8px; }
 .home-stratum.understory {
   background: linear-gradient(180deg, #0a1612 0%, #08130f 100%);
   padding: 14px 56px 16px;
@@ -121,8 +121,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
-  margin-bottom: 4px;
+  margin-top: 6px;
+  margin-bottom: 0;
 }
 .canopy-brand {
   display: flex;
@@ -130,8 +130,8 @@
   gap: 18px;
 }
 .canopy-mark {
-  width: 88px;
-  height: 88px;
+  width: 40px;
+  height: 40px;
   display: block;
   object-fit: contain;
   align-self: center;

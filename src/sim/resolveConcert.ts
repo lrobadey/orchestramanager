@@ -8,13 +8,20 @@ import {
 } from '../types/core'
 import { ForecastInput, forecastProgram, computeIdentityProgramFit } from './forecastProgram'
 import { calculateRosterChangesAfterConcert } from './roster'
-import { clamp, average, HALL_CAPACITY, computeDonorUplift } from './scoring'
+import { clamp, average, HALL_CAPACITY, computeDonorUplift, capAudienceToHall } from './scoring'
 import { estimateDonorUpliftFromDonors } from './donorReactions'
 
 // roll: 0-100, where 50 = neutral, <50 = worse than expected, >50 = better
 // Pass roll = 50 in tests for deterministic output.
 export interface ResolveInput extends ForecastInput {
   roll?: number
+  // Committed realized donor money for this concert (the funding model). When
+  // provided it replaces the legacy per-concert donor "tip": the night's income
+  // is the donor pledges that latched to it, realized with their volatility.
+  donorIncome?: number
+  // Unrestricted institutional support earned from current health. Kept
+  // separate from concert-latched pledges for report and ledger readability.
+  operatingSupport?: number
 }
 
 function sectionLabel(section: string): string {
@@ -137,11 +144,9 @@ function resolveAudienceBreakdown(
     }
   })
 
-  const totalAttendance = resolved.reduce((sum, row) => sum + row.attendance, 0)
-  return resolved.map(row => ({
-    ...row,
-    shareOfHouse: totalAttendance > 0 ? row.attendance / totalAttendance : 0,
-  }))
+  // A lucky variance roll can push demand past the house; cap to the hall and
+  // let capAudienceToHall recompute revenue and shares from the seated numbers.
+  return capAudienceToHall(resolved)
 }
 
 function prestigeWeightedArcDamage(works: Work[], perWorkArcDamage: (number | null)[]): number {
@@ -159,6 +164,7 @@ function fmt$(n: number): string {
 function buildFinancialNotes(
   revenue: number,
   donorUplift: number,
+  operatingSupport: number,
   expenses: number,
   net: number,
   attendance: number,
@@ -166,13 +172,13 @@ function buildFinancialNotes(
   expenseBreakdown: ExpenseBreakdown,
 ): string[] {
   const notes: string[] = []
-  const totalIncome = revenue + donorUplift
+  const totalIncome = revenue + donorUplift + operatingSupport
   const coveragePercent = expenses > 0 ? Math.round((totalIncome / expenses) * 100) : 100
 
   if (net < 0) {
     if (totalIncome < expenseBreakdown.baseConcert) {
       notes.push(
-        `Ticket sales and donor support (${fmt$(totalIncome)}) did not cover the base hall cost of ${fmt$(expenseBreakdown.baseConcert)} — growing the audience is the primary lever.`,
+        `Ticket sales and contributed support (${fmt$(totalIncome)}) did not cover the base hall cost of ${fmt$(expenseBreakdown.baseConcert)} — growing the audience is the primary lever.`,
       )
     } else {
       const { rehearsal, marketing, production } = expenseBreakdown
@@ -246,7 +252,9 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const revenue = audienceBreakdown.reduce((sum, row) => sum + row.ticketRevenue, 0)
   const expenses = forecast.projectedExpenses
   const expenseBreakdown = forecast.projectedExpenseBreakdown
-  const donorUplift = input.donorState
+  const donorUplift = input.donorIncome != null
+    ? Math.round(input.donorIncome)
+    : input.donorState
     ? estimateDonorUpliftFromDonors({
         donorState: input.donorState,
         institution: input.institution,
@@ -258,7 +266,8 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
         marketingDonorSignal: forecast.marketingImpact.donorSignal,
       })
     : computeDonorUplift(input.institution.donorConfidence)
-  const net = revenue + donorUplift - expenses
+  const operatingSupport = Math.round(input.operatingSupport ?? 0)
+  const net = revenue + donorUplift + operatingSupport - expenses
 
   const programPrestige = average(works.map(w => w.artisticPrestige))
   const programNovelty = average(works.map(w => w.novelty))
@@ -372,13 +381,14 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   }
 
   const financialNotes = buildFinancialNotes(
-    revenue, donorUplift, expenses, net, attendance, audienceBreakdown, expenseBreakdown,
+    revenue, donorUplift, operatingSupport, expenses, net, attendance, audienceBreakdown, expenseBreakdown,
   )
 
   return {
     attendance,
     revenue,
     donorUplift,
+    operatingSupport,
     marketingDonorSignal: forecast.marketingImpact.donorSignal,
     audienceBreakdown,
     expenses,

@@ -29,6 +29,7 @@ import {
   pressureFromHoursGap,
   computeExpenseBreakdown,
   computeDonorUplift,
+  capAudienceToHall,
 } from './scoring'
 import { computeProgramArcSalience } from './programArcSalience'
 import { estimateDonorUpliftFromDonors } from './donorReactions'
@@ -51,6 +52,8 @@ export interface ForecastInput {
   audienceState?: AudienceState
   program: ConcertProgram
   donorState?: DonorState
+  donorIncome?: number
+  operatingSupport?: number
 }
 
 function resolveSlotWorks(input: ForecastInput): SlotTuple<Work | null> {
@@ -245,7 +248,7 @@ function computeAttendance(
     }
   })
 
-  return withHouseShares(breakdown)
+  return capAudienceToHall(breakdown)
 }
 
 function priceAccessibilityForSegment(segment: CityAudienceSegment | AudienceSegment, ticketPrice: number): number {
@@ -275,14 +278,6 @@ function donorPrestigeLiftForSegment(segmentId: string, lift: number): number {
   if (segmentId === 'donors-patrons' || segmentId === 'civic-tech-professionals') return lift
   if (segmentId === 'seasoned-supporters' || segmentId === 'classical-core') return lift * 0.45
   return 0
-}
-
-function withHouseShares(breakdown: AudienceBreakdown[]): AudienceBreakdown[] {
-  const totalAttendance = breakdown.reduce((sum, row) => sum + row.attendance, 0)
-  return breakdown.map(row => ({
-    ...row,
-    shareOfHouse: totalAttendance > 0 ? row.attendance / totalAttendance : 0,
-  }))
 }
 
 function buildForecastNotes(
@@ -361,6 +356,7 @@ function emptyForecast(
     projectedAttendance: 0,
     projectedRevenue: 0,
     projectedDonorUplift: 0,
+    projectedOperatingSupport: 0,
     projectedAudienceBreakdown: [],
     marketingImpact: EMPTY_MARKETING_IMPACT,
     projectedExpenses: 0,
@@ -536,7 +532,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   const totalRehearsalHours = program.rehearsalAllocation.reduce((s, h) => s + h, 0)
   const projectedExpenseBreakdown = computeExpenseBreakdown(works, totalRehearsalHours, program.marketingSpend)
   const projectedExpenses = projectedExpenseBreakdown.total
-  const projectedDonorUplift = input.donorState
+  const projectedDonorUplift = input.donorIncome ?? (input.donorState
     ? estimateDonorUpliftFromDonors({
         donorState: input.donorState,
         institution,
@@ -547,8 +543,9 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
         projectedExpenseBreakdown,
         marketingDonorSignal: marketingImpact.donorSignal,
       })
-    : computeDonorUplift(institution.donorConfidence)
-  const projectedNet = projectedRevenue + projectedDonorUplift - projectedExpenses
+    : computeDonorUplift(institution.donorConfidence))
+  const projectedOperatingSupport = Math.round(input.operatingSupport ?? 0)
+  const projectedNet = projectedRevenue + projectedDonorUplift + projectedOperatingSupport - projectedExpenses
 
   const identityFit = computeIdentityProgramFit(
     institution,
@@ -578,6 +575,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     projectedAttendance,
     projectedRevenue,
     projectedDonorUplift,
+    projectedOperatingSupport,
     projectedAudienceBreakdown,
     marketingImpact,
     projectedExpenses,
