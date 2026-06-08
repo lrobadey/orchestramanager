@@ -125,6 +125,9 @@ describe('applyBreachToFunding', () => {
 
     expect(next.concerts[0].pledged).toBeLessThan(before.pledged)
     expect(next.pledged).toBeLessThan(funding.pledged)
+    for (const donor of next.donors) {
+      expect(donor.unusedCapacity).toBe(Math.max(0, donor.concertCapacity - donor.pledged))
+    }
     // A donor who fully withdrew should leave no surviving pledge on the night.
     const survivingDonorIds = new Set(next.concerts[0].pledges.map(p => p.donorId))
     for (const w of breach.withdrawals) {

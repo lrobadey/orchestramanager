@@ -225,6 +225,9 @@ export function useSeasonGame() {
         concertIndex: idx,
         concertName: season.slots[idx].name,
       })
+      const concertCapacityByDonorId = new Map(
+        funding.donors.map(donor => [donor.donorId, donor.concertCapacity]),
+      )
       const newFits = season.donors.donors
         .map(donor =>
           scoreDonorConcertFundingFit({
@@ -232,6 +235,7 @@ export function useSeasonGame() {
             concert: { index: idx, name: season.slots[idx].name, program: editDraft },
             works,
             institution,
+            capacity: concertCapacityByDonorId.get(donor.id),
           }),
         )
       const newFunding = applyBreachToFunding({ funding, concertIndex: idx, breach, newFits })

@@ -174,7 +174,7 @@ export function applyBreachToFunding({
       ...donor,
       pledged,
       realized,
-      unusedCapacity: Math.max(0, donor.capacity - pledged),
+      unusedCapacity: Math.max(0, donor.concertCapacity - pledged),
       pledges,
       relationshipDelta: donor.relationshipDelta + (w?.relationshipDelta ?? 0),
       doorClosed: donor.doorClosed || Boolean(w?.doorClosed),
