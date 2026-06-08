@@ -172,17 +172,50 @@
 .plan-season .trail-compact-stop.selected .trail-compact-roman,
 .plan-season .trail-compact-stop.selected .trail-compact-name { color: var(--birch); }
 
-/* Editor block */
-.plan-season-editor {
-  border-top: 1px solid var(--hairline);
-  padding-top: 10px;
-}
-.plan-season-editor-head {
+/* Tabbed workspace — the trail above is the spine; these swap the body so the
+   artistic build, the money, and the forecast never crowd one another. */
+.plan-tabs {
   display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 4px;
+  border-bottom: 1px solid var(--hairline);
 }
+.plan-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  padding: 9px 18px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: -1px;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--silver-dim);
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.plan-tab:hover { color: var(--birch); }
+.plan-tab.active {
+  color: var(--birch);
+  background: rgba(255, 255, 255, 0.02);
+  border-color: var(--hairline);
+  border-bottom-color: var(--ink-0);
+}
+.plan-tab-meta {
+  font-family: var(--hc-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--silver-dim);
+}
+.plan-tab-meta.tone-covered { color: var(--pine); }
+.plan-tab-meta.tone-short { color: var(--amber, #c79a3e); }
+
+.plan-tab-panel { padding-top: 12px; }
+
+/* Editor block */
 .plan-season-editor-title {
   font-family: var(--serif);
   font-style: italic;
@@ -200,6 +233,24 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+/* Forecast tab — the full live read of the selected concert, one readable
+   column rather than a squeezed rail. */
+.plan-forecast-tab {
+  max-width: 720px;
+}
+.plan-forecast-context {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.plan-forecast-tab .forecast-rail {
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 16px;
+  background: rgba(5, 12, 10, 0.6);
 }
 
 /* Season funding panel — live donor auto-fill coverage */

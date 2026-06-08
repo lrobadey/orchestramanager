@@ -28,6 +28,9 @@ interface ProgramBuilderProps {
   // Hide the per-concert "Run Concert" CTA (the season-plan screen commits the
   // whole season at once instead of running individual concerts).
   showLaunch?: boolean
+  // Hide the right-hand forecast column (the season-plan screen surfaces the
+  // forecast on its own tab instead of crowding the builder).
+  showForecast?: boolean
 }
 
 const ROMAN = ['I', 'II', 'III']
@@ -448,9 +451,11 @@ export default function ProgramBuilder({
   onRunConcert,
   locked = false,
   showLaunch = true,
+  showForecast = true,
 }: ProgramBuilderProps) {
   const [search, setSearch] = useState('')
   const [eraFilter, setEraFilter] = useState<Era | 'all'>('all')
+  const [productionOpen, setProductionOpen] = useState(false)
 
   const slotWorks = useMemo(
     () => program.workIds.map(id => findWork(works, id)) as SlotTuple<Work | null>,
@@ -560,7 +565,7 @@ export default function ProgramBuilder({
 
   return (
     <div className={`programme-shell ${isDragging ? 'dragging-mode' : ''} ${locked ? 'is-locked' : ''}`}>
-      <div className="programme-floor">
+      <div className={`programme-floor ${showForecast ? '' : 'no-forecast'}`}>
         <section className="programme-column programme-column-left">
           <div className="programme-section-head">
             <span className="eyebrow">Programme</span>
@@ -643,11 +648,22 @@ export default function ProgramBuilder({
             onChange={next => onProgramChange({ ...program, rehearsalAllocation: next })}
           />
 
-          <section className="programme-production">
-            <div className="programme-section-head">
+          <section className={`programme-production ${productionOpen ? 'is-open' : ''}`}>
+            <button
+              type="button"
+              className="programme-production-toggle-head"
+              aria-expanded={productionOpen}
+              onClick={() => setProductionOpen(open => !open)}
+            >
               <span className="eyebrow">Production</span>
-            </div>
+              <span className="programme-production-summary">
+                ${program.ticketPrice} · ${(program.marketingSpend / 1000).toFixed(0)}K mktg
+                {program.studentTicketsEnabled ? ' · students' : ''}
+              </span>
+              <span className="programme-production-chev">{productionOpen ? '–' : '+'}</span>
+            </button>
 
+            {productionOpen && (
             <div className="programme-production-grid">
               <div className="programme-production-cell">
                 <div className="programme-production-row">
@@ -731,6 +747,7 @@ export default function ProgramBuilder({
                 />
               </div>
             </div>
+            )}
           </section>
 
           {showLaunch && (
@@ -825,13 +842,15 @@ export default function ProgramBuilder({
           </div>
         </section>
 
-        <aside className="programme-column programme-column-right">
-          <ConcertForecastView
-            forecast={forecast}
-            slotWorks={forecastSlotWorks}
-            workCount={program.workCount}
-          />
-        </aside>
+        {showForecast && (
+          <aside className="programme-column programme-column-right">
+            <ConcertForecastView
+              forecast={forecast}
+              slotWorks={forecastSlotWorks}
+              workCount={program.workCount}
+            />
+          </aside>
+        )}
       </div>
     </div>
   )
