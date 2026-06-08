@@ -328,6 +328,7 @@ export function useSeasonGame() {
       donorState: season.donors,
       donorIncome: committedConcert?.realized,
       operatingSupport,
+      isOpeningNight: season.currentSlotIndex === 0,
       roll: Math.random() * 100,
     })
     setReport(result)

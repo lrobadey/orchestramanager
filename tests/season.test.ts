@@ -3,7 +3,7 @@ import { createInitialSeason, resolveSeasonConcert, summarizeSeason } from '../s
 import { resolveConcert } from '../src/sim/resolveConcert'
 import { works } from '../src/data/works'
 import { principals } from '../src/data/principals'
-import { audienceSegments } from '../src/data/audienceSegments'
+import { audienceSegments, cityAudienceSegments } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
 import { ConcertProgram, Principal, SeasonState } from '../src/types/core'
 
@@ -188,6 +188,31 @@ describe('resolveSeasonConcert', () => {
 
     const report1 = makeReport(safeProgram, season1.institution, season1.roster.principals)
     expect(report1.rosterChanges).toHaveLength(principals.length)
+  })
+})
+
+describe('audience-trust feedback', () => {
+  // The vitals strip and concert report show report.institutionalDeltas.audienceTrust
+  // as the movement of the institution's trust meter. resolveSeasonConcert sets that
+  // meter from the audience-relationship model, so the displayed delta MUST equal the
+  // meter's actual change — otherwise the player reads a number that never lands.
+  it('the reported audience-trust delta equals the meter movement it claims', () => {
+    let season = createInitialSeason(startingInstitution, principals)
+    for (let i = 0; i < 4; i++) {
+      const before = season.institution.audienceTrust
+      const report = resolveConcert({
+        works,
+        institution: season.institution,
+        principals: season.roster.principals,
+        cityAudienceSegments,
+        audienceState: season.audience,
+        program: safeProgram,
+        isOpeningNight: season.currentSlotIndex === 0,
+        roll: 50,
+      })
+      season = resolveSeasonConcert(season, safeProgram, report, works)
+      expect(season.institution.audienceTrust).toBe(before + report.institutionalDeltas.audienceTrust)
+    }
   })
 })
 
