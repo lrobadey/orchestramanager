@@ -4,6 +4,11 @@ Working checklist for **Orchestra Manager**. Keep this aligned with `docs/PROGRE
 
 ## Now
 
+- [x] Add per-service musician payroll (labor model): work forces, core list + extras, principal premium. See `docs/LABOR_MODEL.md`.
+- [x] Rebalance world economics around real labor costs (donor capacities, starting cash, base concert cost).
+- [x] Add full four-concert season integration test (`tests/seasonLoop.test.ts`).
+- [ ] Review authored `forces` data in `src/data/works.ts` against the scores (Luca).
+
 - [x] Add prominent last-delta movement graphic to Donor Relations.
 - [x] Individualize donor relationship changes after each resolved concert.
 - [x] Split donor data into music taste, institutional priorities, and influence weights.

@@ -63,6 +63,7 @@ function makeWork(id: string, overrides: Partial<Work>): Work {
     rehearsalLoad: 30,
     familiarity: 50,
     demands: { strings: 20, winds: 20, brass: 20, percussion: 20 },
+    forces: { strings: 30, winds: 8, brass: 6, percussion: 2 },
     ...overrides,
   }
 }

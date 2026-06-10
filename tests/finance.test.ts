@@ -32,9 +32,12 @@ describe('finance transactions', () => {
     const transactions = buildConcertFinanceTransactions('Opening Night', 0, report)
     const total = transactions.reduce((sum, tx) => sum + tx.amount, 0)
 
-    expect(transactions).toHaveLength(6)
+    expect(transactions).toHaveLength(7)
     expect(total).toBe(report.net)
     expect(transactions.find(tx => tx.kind === 'ticket-revenue')!.status).toBe('posted')
+    const payroll = transactions.find(tx => tx.kind === 'payroll-cost')!
+    expect(payroll.status).toBe('posted')
+    expect(payroll.amount).toBe(-report.expenseBreakdown.payroll)
     expect(transactions.find(tx => tx.kind === 'marketing-cost')!.status).toBe('posted')
     expect(transactions.find(tx => tx.kind === 'donor-support')!.status).toBe('scheduled')
     const baseCost = transactions.find(tx => tx.kind === 'base-cost')!
@@ -60,7 +63,7 @@ describe('finance transactions', () => {
     const total = transactions.reduce((sum, tx) => sum + tx.amount, 0)
     const operating = transactions.find(tx => tx.kind === 'operating-support')!
 
-    expect(transactions).toHaveLength(7)
+    expect(transactions).toHaveLength(8)
     expect(total).toBe(report.net)
     expect(operating.label).toBe('Operating support')
     expect(operating.amount).toBe(12_000)

@@ -16,6 +16,7 @@ export const works: Work[] = [
     rehearsalLoad: 32,
     familiarity: 65,
     demands: { strings: 58, winds: 55, brass: 45, percussion: 25 },
+    forces: { strings: 32, winds: 8, brass: 4, percussion: 1 },
   },
   {
     id: 'beethoven-2',
@@ -32,6 +33,7 @@ export const works: Work[] = [
     rehearsalLoad: 36,
     familiarity: 58,
     demands: { strings: 62, winds: 58, brass: 48, percussion: 28 },
+    forces: { strings: 34, winds: 8, brass: 4, percussion: 1 },
   },
   {
     id: 'beethoven-3',
@@ -48,6 +50,7 @@ export const works: Work[] = [
     rehearsalLoad: 60,
     familiarity: 78,
     demands: { strings: 78, winds: 70, brass: 70, percussion: 42 },
+    forces: { strings: 40, winds: 8, brass: 5, percussion: 1 },
   },
   {
     id: 'beethoven-4',
@@ -64,6 +67,7 @@ export const works: Work[] = [
     rehearsalLoad: 42,
     familiarity: 55,
     demands: { strings: 68, winds: 65, brass: 55, percussion: 30 },
+    forces: { strings: 36, winds: 7, brass: 4, percussion: 1 },
   },
   {
     id: 'beethoven-5',
@@ -80,6 +84,7 @@ export const works: Work[] = [
     rehearsalLoad: 42,
     familiarity: 96,
     demands: { strings: 72, winds: 64, brass: 74, percussion: 55 },
+    forces: { strings: 40, winds: 10, brass: 7, percussion: 1 },
   },
   {
     id: 'beethoven-6',
@@ -96,6 +101,7 @@ export const works: Work[] = [
     rehearsalLoad: 48,
     familiarity: 88,
     demands: { strings: 70, winds: 72, brass: 58, percussion: 48 },
+    forces: { strings: 38, winds: 9, brass: 6, percussion: 1 },
   },
   {
     id: 'beethoven-7',
@@ -112,6 +118,7 @@ export const works: Work[] = [
     rehearsalLoad: 46,
     familiarity: 88,
     demands: { strings: 74, winds: 68, brass: 64, percussion: 58 },
+    forces: { strings: 40, winds: 8, brass: 4, percussion: 1 },
   },
   {
     id: 'beethoven-8',
@@ -128,6 +135,7 @@ export const works: Work[] = [
     rehearsalLoad: 38,
     familiarity: 55,
     demands: { strings: 66, winds: 58, brass: 55, percussion: 30 },
+    forces: { strings: 36, winds: 8, brass: 4, percussion: 1 },
   },
   {
     id: 'beethoven-9',
@@ -144,6 +152,7 @@ export const works: Work[] = [
     rehearsalLoad: 86,
     familiarity: 85,
     demands: { strings: 84, winds: 78, brass: 86, percussion: 70 },
+    forces: { strings: 48, winds: 10, brass: 9, percussion: 4 },
   },
   {
     id: 'mozart-39',
@@ -160,6 +169,7 @@ export const works: Work[] = [
     rehearsalLoad: 38,
     familiarity: 62,
     demands: { strings: 66, winds: 72, brass: 42, percussion: 25 },
+    forces: { strings: 30, winds: 5, brass: 4, percussion: 1 },
   },
   {
     id: 'mozart-40',
@@ -176,6 +186,7 @@ export const works: Work[] = [
     rehearsalLoad: 42,
     familiarity: 78,
     demands: { strings: 74, winds: 62, brass: 25, percussion: 20 },
+    forces: { strings: 30, winds: 7, brass: 2, percussion: 0 },
   },
   {
     id: 'mozart-41',
@@ -192,6 +203,7 @@ export const works: Work[] = [
     rehearsalLoad: 50,
     familiarity: 78,
     demands: { strings: 78, winds: 70, brass: 50, percussion: 30 },
+    forces: { strings: 32, winds: 5, brass: 4, percussion: 1 },
   },
   {
     id: 'brahms-1',
@@ -208,6 +220,7 @@ export const works: Work[] = [
     rehearsalLoad: 58,
     familiarity: 80,
     demands: { strings: 82, winds: 76, brass: 74, percussion: 42 },
+    forces: { strings: 44, winds: 9, brass: 9, percussion: 1 },
   },
   {
     id: 'brahms-2',
@@ -224,6 +237,7 @@ export const works: Work[] = [
     rehearsalLoad: 50,
     familiarity: 78,
     demands: { strings: 76, winds: 72, brass: 65, percussion: 38 },
+    forces: { strings: 42, winds: 8, brass: 10, percussion: 1 },
   },
   {
     id: 'brahms-3',
@@ -240,6 +254,7 @@ export const works: Work[] = [
     rehearsalLoad: 48,
     familiarity: 68,
     demands: { strings: 74, winds: 70, brass: 62, percussion: 35 },
+    forces: { strings: 42, winds: 9, brass: 9, percussion: 1 },
   },
   {
     id: 'brahms-4',
@@ -256,6 +271,7 @@ export const works: Work[] = [
     rehearsalLoad: 55,
     familiarity: 75,
     demands: { strings: 80, winds: 74, brass: 68, percussion: 40 },
+    forces: { strings: 44, winds: 9, brass: 9, percussion: 2 },
   },
   {
     id: 'tchaikovsky-1',
@@ -272,6 +288,7 @@ export const works: Work[] = [
     rehearsalLoad: 50,
     familiarity: 35,
     demands: { strings: 74, winds: 62, brass: 58, percussion: 45 },
+    forces: { strings: 44, winds: 9, brass: 10, percussion: 3 },
   },
   {
     id: 'tchaikovsky-2',
@@ -288,6 +305,7 @@ export const works: Work[] = [
     rehearsalLoad: 46,
     familiarity: 38,
     demands: { strings: 70, winds: 64, brass: 60, percussion: 44 },
+    forces: { strings: 44, winds: 9, brass: 10, percussion: 3 },
   },
   {
     id: 'tchaikovsky-3',
@@ -304,6 +322,7 @@ export const works: Work[] = [
     rehearsalLoad: 48,
     familiarity: 30,
     demands: { strings: 68, winds: 62, brass: 55, percussion: 42 },
+    forces: { strings: 44, winds: 9, brass: 10, percussion: 3 },
   },
   {
     id: 'tchaikovsky-4',
@@ -320,6 +339,7 @@ export const works: Work[] = [
     rehearsalLoad: 58,
     familiarity: 80,
     demands: { strings: 80, winds: 72, brass: 82, percussion: 62 },
+    forces: { strings: 48, winds: 9, brass: 10, percussion: 4 },
   },
   {
     id: 'tchaikovsky-5',
@@ -336,6 +356,7 @@ export const works: Work[] = [
     rehearsalLoad: 56,
     familiarity: 82,
     demands: { strings: 78, winds: 74, brass: 78, percussion: 58 },
+    forces: { strings: 48, winds: 9, brass: 10, percussion: 1 },
   },
   {
     id: 'tchaikovsky-6',
@@ -352,6 +373,7 @@ export const works: Work[] = [
     rehearsalLoad: 60,
     familiarity: 82,
     demands: { strings: 86, winds: 74, brass: 76, percussion: 55 },
+    forces: { strings: 50, winds: 9, brass: 10, percussion: 4 },
   },
   {
     id: 'tchaikovsky-manfred',
@@ -368,6 +390,7 @@ export const works: Work[] = [
     rehearsalLoad: 82,
     familiarity: 35,
     demands: { strings: 82, winds: 84, brass: 88, percussion: 78 },
+    forces: { strings: 52, winds: 11, brass: 12, percussion: 6 },
   },
   {
     id: 'sibelius-1',
@@ -384,6 +407,7 @@ export const works: Work[] = [
     rehearsalLoad: 55,
     familiarity: 45,
     demands: { strings: 78, winds: 72, brass: 70, percussion: 42 },
+    forces: { strings: 46, winds: 8, brass: 11, percussion: 3 },
   },
   {
     id: 'sibelius-2',
@@ -400,6 +424,7 @@ export const works: Work[] = [
     rehearsalLoad: 54,
     familiarity: 65,
     demands: { strings: 80, winds: 72, brass: 74, percussion: 48 },
+    forces: { strings: 46, winds: 8, brass: 11, percussion: 1 },
   },
   {
     id: 'sibelius-3',
@@ -416,6 +441,7 @@ export const works: Work[] = [
     rehearsalLoad: 44,
     familiarity: 35,
     demands: { strings: 66, winds: 68, brass: 52, percussion: 30 },
+    forces: { strings: 42, winds: 8, brass: 9, percussion: 1 },
   },
   {
     id: 'sibelius-4',
@@ -432,6 +458,7 @@ export const works: Work[] = [
     rehearsalLoad: 58,
     familiarity: 28,
     demands: { strings: 78, winds: 82, brass: 68, percussion: 35 },
+    forces: { strings: 44, winds: 8, brass: 9, percussion: 2 },
   },
   {
     id: 'sibelius-5',
@@ -448,6 +475,7 @@ export const works: Work[] = [
     rehearsalLoad: 60,
     familiarity: 52,
     demands: { strings: 76, winds: 78, brass: 88, percussion: 45 },
+    forces: { strings: 46, winds: 8, brass: 10, percussion: 1 },
   },
   {
     id: 'sibelius-6',
@@ -464,6 +492,7 @@ export const works: Work[] = [
     rehearsalLoad: 52,
     familiarity: 28,
     demands: { strings: 72, winds: 78, brass: 60, percussion: 30 },
+    forces: { strings: 44, winds: 9, brass: 10, percussion: 2 },
   },
   {
     id: 'sibelius-7',
@@ -480,6 +509,7 @@ export const works: Work[] = [
     rehearsalLoad: 58,
     familiarity: 35,
     demands: { strings: 78, winds: 82, brass: 74, percussion: 38 },
+    forces: { strings: 46, winds: 8, brass: 10, percussion: 1 },
   },
   {
     id: 'ravel-daphnis',
@@ -496,6 +526,7 @@ export const works: Work[] = [
     rehearsalLoad: 48,
     familiarity: 55,
     demands: { strings: 72, winds: 90, brass: 78, percussion: 65 },
+    forces: { strings: 52, winds: 13, brass: 12, percussion: 8 },
   },
   {
     id: 'handel-royal-fireworks',
@@ -512,6 +543,7 @@ export const works: Work[] = [
     rehearsalLoad: 30,
     familiarity: 68,
     demands: { strings: 50, winds: 70, brass: 78, percussion: 40 },
+    forces: { strings: 26, winds: 5, brass: 6, percussion: 1 },
   },
   {
     id: 'mozart-don-giovanni-overture',
@@ -528,6 +560,7 @@ export const works: Work[] = [
     rehearsalLoad: 24,
     familiarity: 72,
     demands: { strings: 60, winds: 58, brass: 40, percussion: 22 },
+    forces: { strings: 30, winds: 8, brass: 4, percussion: 1 },
   },
   {
     id: 'beethoven-egmont',
@@ -544,6 +577,7 @@ export const works: Work[] = [
     rehearsalLoad: 32,
     familiarity: 74,
     demands: { strings: 66, winds: 62, brass: 58, percussion: 32 },
+    forces: { strings: 38, winds: 8, brass: 6, percussion: 1 },
   },
   {
     id: 'mendelssohn-hebrides',
@@ -560,6 +594,7 @@ export const works: Work[] = [
     rehearsalLoad: 34,
     familiarity: 60,
     demands: { strings: 68, winds: 64, brass: 48, percussion: 22 },
+    forces: { strings: 36, winds: 8, brass: 4, percussion: 1 },
   },
   {
     id: 'berlioz-roman-carnival',
@@ -576,6 +611,7 @@ export const works: Work[] = [
     rehearsalLoad: 44,
     familiarity: 58,
     demands: { strings: 74, winds: 78, brass: 70, percussion: 60 },
+    forces: { strings: 44, winds: 9, brass: 11, percussion: 5 },
   },
   {
     id: 'liszt-les-preludes',
@@ -592,6 +628,7 @@ export const works: Work[] = [
     rehearsalLoad: 46,
     familiarity: 58,
     demands: { strings: 74, winds: 70, brass: 78, percussion: 48 },
+    forces: { strings: 44, winds: 9, brass: 10, percussion: 4 },
   },
   {
     id: 'smetana-vltava',
@@ -608,6 +645,7 @@ export const works: Work[] = [
     rehearsalLoad: 40,
     familiarity: 72,
     demands: { strings: 76, winds: 72, brass: 60, percussion: 42 },
+    forces: { strings: 44, winds: 9, brass: 10, percussion: 4 },
   },
   {
     id: 'tchaikovsky-romeo-juliet',
@@ -624,6 +662,7 @@ export const works: Work[] = [
     rehearsalLoad: 52,
     familiarity: 80,
     demands: { strings: 80, winds: 72, brass: 74, percussion: 52 },
+    forces: { strings: 46, winds: 10, brass: 10, percussion: 4 },
   },
   {
     id: 'debussy-faune',
@@ -640,6 +679,7 @@ export const works: Work[] = [
     rehearsalLoad: 42,
     familiarity: 68,
     demands: { strings: 70, winds: 82, brass: 40, percussion: 30 },
+    forces: { strings: 40, winds: 10, brass: 4, percussion: 3 },
   },
   {
     id: 'ravel-la-valse',
@@ -656,6 +696,7 @@ export const works: Work[] = [
     rehearsalLoad: 54,
     familiarity: 58,
     demands: { strings: 80, winds: 82, brass: 74, percussion: 68 },
+    forces: { strings: 50, winds: 12, brass: 11, percussion: 7 },
   },
   {
     id: 'city-light-machines',
@@ -672,6 +713,7 @@ export const works: Work[] = [
     rehearsalLoad: 40,
     familiarity: 5,
     demands: { strings: 60, winds: 55, brass: 45, percussion: 70 },
+    forces: { strings: 36, winds: 8, brass: 6, percussion: 4 },
   },
   {
     id: 'glacier-index',
@@ -688,6 +730,7 @@ export const works: Work[] = [
     rehearsalLoad: 60,
     familiarity: 5,
     demands: { strings: 68, winds: 72, brass: 55, percussion: 80 },
+    forces: { strings: 40, winds: 9, brass: 7, percussion: 5 },
   },
   {
     id: 'signal-fires',
@@ -704,6 +747,7 @@ export const works: Work[] = [
     rehearsalLoad: 35,
     familiarity: 5,
     demands: { strings: 55, winds: 60, brass: 50, percussion: 58 },
+    forces: { strings: 36, winds: 8, brass: 6, percussion: 3 },
   },
   {
     id: 'first-desk-concerto',
@@ -720,6 +764,7 @@ export const works: Work[] = [
     rehearsalLoad: 45,
     familiarity: 5,
     demands: { strings: 80, winds: 50, brass: 42, percussion: 40 },
+    forces: { strings: 42, winds: 6, brass: 4, percussion: 2 },
   },
   {
     id: 'harbor-grid',
@@ -736,6 +781,7 @@ export const works: Work[] = [
     rehearsalLoad: 65,
     familiarity: 5,
     demands: { strings: 62, winds: 68, brass: 58, percussion: 90 },
+    forces: { strings: 38, winds: 8, brass: 6, percussion: 6 },
   },
   {
     id: 'night-ferry',
@@ -752,6 +798,7 @@ export const works: Work[] = [
     rehearsalLoad: 58,
     familiarity: 5,
     demands: { strings: 75, winds: 70, brass: 62, percussion: 55 },
+    forces: { strings: 44, winds: 9, brass: 8, percussion: 3 },
   },
 ]
 

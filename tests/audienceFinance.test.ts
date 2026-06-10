@@ -124,15 +124,18 @@ describe('audience & finance systems', () => {
     expect(asterForecast.projectedDonorUplift).toBeGreaterThan(lowForecast.projectedDonorUplift)
   })
 
-  it('expense breakdown total matches projectedExpenses and includes all four components', () => {
+  it('expense breakdown total matches projectedExpenses and includes all five components', () => {
     const forecast = forecastProgram(makeInput(safeProgram))
     const bd = forecast.projectedExpenseBreakdown
     expect(bd.baseConcert).toBeGreaterThan(0)
+    expect(bd.payroll).toBeGreaterThan(0)
     expect(bd.rehearsal).toBeGreaterThan(0)
     expect(bd.marketing).toBeGreaterThan(0)
     expect(bd.production).toBeGreaterThanOrEqual(0)
-    expect(bd.total).toBe(bd.baseConcert + bd.rehearsal + bd.marketing + bd.production)
+    expect(bd.total).toBe(bd.baseConcert + bd.payroll + bd.rehearsal + bd.marketing + bd.production)
     expect(bd.total).toBe(forecast.projectedExpenses)
+    // Payroll is the dominant cost line, as in a real orchestra.
+    expect(bd.payroll).toBeGreaterThan(bd.baseConcert + bd.rehearsal + bd.marketing + bd.production)
   })
 
   it('contemporary program has higher production cost than canon program', () => {

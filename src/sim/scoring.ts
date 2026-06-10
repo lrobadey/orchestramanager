@@ -1,4 +1,5 @@
 import { Work, Principal, ExpenseBreakdown, AudienceBreakdown } from '../types/core'
+import { computePayroll } from './labor'
 
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
@@ -26,16 +27,16 @@ export function pricePenalty(ticketPrice: number): number {
   return clamp((ticketPrice - threshold) / 4, 0, 30)
 }
 
-// Rehearsal cost: $120/hour (hall + staff overhead)
+// Rehearsal facility overhead: $120/hour (space, stage crew). Musician time
+// during rehearsal is paid through the payroll model, not this line.
 export const REHEARSAL_COST_PER_HOUR = 120
 
-// Base concert costs: hall rental, staff, programs, production.
-// Rebalanced down from the original $45k so a concert's all-in cost lands in
-// the donor-coverable range (~$35–45k with modest marketing): the funding model
-// anchors each concert's "ask" to its cost, and a concert must be roughly
-// coverable by a single aligned major donor (capacities $55k–$120k) or the
-// sponsorship system never funds it. See docs/SEASON_FUNDING_MODEL.md (P0).
-export const BASE_CONCERT_COST = 30_000
+// Base concert overhead: hall rental, front-of-house staff, programs.
+// Musicians are paid per service through the labor model (src/sim/labor.ts),
+// which is the dominant cost line — so concert costs are grounded in forces ×
+// services × rates rather than tuned to donor capacities. No single donor is
+// expected to cover a concert; coverage is collective.
+export const BASE_CONCERT_COST = 12_000
 
 // Hall capacity — the physical seat count. Used both for attendance-rate
 // calculations and as a hard ceiling on how many tickets can actually be sold.
@@ -82,19 +83,33 @@ export function pressureFromHoursGap(hoursNeeded: number, hoursAllocated: number
   return clamp((hoursNeeded - hoursAllocated) * 5, -40, 100)
 }
 
-// Structured breakdown of all concert expenses.
+// Structured breakdown of all concert expenses. `rehearsalHoursPerWork` is
+// aligned with `works` (the hours the player allocated to each piece), so
+// payroll can price each work's rehearsal at that work's headcount.
 // Production cost is 0 for standard canon; scales with contemporary and high-load works.
 export function computeExpenseBreakdown(
   works: Work[],
-  totalRehearsalHours: number,
+  rehearsalHoursPerWork: number[],
   marketingSpend: number,
 ): ExpenseBreakdown {
+  const totalRehearsalHours = sum(rehearsalHoursPerWork)
   const rehearsal = totalRehearsalHours * REHEARSAL_COST_PER_HOUR
+  const payrollResult = computePayroll(works, rehearsalHoursPerWork)
+  const payroll = Math.round(payrollResult.total)
   const contemporaryCount = works.filter(w => w.isContemporary).length
   const highLoadCount = works.filter(w => w.rehearsalLoad >= 60).length
   const production = contemporaryCount * 3_000 + Math.min(highLoadCount * 2_500, 8_000)
-  const total = BASE_CONCERT_COST + rehearsal + marketingSpend + production
-  return { baseConcert: BASE_CONCERT_COST, rehearsal, marketing: marketingSpend, production, total }
+  const total = BASE_CONCERT_COST + payroll + rehearsal + marketingSpend + production
+  return {
+    baseConcert: BASE_CONCERT_COST,
+    payroll,
+    rehearsal,
+    marketing: marketingSpend,
+    production,
+    total,
+    musicians: payrollResult.musicians,
+    extraPlayers: payrollResult.extraPlayers,
+  }
 }
 
 // Enforce the physical hall: no more seats can be sold than the house holds.
