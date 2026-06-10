@@ -35,6 +35,7 @@ function makeWork(id: string, overrides: Partial<Work>): Work {
     rehearsalLoad: 30,
     familiarity: 50,
     demands: { strings: 20, winds: 20, brass: 20, percussion: 20 },
+    forces: { strings: 30, winds: 8, brass: 6, percussion: 2 },
     ...overrides,
   }
 }
@@ -169,7 +170,7 @@ function makeReport(overrides: Partial<ConcertReport> = {}): ConcertReport {
     donorUplift: 0,
     audienceBreakdown: [makeAudienceBreakdown()],
     expenses: revenue - net,
-    expenseBreakdown: { baseConcert: 10_000, rehearsal: 0, marketing: 0, production: 0, total: 10_000 },
+    expenseBreakdown: { baseConcert: 10_000, payroll: 0, rehearsal: 0, marketing: 0, production: 0, total: 10_000, musicians: 0, extraPlayers: 0 },
     net,
     financialNotes: [],
     performanceQuality: 70,

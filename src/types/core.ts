@@ -6,6 +6,15 @@ import type { SeasonFundingResult } from '../sim/seasonFunding'
 
 export type Era = 'baroque' | 'classical' | 'romantic' | 'late-romantic' | 'contemporary'
 
+// Players on stage per section. Used both for a work's required forces (from
+// the score's instrumentation) and for the orchestra's core list.
+export interface SectionForces {
+  strings: number
+  winds: number
+  brass: number
+  percussion: number
+}
+
 export interface Work {
   id: string
   title: string
@@ -30,6 +39,10 @@ export interface Work {
     brass: number
     percussion: number
   }
+  // players required on stage per section, authored from the score's
+  // instrumentation (winds = woodwinds; percussion folds in timpani, harps,
+  // and keyboards). Drives per-service payroll.
+  forces: SectionForces
 }
 
 export interface Principal {
@@ -321,10 +334,17 @@ export interface AudienceBreakdown {
 
 export interface ExpenseBreakdown {
   baseConcert: number
+  // Per-service musician pay across all rehearsals and the concert. The
+  // dominant cost line, as in a real orchestra.
+  payroll: number
+  // Rehearsal facility overhead (space, stage crew) — musician time is payroll.
   rehearsal: number
   marketing: number
   production: number
   total: number
+  // Stage headcount metadata for the payroll line (not money).
+  musicians: number
+  extraPlayers: number
 }
 
 export interface ConcertReport {
@@ -353,6 +373,7 @@ export type FinanceTransactionKind =
   | 'donor-support'
   | 'operating-support'
   | 'base-cost'
+  | 'payroll-cost'
   | 'rehearsal-cost'
   | 'marketing-cost'
   | 'production-cost'

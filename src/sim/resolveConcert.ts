@@ -181,14 +181,16 @@ function buildFinancialNotes(
   const coveragePercent = expenses > 0 ? Math.round((totalIncome / expenses) * 100) : 100
 
   if (net < 0) {
-    if (totalIncome < expenseBreakdown.baseConcert) {
+    const fixedStageCost = expenseBreakdown.baseConcert + expenseBreakdown.payroll
+    if (totalIncome < fixedStageCost) {
       notes.push(
-        `Ticket sales and contributed support (${fmt$(totalIncome)}) did not cover the base hall cost of ${fmt$(expenseBreakdown.baseConcert)} — growing the audience is the primary lever.`,
+        `Ticket sales and contributed support (${fmt$(totalIncome)}) did not cover the ${fmt$(fixedStageCost)} cost of putting the orchestra on stage (hall + musician payroll) — contributed income and audience growth are the levers.`,
       )
     } else {
-      const { rehearsal, marketing, production } = expenseBreakdown
+      const { payroll, rehearsal, marketing, production } = expenseBreakdown
       const drivers: [string, number][] = [
-        ['high rehearsal overhead', rehearsal],
+        ['musician payroll', payroll],
+        ['rehearsal overhead', rehearsal],
         ['marketing spend', marketing],
         ['production costs', production],
       ].filter(([, v]) => (v as number) > 0) as [string, number][]

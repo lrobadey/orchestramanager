@@ -246,6 +246,13 @@ export default function ConcertForecastView({ forecast, slotWorks, workCount }: 
                 value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.baseConcert)}</span>}
                 animKey={`base-${forecast.projectedExpenseBreakdown.baseConcert}`}
               />
+              {forecast.projectedExpenseBreakdown.payroll > 0 && (
+                <ForecastLine
+                  label={`Musicians (${forecast.projectedExpenseBreakdown.musicians} on stage${forecast.projectedExpenseBreakdown.extraPlayers > 0 ? `, ${forecast.projectedExpenseBreakdown.extraPlayers} extras` : ''})`}
+                  value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.payroll)}</span>}
+                  animKey={`payroll-${forecast.projectedExpenseBreakdown.payroll}`}
+                />
+              )}
               <ForecastLine
                 label="Rehearsal"
                 value={<span className="text-muted">{fmt$(forecast.projectedExpenseBreakdown.rehearsal)}</span>}

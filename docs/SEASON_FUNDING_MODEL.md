@@ -83,6 +83,10 @@ Reused parameters (no new ones):
 - **Defines the cost floor (fix #1):** a concert must be roughly coverable by one aligned
   major donor (~$35–45k all-in), or the system never funds. So the $45k base hall cost drops;
   donor capacities and concert costs are two sides of one equation.
+  > **Superseded by the labor model** ([`LABOR_MODEL.md`](./LABOR_MODEL.md)): concert costs
+  > are now grounded in per-service musician payroll (~$100–130k all-in), and donor
+  > capacities were rebalanced upward (~2.7×) to match. No single donor covers a concert;
+  > coverage is collective, which is the realistic shape.
 
 ### 2.4 Changing the plan after the ask
 Programs remain mutable, but a pledge is collateral on a specific plan. Swapping a work that

@@ -46,6 +46,7 @@ function makeWork(demands: Work['demands']): Work {
     rehearsalLoad: 40,
     familiarity: 50,
     demands,
+    forces: { strings: 30, winds: 8, brass: 6, percussion: 2 },
   }
 }
 

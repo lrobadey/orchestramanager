@@ -174,6 +174,10 @@ export default function ConcertReportView({ report, selectedWorks, onDone, conce
             <div className="report-expense-breakdown">
               {([
                 ['Base', report.expenseBreakdown.baseConcert],
+                [
+                  `Musicians (${report.expenseBreakdown.musicians} on stage)`,
+                  report.expenseBreakdown.payroll,
+                ],
                 ['Rehearsal', report.expenseBreakdown.rehearsal],
                 ['Marketing', report.expenseBreakdown.marketing],
                 ...(report.expenseBreakdown.production > 0

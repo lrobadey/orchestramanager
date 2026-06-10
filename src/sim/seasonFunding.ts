@@ -599,10 +599,8 @@ function normalizeConcert(
 }
 
 function computeConcertExpenseBreakdown(program: ConcertProgram, works: readonly Work[]): ExpenseBreakdown {
-  const rehearsalHours = program.rehearsalAllocation
-    .slice(0, program.workCount)
-    .reduce((sum, hours) => sum + hours, 0)
-  return computeExpenseBreakdown([...works], rehearsalHours, program.marketingSpend)
+  const rehearsalHoursPerWork = program.rehearsalAllocation.slice(0, program.workCount)
+  return computeExpenseBreakdown([...works], rehearsalHoursPerWork, program.marketingSpend)
 }
 
 function resolveProgramWorks(program: ConcertProgram, works: readonly Work[]): Work[] {

@@ -60,7 +60,8 @@ export function buildConcertFinanceTransactions(
       ? [scheduled('operating-support', 'Operating support', report.operatingSupport)]
       : []),
     scheduled('base-cost', 'Hall and fixed concert costs', -report.expenseBreakdown.baseConcert),
-    posted('rehearsal-cost', 'Rehearsal costs', -report.expenseBreakdown.rehearsal),
+    posted('payroll-cost', 'Musician payroll', -report.expenseBreakdown.payroll),
+    posted('rehearsal-cost', 'Rehearsal facility costs', -report.expenseBreakdown.rehearsal),
     posted('marketing-cost', 'Marketing spend', -report.expenseBreakdown.marketing),
     scheduled('production-cost', 'Production costs', -report.expenseBreakdown.production),
   ]

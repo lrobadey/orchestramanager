@@ -335,7 +335,8 @@ function buildForecastNotes(
 }
 
 const EMPTY_EXPENSE_BREAKDOWN: ExpenseBreakdown = {
-  baseConcert: 0, rehearsal: 0, marketing: 0, production: 0, total: 0,
+  baseConcert: 0, payroll: 0, rehearsal: 0, marketing: 0, production: 0, total: 0,
+  musicians: 0, extraPlayers: 0,
 }
 
 const EMPTY_MARKETING_IMPACT: MarketingImpact = {
@@ -529,8 +530,12 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
     (sum, row) => sum + row.ticketRevenue,
     0,
   )
-  const totalRehearsalHours = program.rehearsalAllocation.reduce((s, h) => s + h, 0)
-  const projectedExpenseBreakdown = computeExpenseBreakdown(works, totalRehearsalHours, program.marketingSpend)
+  // Hours aligned with the filled works, so payroll prices each work's
+  // rehearsal at that work's forces.
+  const rehearsalHoursPerWork = displaySlotWorks.flatMap((work, i) =>
+    work ? [program.rehearsalAllocation[i]] : [],
+  )
+  const projectedExpenseBreakdown = computeExpenseBreakdown(works, rehearsalHoursPerWork, program.marketingSpend)
   const projectedExpenses = projectedExpenseBreakdown.total
   const projectedDonorUplift = input.donorIncome ?? (input.donorState
     ? estimateDonorUpliftFromDonors({

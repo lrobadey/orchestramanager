@@ -22,6 +22,7 @@ const baseWork: Work = {
   rehearsalLoad: 50,
   familiarity: 50,
   demands: { strings: 60, winds: 50, brass: 40, percussion: 30 },
+  forces: { strings: 30, winds: 8, brass: 6, percussion: 2 },
 }
 
 type WorkOverrides = Partial<Omit<Work, 'demands'>> & {

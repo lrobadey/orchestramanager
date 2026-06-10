@@ -146,8 +146,13 @@ describe('resolveSeasonConcert', () => {
     expect(season2.calendar.currentDate).toBe('2026-10-26')
     expect(season2.slots[1].institutionBefore).toEqual(season1.institution)
     expect(season2.slots[0].financeTransactions.every(tx => tx.status === 'posted')).toBe(true)
-    expect(season2.institution.cash).toBeGreaterThanOrEqual(
-      season1.institution.cash + scheduledFromFirstConcert,
+    // Cash conservation: concert 2's cash equals concert 1's cash plus the
+    // settled deferred items plus concert 2's own immediately-posted flows.
+    const postedNowSecond = season2.slots[1].financeTransactions
+      .filter(tx => tx.status === 'posted')
+      .reduce((sum, tx) => sum + tx.amount, 0)
+    expect(season2.institution.cash).toBe(
+      season1.institution.cash + scheduledFromFirstConcert + postedNowSecond,
     )
   })
 
@@ -163,7 +168,7 @@ describe('resolveSeasonConcert', () => {
       .filter(tx => tx.status === 'posted')
       .reduce((sum, tx) => sum + tx.amount, 0)
 
-    expect(next.slots[0].financeTransactions).toHaveLength(6)
+    expect(next.slots[0].financeTransactions).toHaveLength(7)
     expect(transactionTotal).toBe(report.net)
     expect(postedTotal).not.toBe(report.net)
     expect(next.slots[0].financeTransactions.some(tx => tx.status === 'scheduled')).toBe(true)
