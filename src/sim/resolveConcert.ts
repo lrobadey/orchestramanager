@@ -187,9 +187,10 @@ function buildFinancialNotes(
         `Ticket sales and contributed support (${fmt$(totalIncome)}) did not cover the ${fmt$(fixedStageCost)} cost of putting the orchestra on stage (hall + musician payroll) — contributed income and audience growth are the levers.`,
       )
     } else {
-      const { payroll, rehearsal, marketing, production } = expenseBreakdown
+      // Income covered the fixed stage cost (hall + payroll), so the marginal
+      // shortfall is attributable to the variable lines.
+      const { rehearsal, marketing, production } = expenseBreakdown
       const drivers: [string, number][] = [
-        ['musician payroll', payroll],
         ['rehearsal overhead', rehearsal],
         ['marketing spend', marketing],
         ['production costs', production],

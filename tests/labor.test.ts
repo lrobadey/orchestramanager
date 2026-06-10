@@ -70,7 +70,12 @@ describe('computePayroll', () => {
     const payroll = computePayroll(works, [10, 10])
     expect(payroll.concertForces).toEqual(largeForces)
     expect(payroll.musicians).toBe(48 + 10 + 10 + 4)
-    expect(payroll.extraPlayers).toBe(48 - CORE_LIST.strings + (10 - CORE_LIST.winds) + (10 - CORE_LIST.brass) + (4 - CORE_LIST.percussion))
+    const expectedExtras =
+      Math.max(0, 48 - CORE_LIST.strings) +
+      Math.max(0, 10 - CORE_LIST.winds) +
+      Math.max(0, 10 - CORE_LIST.brass) +
+      Math.max(0, 4 - CORE_LIST.percussion)
+    expect(payroll.extraPlayers).toBe(expectedExtras)
   })
 
   it('prices each rehearsal hour at that work\'s headcount, not the program\'s', () => {

@@ -73,7 +73,7 @@ function runSeason(): { season: SeasonState; reports: ConcertReport[] } {
       audienceState: season.audience,
       concertCount: 4,
     }).reduce((sum, donor) => sum + donor.perConcertAmount, 0)
-    const committed = season.funding!.concerts.find(c => c.concertIndex === i)
+    const committed = season.funding!.concerts.find(c => c.concertIndex === i)!
 
     const forecast = forecastProgram({
       works,

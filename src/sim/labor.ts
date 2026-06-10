@@ -22,6 +22,11 @@ import type { SectionForces, SectionKey, Work } from '../types/core'
 // The model is service-based so a purchasable-rehearsals lever can bolt on
 // later: a service is SERVICE_HOURS long and priced at BASE_SCALE_PER_SERVICE.
 
+// Rate assumption: freelance regional per-service scale. AFM locals publish
+// roughly $125–$160 for a 2.5-hour service in smaller markets (major-market
+// single-engagement scales run $300+); a "service" here is one 2.5-hour
+// rehearsal block or the concert call. Tune BASE_SCALE_PER_SERVICE to
+// reposition the whole labor market.
 export const SERVICE_HOURS = 2.5
 export const BASE_SCALE_PER_SERVICE = 150
 export const PRINCIPAL_PAY_MULTIPLIER = 1.5
@@ -38,7 +43,9 @@ export const CORE_LIST: SectionForces = {
 
 // Principal chairs per section on the current roster. The roster does not
 // change size in this slice, so the counts are a rate-structure constant
-// (mirrors src/data/principals.ts).
+// (mirrors src/data/principals.ts). Invariant: PRINCIPAL_CHAIRS[s] ≤
+// CORE_LIST[s] for every section — principals are part of the core list, and
+// sectionServiceCost's core/extras split depends on it.
 export const PRINCIPAL_CHAIRS: SectionForces = {
   strings: 5,
   winds: 4,
