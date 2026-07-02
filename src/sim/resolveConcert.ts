@@ -8,18 +8,13 @@ import {
 } from '../types/core'
 import { ForecastInput, forecastProgram, computeIdentityProgramFit } from './forecastProgram'
 import { calculateRosterChangesAfterConcert } from './roster'
-import { clamp, average, HALL_CAPACITY, computeDonorUplift, capAudienceToHall } from './scoring'
-import { estimateDonorUpliftFromDonors } from './donorReactions'
+import { clamp, average, HALL_CAPACITY, capAudienceToHall } from './scoring'
 import { updateAudienceAfterConcert, summarizeAudienceTrust } from './audienceReactions'
 
 // roll: 0-100, where 50 = neutral, <50 = worse than expected, >50 = better
 // Pass roll = 50 in tests for deterministic output.
 export interface ResolveInput extends ForecastInput {
   roll?: number
-  // Committed realized donor money for this concert (the funding model). When
-  // provided it replaces the legacy per-concert donor "tip": the night's income
-  // is the donor pledges that latched to it, realized with their volatility.
-  donorIncome?: number
   // Unrestricted institutional support earned from current health. Kept
   // separate from concert-latched pledges for report and ledger readability.
   operatingSupport?: number
@@ -260,20 +255,10 @@ export function resolveConcert(input: ResolveInput): ConcertReport {
   const revenue = audienceBreakdown.reduce((sum, row) => sum + row.ticketRevenue, 0)
   const expenses = forecast.projectedExpenses
   const expenseBreakdown = forecast.projectedExpenseBreakdown
-  const donorUplift = input.donorIncome != null
-    ? Math.round(input.donorIncome)
-    : input.donorState
-    ? estimateDonorUpliftFromDonors({
-        donorState: input.donorState,
-        institution: input.institution,
-        program: input.program,
-        works,
-        projectedAttendance: attendance,
-        projectedRevenue: revenue,
-        projectedExpenseBreakdown: expenseBreakdown,
-        marketingDonorSignal: forecast.marketingImpact.donorSignal,
-      })
-    : computeDonorUplift(input.institution.donorConfidence)
+  // The night's donor income is the committed pledges that latched to this
+  // concert, realized with their volatility — donors fund the season, not tip
+  // the night. A concert with no committed funding earns no donor income.
+  const donorUplift = Math.round(input.donorIncome ?? 0)
   const operatingSupport = Math.round(input.operatingSupport ?? 0)
   const net = revenue + donorUplift + operatingSupport - expenses
 

@@ -5,8 +5,6 @@ import type {
   DonorInstitutionalPriorities,
   DonorMusicTaste,
   DonorState,
-  ExpenseBreakdown,
-  InstitutionState,
   MarketingStyle,
   Work,
 } from '../types/core'
@@ -17,64 +15,6 @@ interface UpdateDonorsAfterConcertInput {
   program: ConcertProgram
   report: ConcertReport
   works: Work[]
-}
-
-interface EstimateDonorUpliftInput {
-  donorState: DonorState
-  institution: InstitutionState
-  program: ConcertProgram
-  works: Work[]
-  projectedAttendance: number
-  projectedRevenue: number
-  projectedExpenseBreakdown: ExpenseBreakdown
-  marketingDonorSignal?: number
-}
-
-export function estimateDonorUpliftFromDonors({
-  donorState,
-  institution,
-  program,
-  works,
-  projectedAttendance,
-  projectedRevenue,
-  projectedExpenseBreakdown,
-  marketingDonorSignal = 0,
-}: EstimateDonorUpliftInput): number {
-  const musicProfile = buildConcertMusicProfile(works)
-  const institutionalProfile = buildForecastInstitutionalProfile({
-    institution,
-    program,
-    works,
-    projectedAttendance,
-    projectedRevenue,
-    projectedExpenseBreakdown,
-  })
-  const climate = clamp(0.78 + institution.donorConfidence / 220, 0.65, 1.25)
-
-  const total = donorState.donors.reduce((sum, donor) => {
-    const musicFit = scoreMusicFit(donor.musicTaste, musicProfile)
-    const institutionalFit = scoreInstitutionalFit(
-      donor.institutionalPriorities,
-      institutionalProfile,
-    )
-    const marketingFit = scoreMarketingDonorFit(
-      donor,
-      program.marketingStyle ?? 'digital',
-      marketingDonorSignal,
-    )
-    const fitScore =
-      musicFit * (donor.influenceWeights.music / 100) +
-      institutionalFit * (donor.influenceWeights.institutional / 100) +
-      marketingFit
-    const relationshipFactor = donorRelationshipGivingFactor(donor)
-    const adjustedFitScore = fitScore < 0 ? fitScore * (1 - donor.loyalty / 200) : fitScore
-    const fitFactor = clamp(1 + adjustedFitScore / 95, 0.25, 1.6)
-    const restrictionFactor = donorRestrictionFactor(donor, program, works)
-
-    return sum + donor.capacity * 0.025 * relationshipFactor * fitFactor * restrictionFactor * climate
-  }, 0)
-
-  return Math.round(Math.max(0, total))
 }
 
 export function updateDonorsAfterConcert({
@@ -126,21 +66,6 @@ export function updateDonorsAfterConcert({
       }
     }),
   }
-}
-
-function donorRelationshipGivingFactor(donor: Donor): number {
-  const relationship = Math.max(donor.relationship / 100, 0.05)
-  const loyalty = Math.max(donor.loyalty / 100, 0.2)
-  const commitment = Math.max(donor.commitment / 100, 0.2)
-  const effectiveRelationship = clamp(
-    100 *
-      Math.pow(relationship, 0.85) *
-      Math.pow(loyalty, 0.15) *
-      Math.pow(commitment, 0.1),
-    0,
-    100,
-  )
-  return clamp((effectiveRelationship - 25) / 75, 0, 1)
 }
 
 function marketingDonorInterest(donor: Donor, style: MarketingStyle): number {
@@ -203,53 +128,6 @@ function computeCommitmentDelta({
   const breach = Math.max(0, disappointment - protectionThreshold)
   const breachLoss = breach * breach * (commitment / 100) * 0.35
   return -(baseLoss + breachLoss)
-}
-
-function donorRestrictionFactor(donor: Donor, program: ConcertProgram, works: Work[]): number {
-  const novelty = works.length > 0 ? average(works.map(work => work.novelty)) : 0
-  const prestige = works.length > 0 ? average(works.map(work => work.artisticPrestige)) : 0
-  const contemporaryCount = works.filter(work => work.isContemporary).length
-
-  switch (donor.restrictionStyle) {
-    case 'new-music':
-      return contemporaryCount > 0 || novelty > 60 ? 1.3 : 0.55
-    case 'education':
-      return program.studentTicketsEnabled ? 1.25 : 0.75
-    case 'prestige':
-      return prestige > 70 ? 1.2 : 0.8
-    case 'general':
-      return 1
-    case 'unrestricted':
-    default:
-      return 1.05
-  }
-}
-
-function buildForecastInstitutionalProfile({
-  institution,
-  program,
-  works,
-  projectedAttendance,
-  projectedRevenue,
-  projectedExpenseBreakdown,
-}: Omit<EstimateDonorUpliftInput, 'donorState'>): DonorInstitutionalPriorities {
-  const attendanceRate = projectedAttendance / HALL_CAPACITY
-  const novelty = works.length > 0 ? average(works.map(work => work.novelty)) : 0
-  const identity = works.length > 0 ? average(works.map(work => work.identityValue)) : 0
-  const prestige = works.length > 0 ? average(works.map(work => work.artisticPrestige)) : 0
-  const preDonorNet = projectedRevenue - projectedExpenseBreakdown.total
-  const studentAccess = program.studentTicketsEnabled
-    ? clamp(100 - program.studentTicketPrice * 2.4, 20, 100)
-    : 20
-
-  return {
-    prestige: Math.round(clamp(prestige * 0.6 + institution.artisticReputation * 0.4, 0, 100)),
-    stability: Math.round(clamp(50 + preDonorNet / 1_200 + institution.donorConfidence * 0.25, 0, 100)),
-    access: Math.round(clamp(studentAccess * 0.65 + institution.audienceTrust * 0.2 + attendanceRate * 15, 0, 100)),
-    reach: Math.round(clamp(attendanceRate * 100, 0, 100)),
-    revenue: Math.round(clamp(45 + preDonorNet / 1_000 + projectedRevenue / 2_200, 0, 100)),
-    innovation: Math.round(clamp(novelty * 0.55 + identity * 0.3 + institution.identity.adventurous * 0.15, 0, 100)),
-  }
 }
 
 function resolveProgramWorks(program: ConcertProgram, works: Work[]): Work[] {

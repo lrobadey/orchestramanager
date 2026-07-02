@@ -6,7 +6,6 @@ import {
   CityAudienceSegment,
   InstitutionState,
   ConcertProgram,
-  DonorState,
   ConcertForecast,
   AudienceBreakdown,
   ExpenseBreakdown,
@@ -28,11 +27,9 @@ import {
   rehearsalHoursNeeded,
   pressureFromHoursGap,
   computeExpenseBreakdown,
-  computeDonorUplift,
   capAudienceToHall,
 } from './scoring'
 import { computeProgramArcSalience } from './programArcSalience'
-import { estimateDonorUpliftFromDonors } from './donorReactions'
 import { computeMarketingImpact } from './marketing'
 
 const EMPTY_ARC_SALIENCE: ProgramArcSalienceResult = {
@@ -51,7 +48,9 @@ export interface ForecastInput {
   cityAudienceSegments?: CityAudienceSegment[]
   audienceState?: AudienceState
   program: ConcertProgram
-  donorState?: DonorState
+  // Donor money the season-funding engine attached to this concert (pledges
+  // while planning, realized amounts at resolution). The forecast never invents
+  // donor money on its own: no committed funding means no donor income.
   donorIncome?: number
   operatingSupport?: number
 }
@@ -537,18 +536,7 @@ export function forecastProgram(input: ForecastInput): ConcertForecast {
   )
   const projectedExpenseBreakdown = computeExpenseBreakdown(works, rehearsalHoursPerWork, program.marketingSpend)
   const projectedExpenses = projectedExpenseBreakdown.total
-  const projectedDonorUplift = input.donorIncome ?? (input.donorState
-    ? estimateDonorUpliftFromDonors({
-        donorState: input.donorState,
-        institution,
-        program,
-        works,
-        projectedAttendance,
-        projectedRevenue,
-        projectedExpenseBreakdown,
-        marketingDonorSignal: marketingImpact.donorSignal,
-      })
-    : computeDonorUplift(institution.donorConfidence))
+  const projectedDonorUplift = Math.round(input.donorIncome ?? 0)
   const projectedOperatingSupport = Math.round(input.operatingSupport ?? 0)
   const projectedNet = projectedRevenue + projectedDonorUplift + projectedOperatingSupport - projectedExpenses
 
