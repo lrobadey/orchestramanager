@@ -79,6 +79,7 @@ npm install
 npm run dev       # start Vite dev server
 npm test          # run simulation tests
 npm run build     # TypeScript compile + Vite bundle
+npm run cli       # headless CLI for agents — see docs/CLI.md
 ```
 
 ## Architecture
@@ -87,12 +88,17 @@ npm run build     # TypeScript compile + Vite bundle
 src/types/     domain types (Work, Principal, InstitutionState, SeasonState, …)
 src/data/      seed data (30+ works, 15 principals, 5 audience segments)
 src/sim/       pure simulation functions (forecast, resolve, scoring, season)
+src/engine/    pure game engine: player actions, phases, seeded rng, strategies
+src/cli/       headless CLI for coding agents (docs/CLI.md)
 src/components/ React UI components
-src/App.tsx    season state machine and game loop
-tests/         Vitest simulation tests (36 tests passing)
+src/App.tsx    view router over the useSeasonGame hook
+tests/         Vitest suites for sim, engine, and CLI
 ```
 
-The simulation layer has no React dependency. UI components do not own formulas.
+The simulation layer has no React dependency. UI components do not own
+formulas. All player actions live in `src/engine/` as pure state-in/state-out
+functions; the React hook and the CLI are two thin shells over that one
+engine, so the rules cannot drift between interfaces.
 
 ## What Is Not Yet Built
 
