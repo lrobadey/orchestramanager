@@ -2,12 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { forecastProgram, ForecastInput } from '../src/sim/forecastProgram'
 import { resolveConcert } from '../src/sim/resolveConcert'
 import { createInitialSeason, resolveSeasonConcert, summarizeSeason } from '../src/sim/season'
-import { computeDonorUplift, DONOR_UPLIFT_THRESHOLD } from '../src/sim/scoring'
 import { works } from '../src/data/works'
 import { principals } from '../src/data/principals'
 import { audienceSegments, cityAudienceSegments, createInitialAudience } from '../src/data/audienceSegments'
 import { startingInstitution } from '../src/data/institution'
-import { createInitialDonors } from '../src/data/donors'
 import { ConcertProgram } from '../src/types/core'
 
 const safeProgram: ConcertProgram = {
@@ -108,20 +106,9 @@ describe('audience & finance systems', () => {
     expect(highExplorers.attendance).toBeGreaterThan(lowExplorers.attendance)
   })
 
-  it('named donor relationships now drive projected donor uplift', () => {
-    const lowRelationships = createInitialDonors()
-    const asterActivated = createInitialDonors()
-
-    lowRelationships.donors = lowRelationships.donors.map(donor => ({ ...donor, relationship: 25 }))
-    asterActivated.donors = asterActivated.donors.map(donor => ({
-      ...donor,
-      relationship: donor.id === 'aster-foundation' ? 95 : 25,
-    }))
-
-    const lowForecast = forecastProgram({ ...makeInput(adventurousProgram), donorState: lowRelationships })
-    const asterForecast = forecastProgram({ ...makeInput(adventurousProgram), donorState: asterActivated })
-
-    expect(asterForecast.projectedDonorUplift).toBeGreaterThan(lowForecast.projectedDonorUplift)
+  it('projected donor uplift is exactly the committed funding attached to the concert', () => {
+    const funded = forecastProgram({ ...makeInput(adventurousProgram), donorIncome: 42_000 })
+    expect(funded.projectedDonorUplift).toBe(42_000)
   })
 
   it('expense breakdown total matches projectedExpenses and includes all five components', () => {
@@ -178,16 +165,8 @@ describe('audience & finance systems', () => {
     )
   })
 
-  it('donor uplift is positive above threshold and zero at or below it', () => {
-    expect(computeDonorUplift(DONOR_UPLIFT_THRESHOLD)).toBe(0)
-    expect(computeDonorUplift(DONOR_UPLIFT_THRESHOLD - 5)).toBe(0)
-    expect(computeDonorUplift(50)).toBeGreaterThan(0)
-    expect(computeDonorUplift(50)).toBe((50 - DONOR_UPLIFT_THRESHOLD) * 200)
-
+  it('the forecast never invents donor money — no committed funding means zero uplift', () => {
     const forecast = forecastProgram({ ...makeInput(safeProgram), institution: { ...startingInstitution, donorConfidence: 60 } })
-    expect(forecast.projectedDonorUplift).toBeGreaterThan(0)
-
-    const zeroForecast = forecastProgram({ ...makeInput(safeProgram), institution: { ...startingInstitution, donorConfidence: 20 } })
-    expect(zeroForecast.projectedDonorUplift).toBe(0)
+    expect(forecast.projectedDonorUplift).toBe(0)
   })
 })

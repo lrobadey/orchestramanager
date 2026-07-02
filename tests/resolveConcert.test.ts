@@ -444,11 +444,10 @@ describe('resolveConcert', () => {
     }
   })
 
-  it('committed donorIncome replaces the per-concert donor estimate', () => {
+  it('the night’s donor income is the committed funding, dollar for dollar', () => {
     const committed = 50_000
     const report = resolveConcert({
       ...makeInput(safeProgram),
-      donorState: { donors: [] },
       donorIncome: committed,
       roll: 50,
     })
@@ -461,7 +460,6 @@ describe('resolveConcert', () => {
   it('adds operating support as a separate contributed-income stream', () => {
     const report = resolveConcert({
       ...makeInput(safeProgram),
-      donorState: { donors: [] },
       donorIncome: 30_000,
       operatingSupport: 12_500,
       roll: 50,

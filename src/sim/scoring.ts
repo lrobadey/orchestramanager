@@ -42,9 +42,6 @@ export const BASE_CONCERT_COST = 12_000
 // calculations and as a hard ceiling on how many tickets can actually be sold.
 export const HALL_CAPACITY = 1_200
 
-// Donor confidence threshold below which uplift is $0
-export const DONOR_UPLIFT_THRESHOLD = 30
-
 // Returns the effective rehearsal divisor for a piece, weighted by section
 // demands and driven by each section's average principal leadership, then
 // boosted by how familiar the piece is to the orchestra.
@@ -148,9 +145,4 @@ export function capAudienceToHall(breakdown: AudienceBreakdown[]): AudienceBreak
     ...row,
     shareOfHouse: total > 0 ? row.attendance / total : 0,
   }))
-}
-
-// Cash contribution from donors per concert, based on pre-concert donorConfidence.
-export function computeDonorUplift(donorConfidence: number): number {
-  return Math.max(0, (donorConfidence - DONOR_UPLIFT_THRESHOLD) * 200)
 }

@@ -298,11 +298,10 @@ export function useSeasonGame() {
         cityAudienceSegments,
         audienceState: season.audience,
         program,
-        donorState: season.donors,
         donorIncome: forecastDonorIncome,
         operatingSupport: forecastOperatingSupport,
       }),
-    [institution, livePrincipals, program, season.audience, season.donors, forecastDonorIncome, forecastOperatingSupport],
+    [institution, livePrincipals, program, season.audience, forecastDonorIncome, forecastOperatingSupport],
   )
 
   function handleRunConcert() {
@@ -311,8 +310,8 @@ export function useSeasonGame() {
     // discarded first.
     if (editDraft) return
     // The night's donor income is the committed pledges that latched to this
-    // concert, realized with their volatility. Falls back to the legacy estimate
-    // only if no plan was committed (defensive — should not happen in play).
+    // concert, realized with their volatility. A concert with no committed
+    // funding earns no donor income.
     const committedConcert = season.funding?.concerts.find(
       concert => concert.concertIndex === season.currentSlotIndex,
     )
@@ -329,7 +328,6 @@ export function useSeasonGame() {
       cityAudienceSegments,
       audienceState: season.audience,
       program,
-      donorState: season.donors,
       donorIncome: committedConcert?.realized,
       operatingSupport,
       isOpeningNight: season.currentSlotIndex === 0,

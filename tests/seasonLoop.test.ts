@@ -82,7 +82,6 @@ function runSeason(): { season: SeasonState; reports: ConcertReport[] } {
       cityAudienceSegments,
       audienceState: season.audience,
       program: programs[i],
-      donorState: season.donors,
       donorIncome: committed?.pledged,
       operatingSupport,
     })
@@ -95,7 +94,6 @@ function runSeason(): { season: SeasonState; reports: ConcertReport[] } {
       cityAudienceSegments,
       audienceState: season.audience,
       program: programs[i],
-      donorState: season.donors,
       donorIncome: committed?.realized,
       operatingSupport,
       isOpeningNight: i === 0,
