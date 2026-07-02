@@ -214,4 +214,18 @@ describe('cli entry point', () => {
     })
     expect(JSON.parse(stdout).commands.length).toBeGreaterThan(10)
   }, 60_000)
+
+  it('flushes large documents fully through a pipe (no 64KB truncation)', () => {
+    // A played season's state dump is ~190KB — bigger than the OS pipe
+    // buffer. If the entry point exits before stdout drains, the JSON arrives
+    // cut off. Build the save in-process (fast), dump it via subprocess.
+    playFullSeason('pipe-test', '1')
+    const cwd = path.resolve(__dirname, '..')
+    const env = { ...process.env, ORCHESTRA_SAVES_DIR: savesDir }
+    const stdout = execFileSync('npx', ['tsx', 'src/cli/main.ts', 'state', '--save', 'pipe-test'], {
+      cwd, env, encoding: 'utf8', timeout: 60_000, maxBuffer: 16 * 1024 * 1024,
+    })
+    expect(stdout.length).toBeGreaterThan(64 * 1024)
+    expect(() => JSON.parse(stdout)).not.toThrow()
+  }, 120_000)
 })

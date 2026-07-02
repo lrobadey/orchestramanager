@@ -132,8 +132,11 @@ export function runCli(argv: string[]): number {
 }
 
 // Only take over the process when run as the entry point; tests import runCli.
+// Set exitCode rather than calling process.exit(): exit() tears the process
+// down before large stdout writes finish flushing into a pipe, truncating any
+// JSON document bigger than the pipe buffer (~64KB) — e.g. a full state dump.
 const invokedDirectly = process.argv[1] !== undefined
   && import.meta.url === pathToFileURL(process.argv[1]).href
 if (invokedDirectly) {
-  process.exit(runCli(process.argv.slice(2)))
+  process.exitCode = runCli(process.argv.slice(2))
 }
